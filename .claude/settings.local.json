@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check controllers/extendedController.js)",
+      "Bash(node -e ' *)",
+      "Bash(npm install *)",
+      "Bash(node --check config/seed.js)",
+      "Bash(node --check server.js)",
+      "Bash(npm init *)",
+      "Bash(timeout 240 npm install mongodb-memory-server@^9 --no-audit --no-fund)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(node validate.js)",
+      "Bash(npx vite *)",
+      "Read(//c/Users/Muhammad Numan/.cache/**)",
+      "Read(//c/Users/Muhammad Numan/**)",
+      "Bash(echo \"EXITCODE:$?\")",
+      "Bash(grep -q \"ISOLATION\\\\|SEED FAILED\\\\|❌\" val_out.txt)",
+      "Bash(break)",
+      "Bash(taskkill //F //IM mongod-x64-win32-6.0.14.exe //T)",
+      "Bash(taskkill //F //IM node.exe //T)",
+      "Bash(grep -q \"ISOLATION\\\\|SEED FAILED\\\\|❌\\\\|EXITCODE\" blycyuowu.output)",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
+      "Bash(tasklist //FI \"IMAGENAME eq mongod-x64-win32-6.0.14.exe\")",
+      "Bash(node debug.js)",
+      "Bash(node httptest.js)",
+      "Bash(echo \"started pid $!\")",
+      "Bash(rm -f data/mockData.js)",
+      "Bash(rmdir data *)",
+      "Bash(ls data *)",
+      "Bash(node -e \"require\\('./models/School'\\); require\\('./controllers/extendedController'\\); require\\('./routes/index'\\); console.log\\('backend OK'\\);\")"
+    ]
+  }
+}

@@ -1,0 +1,293 @@
+import { useState, useEffect, useCallback } from 'react';
+import { DollarSign, Search, Plus, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { feeAPI, studentAPI } from '../services/api';
+import { useSchool } from '../hooks/useSchool.jsx';
+import { buildPrintPage, openPrintWindow } from '../components/print/PrintComponents.jsx';
+import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast } from '../components/ui';
+
+const statusColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
+
+export default function Fees() {
+  const toast = useToast();
+  const { school } = useSchool();
+  const [fees, setFees]           = useState([]);
+  const [stats, setStats]         = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [search, setSearch]       = useState('');
+  const [filterStatus, setFilter] = useState('');
+  const [modalOpen, setModal]     = useState(false);
+  const [receiptModal, setReceipt]= useState(false);
+  const [selected, setSelected]   = useState(null);
+  const [students, setStudents]   = useState([]);
+  const [saving, setSaving]       = useState(false);
+  const [form, setForm]           = useState({ student:'', month:'May', year:2025, amount:'', method:'Cash' });
+
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (filterStatus) params.status = filterStatus;
+      if (search) params.search = search;
+      const [feesRes, statsRes] = await Promise.all([feeAPI.getAll(params), feeAPI.getStats({ year:2025 })]);
+      setFees(feesRes.data || []);
+      setStats(statsRes.data);
+    } catch(e) { console.error(e); }
+    finally { setLoading(false); }
+  }, [filterStatus, search]);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    studentAPI.getAll({ limit:200 }).then(r => setStudents(r.data||[])).catch(console.error);
+  }, []);
+
+  const markPaid = async (id) => {
+    await feeAPI.markPaid(id, { method:'Cash' });
+    fetchAll();
+    toast.success('Marked as paid');
+  };
+
+  const recordPayment = async () => {
+    setSaving(true);
+    try {
+      await feeAPI.create({ ...form, paid: Number(form.amount), balance:0, status:'Paid', dueDate: new Date(), paidDate: new Date() });
+      setModal(false);
+      fetchAll();
+      toast.success('Payment recorded');
+    } catch(e) { toast.error(e.message); }
+    finally { setSaving(false); }
+  };
+
+  const totalCollected = stats?.summary?.reduce((s,x) => s + (x.totalPaid||0), 0) || 0;
+  const totalExpected  = stats?.summary?.reduce((s,x) => s + (x.totalAmount||0), 0) || 0;
+  const totalBalance   = totalExpected - totalCollected;
+
+  const printReceipt = (r) => {
+    const statusBadge = `<span class="badge badge-${(r.status||'').toLowerCase()}">${r.status}</span>`;
+    const stampHtml = school?.stamp
+      ? `<div style="text-align:right;margin-top:8px;opacity:0.75;"><img src="http://localhost:5000${school.stamp}" style="width:80px;height:80px;border-radius:50%;"/></div>`
+      : '';
+    const content = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div>
+          <div style="font-size:13px;font-weight:bold;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Receipt Details</div>
+          <div class="info-grid" style="grid-template-columns:1fr 1fr 1fr;gap:8px;">
+            <div class="info-item"><label>Receipt No</label><span>${r.receiptNo||'—'}</span></div>
+            <div class="info-item"><label>Status</label><span>${statusBadge}</span></div>
+            <div class="info-item"><label>Date Issued</label><span>${new Date().toLocaleDateString('en-PK')}</span></div>
+          </div>
+        </div>
+        ${stampHtml}
+      </div>
+      <h3 style="font-size:13px;font-weight:bold;color:#475569;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.5px;">Student Information</h3>
+      <div class="info-grid">
+        <div class="info-item"><label>Student Name</label><span>${r.student?.name||'—'}</span></div>
+        <div class="info-item"><label>Class</label><span>${r.student?.class||'—'}</span></div>
+        <div class="info-item"><label>Roll No</label><span>${r.student?.rollNumber||'—'}</span></div>
+        <div class="info-item"><label>Student ID</label><span>${r.student?.studentId||'—'}</span></div>
+      </div>
+      <h3 style="font-size:13px;font-weight:bold;color:#475569;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.5px;">Payment Details</h3>
+      <table><thead><tr><th>Description</th><th>Month</th><th>Total Amount</th><th>Amount Paid</th><th>Balance</th></tr></thead>
+      <tbody><tr>
+        <td>School Fee – ${r.month} ${r.year}</td>
+        <td>${r.month} ${r.year}</td>
+        <td>Rs ${(r.amount||0).toLocaleString()}</td>
+        <td>Rs ${(r.paid||0).toLocaleString()}</td>
+        <td>Rs ${(r.balance||0).toLocaleString()}</td>
+      </tr></tbody></table>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:10px 14px;border-radius:6px;display:flex;justify-content:space-between;font-size:13px;">
+        <span>Payment Method: <strong>${r.method||'—'}</strong></span>
+        <span>Date Paid: <strong>${r.paidDate?.slice(0,10)||'—'}</strong></span>
+        <span style="font-size:15px;font-weight:bold;color:#065f46;">Amount Paid: Rs ${(r.paid||0).toLocaleString()}</span>
+      </div>
+      <div class="sig-row">
+        <div class="sig-box"><div class="sig-line"></div><div class="sig-label">Received By</div></div>
+        <div class="sig-box"><div class="sig-line"></div><div class="sig-label">Accountant</div></div>
+        <div class="sig-box"><div class="sig-line"></div><div class="sig-label">${school?.principal||'Principal'}</div></div>
+      </div>
+      <div style="text-align:center;margin-top:10px;font-size:10px;color:#94a3b8;font-style:italic;">
+        This is an official fee receipt. Please retain for your records.
+      </div>`;
+    openPrintWindow(buildPrintPage(content, school, 'Fee Receipt'));
+  };
+
+  return (
+    <div className="space-y-5">
+      <SectionHeader
+        title="Fee Management"
+        subtitle="Manage student fee records and payments"
+        action={
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" icon={RefreshCw} onClick={fetchAll}>Refresh</Button>
+            <Button variant="primary"   size="sm" icon={Plus}      onClick={() => setModal(true)}>Record Payment</Button>
+          </div>
+        }
+      />
+
+      {/* Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label:'Total Expected',  val:`Rs ${(totalExpected/1000).toFixed(0)}K`, icon:DollarSign, color:'bg-blue-50 text-blue-700 border-blue-200' },
+          { label:'Total Collected', val:`Rs ${(totalCollected/1000).toFixed(0)}K`, icon:CheckCircle, color:'bg-emerald-50 text-emerald-700 border-emerald-200' },
+          { label:'Total Pending',   val:`Rs ${(totalBalance/1000).toFixed(0)}K`,  icon:Clock, color:'bg-orange-50 text-orange-700 border-orange-200' },
+          { label:'Collection Rate', val:totalExpected ? `${Math.round((totalCollected/totalExpected)*100)}%` : '—', icon:AlertCircle, color:'bg-purple-50 text-purple-700 border-purple-200' },
+        ].map(i => (
+          <div key={i.label} className={`rounded-2xl border p-5 flex items-center gap-4 ${i.color}`}>
+            <i.icon size={24} className="flex-shrink-0"/>
+            <div><div className="text-xl font-display font-bold">{i.val}</div><div className="text-xs font-medium mt-0.5">{i.label}</div></div>
+          </div>
+        ))}
+      </div>
+
+      <Card>
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-xs">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+            <input placeholder="Search student, class…" value={search} onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+          </div>
+          <select value={filterStatus} onChange={e => setFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+            <option value="">All Status</option>
+            {['Paid','Pending','Overdue','Partial'].map(s => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+
+        <div className="overflow-x-auto">
+          {loading ? <div className="flex items-center justify-center py-16"><Loader2 size={28} className="animate-spin text-primary-500"/></div> : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/50">
+                  {['Student','Class','Month','Amount','Paid','Balance','Status','Due Date','Actions'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {fees.map(r => (
+                  <tr key={r._id} className="border-b border-slate-50 hover:bg-blue-50/40">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Avatar name={r.student?.name||'?'} size="sm"/>
+                        <span className="font-medium text-slate-700">{r.student?.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3"><Badge variant="blue">{r.student?.class}</Badge></td>
+                    <td className="px-4 py-3 text-slate-600">{r.month} {r.year}</td>
+                    <td className="px-4 py-3 font-medium">Rs {r.amount?.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-emerald-600 font-medium">Rs {r.paid?.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-red-500 font-medium">Rs {r.balance?.toLocaleString()}</td>
+                    <td className="px-4 py-3"><Badge variant={statusColors[r.status]}>{r.status}</Badge></td>
+                    <td className="px-4 py-3 text-slate-500 text-xs">{r.dueDate?.slice(0,10)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        {r.status !== 'Paid' && (
+                          <button onClick={() => markPaid(r._id)} className="text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-medium">Mark Paid</button>
+                        )}
+                        <button onClick={() => { setSelected(r); setReceipt(true); }} className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-2.5 py-1 rounded-lg font-medium">Receipt</button>
+                        <button onClick={() => printReceipt(r)} className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 px-2.5 py-1 rounded-lg font-medium">🖨 Print</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {!loading && fees.length === 0 && <div className="text-center py-12 text-slate-400">No fee records found</div>}
+        </div>
+      </Card>
+
+      {/* Record Payment Modal */}
+      <Modal open={modalOpen} onClose={() => setModal(false)} title="Record Fee Payment" size="md">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-slate-700">Student</label>
+            <select value={form.student} onChange={e => setForm({...form, student:e.target.value})}
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <option value="">Select student</option>
+              {students.map(s => <option key={s._id} value={s._id}>{s.name} ({s.class})</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-700">Month</label>
+              <select value={form.month} onChange={e => setForm({...form, month:e.target.value})}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m => <option key={m}>{m}</option>)}
+              </select>
+            </div>
+            <Input label="Year" type="number" value={form.year} onChange={e => setForm({...form, year:Number(e.target.value)})}/>
+          </div>
+          <Input label="Amount (Rs)" type="number" value={form.amount} onChange={e => setForm({...form, amount:e.target.value})} placeholder="5000"/>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-slate-700">Payment Method</label>
+            <select value={form.method} onChange={e => setForm({...form, method:e.target.value})}
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              {['Cash','Bank Transfer','Online','Cheque'].map(m => <option key={m}>{m}</option>)}
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="secondary" onClick={() => setModal(false)}>Cancel</Button>
+            <Button variant="primary" onClick={recordPayment} disabled={saving}>{saving ? 'Saving…' : 'Record Payment'}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Receipt Modal — premium, school-branded */}
+      <Modal open={receiptModal} onClose={() => setReceipt(false)} title="Fee Receipt" size="sm">
+        {selected && (
+          <div className="space-y-4">
+            {/* Branded header */}
+            <div className="relative rounded-2xl p-5 text-white overflow-hidden"
+              style={{ background: `linear-gradient(135deg, ${school?.primaryColor||'#1d4ed8'}, ${school?.primaryColor||'#1d4ed8'}bb)` }}>
+              <div className="flex items-center gap-3">
+                {school?.logo
+                  ? <img src={`http://localhost:5000${school.logo}`} alt="" className="w-11 h-11 rounded-xl object-contain bg-white/90 p-1"/>
+                  : <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center font-bold text-lg">{school?.shortName?.charAt(0)||school?.name?.charAt(0)||'S'}</div>}
+                <div className="min-w-0">
+                  <div className="text-lg font-display font-bold leading-tight truncate">{school?.name || 'School'}</div>
+                  <div className="text-white/70 text-xs truncate">{school?.address || school?.city || ''}</div>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-white/80 text-xs uppercase tracking-widest">Official Fee Receipt</span>
+                <span className="text-xs font-mono bg-white/15 px-2 py-0.5 rounded-md">{selected.receiptNo || 'UNPAID'}</span>
+              </div>
+            </div>
+
+            {/* Amount highlight */}
+            <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
+              <div>
+                <div className="text-xs text-slate-400 uppercase tracking-wider">Amount Paid</div>
+                <div className="text-2xl font-display font-bold text-slate-800">Rs {selected.paid?.toLocaleString() || 0}</div>
+              </div>
+              <Badge variant={statusColors[selected.status]}>{selected.status}</Badge>
+            </div>
+
+            <div className="space-y-2">
+              {[
+                ['Student', selected.student?.name],
+                ['Class', selected.student?.class],
+                ['Fee Month', `${selected.month} ${selected.year}`],
+                ['Total Amount', `Rs ${selected.amount?.toLocaleString()}`],
+                ['Balance', `Rs ${(selected.balance||0).toLocaleString()}`],
+                ['Method', selected.method||'—'],
+                ['Paid Date', selected.paidDate?.slice(0,10)||'—'],
+                ['Due Date', selected.dueDate?.slice(0,10)||'—'],
+              ].map(([k,v]) => (
+                <div key={k} className="flex justify-between py-1.5 border-b border-slate-50 text-sm last:border-0">
+                  <span className="text-slate-500">{k}</span>
+                  <span className="font-semibold text-slate-700">{v}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="secondary" onClick={() => setReceipt(false)}>Close</Button>
+              <Button variant="primary" onClick={() => printReceipt(selected)}>🖨 Print Receipt</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
