@@ -179,7 +179,7 @@ export default function ResultCard() {
       {rc && (
         <>
           <div className="flex justify-end gap-3">
-            <Button variant="secondary" icon={Printer} onClick={handlePrint}>Print</Button>
+            <Button variant="print" icon={Printer} onClick={handlePrint}>Print Report Card</Button>
           </div>
 
           {/* Printable Area */}

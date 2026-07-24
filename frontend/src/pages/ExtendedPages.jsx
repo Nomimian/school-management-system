@@ -834,7 +834,7 @@ export function Certificates() {
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="secondary" onClick={()=>setViewItem(null)}>Close</Button>
-              <Button variant="primary" icon={Printer} onClick={()=>printCert(viewItem)}>Print Certificate</Button>
+              <Button variant="print" icon={Printer} onClick={()=>printCert(viewItem)}>Print Certificate</Button>
             </div>
           </div>
         </Modal>

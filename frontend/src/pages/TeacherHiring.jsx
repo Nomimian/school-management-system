@@ -485,9 +485,9 @@ export default function TeacherHiring() {
               ))}
             </div>
             <div className="flex gap-2 pt-3 border-t border-slate-100 flex-wrap">
-              <Button variant="secondary" size="sm" icon={Printer} onClick={()=>{setView(false);printApplication(selected);}}>Print Application</Button>
+              <Button variant="print" size="sm" icon={Printer} onClick={()=>{setView(false);printApplication(selected);}}>Print Application</Button>
               {['Shortlisted','Interview Scheduled'].includes(selected.status) && (
-                <Button variant="secondary" size="sm" icon={Printer} onClick={()=>{setView(false);printInterviewLetter(selected);}}>Interview Letter</Button>
+                <Button variant="print" size="sm" icon={Printer} onClick={()=>{setView(false);printInterviewLetter(selected);}}>Interview Letter</Button>
               )}
               {selected.status==='Applied' && <Button variant="success" size="sm" onClick={()=>{quickStatus(selected._id,'Shortlisted');setView(false);}}>Shortlist</Button>}
               {selected.status==='Shortlisted' && <Button variant="primary" size="sm" onClick={()=>{quickStatus(selected._id,'Hired');setView(false);}}>Hire</Button>}

@@ -95,6 +95,7 @@ export function Button({ children, variant = 'primary', size = 'md', onClick, cl
     danger: 'bg-red-500 text-white hover:bg-red-600',
     ghost: 'text-primary-600 hover:bg-blue-50',
     success: 'bg-emerald-500 text-white hover:bg-emerald-600',
+    print: 'bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-700 hover:to-purple-600 shadow-md shadow-purple-500/25',
   };
   const sizes = {
     sm: 'px-3 py-1.5 text-xs',

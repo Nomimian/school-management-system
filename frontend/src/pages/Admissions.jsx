@@ -419,7 +419,7 @@ export default function Admissions() {
               <div className="col-span-2"><span className="text-slate-400 block text-xs mb-0.5">Address</span><span className="text-slate-700">{selected.address||'—'}</span></div>
             </div>
             <div className="flex gap-2 pt-3 border-t border-slate-100 flex-wrap">
-              <Button variant="secondary" size="sm" icon={Printer} onClick={()=>{setView(false);printAdmissionForm(selected);}}>Print Form</Button>
+              <Button variant="print" size="sm" icon={Printer} onClick={()=>{setView(false);printAdmissionForm(selected);}}>Print Form</Button>
               {selected.status==='Applied' && <Button variant="success" size="sm" onClick={()=>{quickStatus(selected._id,'Approved');setView(false);}}>Approve</Button>}
               {selected.status==='Approved' && <Button variant="primary" size="sm" onClick={()=>{quickStatus(selected._id,'Enrolled');setView(false);}}>Enroll Student</Button>}
               {!['Rejected','Enrolled'].includes(selected.status) && (

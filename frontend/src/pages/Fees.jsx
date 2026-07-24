@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SERVER_URL } from '../config/env.js';
-import { DollarSign, Search, Plus, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { DollarSign, Search, Plus, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw, Printer } from 'lucide-react';
 import { feeAPI, studentAPI } from '../services/api';
 import { useSchool } from '../hooks/useSchool.jsx';
 import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/print/PrintComponents.jsx';
@@ -187,7 +187,7 @@ export default function Fees() {
                           <button onClick={() => markPaid(r._id)} className="text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-medium">Mark Paid</button>
                         )}
                         <button onClick={() => { setSelected(r); setReceipt(true); }} className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-2.5 py-1 rounded-lg font-medium">Receipt</button>
-                        <button onClick={() => printReceipt(r)} className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 px-2.5 py-1 rounded-lg font-medium">🖨 Print</button>
+                        <button onClick={() => printReceipt(r)} className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 px-2.5 py-1 rounded-lg font-medium inline-flex items-center gap-1"><Printer size={12}/> Print</button>
                       </div>
                     </td>
                   </tr>
@@ -287,7 +287,7 @@ export default function Fees() {
 
             <div className="flex justify-end gap-2 pt-1">
               <Button variant="secondary" onClick={() => setReceipt(false)}>Close</Button>
-              <Button variant="primary" onClick={() => printReceipt(selected)}>🖨 Print Receipt</Button>
+              <Button variant="print" icon={Printer} onClick={() => printReceipt(selected)}>Print Receipt</Button>
             </div>
           </div>
         )}
