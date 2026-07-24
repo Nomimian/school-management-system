@@ -1,5 +1,6 @@
 // ─── TRANSPORT PAGE ───────────────────────────────────────────────────────────
 import { useState, useEffect } from 'react';
+import { SERVER_URL } from '../config/env.js';
 import { useToast, useConfirm, Dropdown } from '../components/ui';
 import { Plus, Bus, Loader2, Trash2, MapPin, User, BookOpen, Eye } from 'lucide-react';
 import { transportAPI } from '../services/api';
@@ -675,7 +676,7 @@ export function Certificates() {
     const stu = cert.student || {};
     const color = school?.primaryColor || '#1d4ed8';
     const gold = '#b8912f';
-    const logoUrl = school?.logo ? `http://localhost:5000${school.logo}` : '';
+    const logoUrl = school?.logo ? `${SERVER_URL}${school.logo}` : '';
     const stampHtml = stampEnabled(school, 'cert') ? generateStampHTML(school, 96) : '';
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${cert.type} Certificate — ${school?.name||'School'}</title>
     <style>

@@ -1,7 +1,7 @@
 // src/services/api.js
 // Central API service — all backend calls go through here
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_URL as BASE_URL } from '../config/env.js';
 
 // ─── HTTP helper ──────────────────────────────────────────────────────────────
 async function request(method, path, body = null, params = {}) {

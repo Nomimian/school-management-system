@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { SERVER_URL } from '../config/env.js';
 import {
   Plus, Search, Eye, Edit2, Trash2, Loader2, UserPlus,
   Camera, Printer, X, Upload
@@ -8,7 +9,7 @@ import { useSchool } from '../hooks/useSchool.jsx';
 import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/print/PrintComponents.jsx';
 import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, useConfirm, Dropdown } from '../components/ui';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = SERVER_URL;
 
 const statusColors = {
   Applied:'blue','Test Scheduled':'orange',Interviewed:'purple',

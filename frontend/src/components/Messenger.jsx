@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { SERVER_URL } from '../config/env.js';
 import {
   Loader2, Send, Plus, Search, ArrowLeft, MessageSquare, X, Users2, Paperclip, FileText, Download,
 } from 'lucide-react';
@@ -7,7 +8,7 @@ import { useAuth } from '../hooks/useAuth.jsx';
 import { ROLE_LABEL } from '../config/access.js';
 import { chatAPI, attachmentAPI } from '../services/api';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = SERVER_URL;
 const fileUrl = (u) => (u?.startsWith('http') ? u : `${API_BASE}${u}`);
 const isImg = (t) => String(t || '').startsWith('image/');
 

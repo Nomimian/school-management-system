@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { SERVER_URL } from '../config/env.js';
 import { DollarSign, Search, Plus, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { feeAPI, studentAPI } from '../services/api';
 import { useSchool } from '../hooks/useSchool.jsx';
@@ -243,7 +244,7 @@ export default function Fees() {
               style={{ background: `linear-gradient(135deg, ${school?.primaryColor||'#1d4ed8'}, ${school?.primaryColor||'#1d4ed8'}bb)` }}>
               <div className="flex items-center gap-3">
                 {school?.logo
-                  ? <img src={`http://localhost:5000${school.logo}`} alt="" className="w-11 h-11 rounded-xl object-contain bg-white/90 p-1"/>
+                  ? <img src={`${SERVER_URL}${school.logo}`} alt="" className="w-11 h-11 rounded-xl object-contain bg-white/90 p-1"/>
                   : <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center font-bold text-lg">{school?.shortName?.charAt(0)||school?.name?.charAt(0)||'S'}</div>}
                 <div className="min-w-0">
                   <div className="text-lg font-display font-bold leading-tight truncate">{school?.name || 'School'}</div>

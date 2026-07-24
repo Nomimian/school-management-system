@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_URL as BASE_URL } from '../config/env.js';
 
 async function saRequest(method, path, body = null, params = {}) {
   const token = localStorage.getItem('sa_token');

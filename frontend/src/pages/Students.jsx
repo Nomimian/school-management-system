@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { SERVER_URL } from '../config/env.js';
 import { useLocation } from 'react-router-dom';
 import { Plus, Search, Eye, Edit2, Trash2, GraduationCap, Loader2, RefreshCw, Upload, X } from 'lucide-react';
 import { studentAPI, schoolAPI } from '../services/api';
 import { useClasses } from '../hooks/useClasses.js';
 import { SectionHeader, Card, Badge, Button, Input, Modal, Avatar, useToast, useConfirm, Dropdown } from '../components/ui';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = SERVER_URL;
 const feeColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
 const emptyForm = { name:'', class:'', rollNumber:'', gender:'Male', dateOfBirth:'', guardian:{name:'',phone:''}, phone:'', feeAmount:'', feeStatus:'Pending', address:'', email:'', admissionDate:'', bloodGroup:'', photo:'' };
 

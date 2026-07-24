@@ -1,11 +1,12 @@
 import { Outlet, useNavigate, NavLink } from 'react-router-dom';
+import { SERVER_URL } from '../../config/env.js';
 import { LogOut, GraduationCap, LayoutDashboard, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useSchool } from '../../hooks/useSchool.jsx';
 import ThemeApplier from '../../components/ThemeApplier.jsx';
 import NotificationBell from '../../components/NotificationBell.jsx';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = SERVER_URL;
 
 export default function ParentLayout() {
   const { user, logout } = useAuth();

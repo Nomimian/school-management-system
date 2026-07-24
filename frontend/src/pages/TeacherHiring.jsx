@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
+import { SERVER_URL } from '../config/env.js';
 import { Plus, Search, Eye, Edit2, Trash2, Loader2, Printer, Upload, X, Briefcase } from 'lucide-react';
 import { useSchool } from '../hooks/useSchool.jsx';
 import { buildPrintPage, openPrintWindow } from '../components/print/PrintComponents.jsx';
 import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, useConfirm, Dropdown } from '../components/ui';
 import { schoolAPI, hiringAPI } from '../services/api';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = SERVER_URL;
 
 const statusColors = {
   Applied: 'blue', Shortlisted: 'orange', 'Interview Scheduled': 'purple',

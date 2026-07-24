@@ -1,6 +1,7 @@
 import { useSchool } from '../../hooks/useSchool.jsx';
+import { SERVER_URL } from '../../config/env.js';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = SERVER_URL;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PREMIUM STAMP ENGINE  —  shapes: 'circle' | 'square' | 'rectangle'

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { SERVER_URL } from '../config/env.js';
 import {
   Save, School, Bell, Shield, Palette, Upload,
   Loader2, Eye, EyeOff, CheckCircle, Stamp, Users
@@ -10,7 +11,7 @@ import { authAPI, schoolAPI } from '../services/api';
 import { SchoolStamp } from '../components/print/PrintComponents.jsx';
 import UsersPanel from '../components/UsersPanel.jsx';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = SERVER_URL;
 
 const tabs = [
   { id:'school',        label:'School Profile',  icon:School   },

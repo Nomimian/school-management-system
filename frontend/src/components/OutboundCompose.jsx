@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { SERVER_URL } from '../config/env.js';
 import { Loader2, Send, Search, X, Users2, Paperclip, FileText, Mail, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { Modal, Button, useToast } from './ui';
 import { ROLE_LABEL } from '../config/access.js';
 import { chatAPI, attachmentAPI, outboundAPI } from '../services/api';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = SERVER_URL;
 const fileUrl = (u) => (u?.startsWith('http') ? u : `${API_BASE}${u}`);
 const isImg = (t) => String(t || '').startsWith('image/');
 
