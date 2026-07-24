@@ -50,6 +50,8 @@ exports.updateAdmission = async (req, res) => {
         bloodGroup: admission.bloodGroup,
         guardian: admission.guardian,
         address: admission.address,
+        photo: admission.photo,          // carry the uploaded applicant photo onto the roster
+        phone: admission.guardian?.phone,
         admissionDate: new Date(),
         feeStatus: 'Pending',
         school: req.user.school,

@@ -26,6 +26,12 @@ const errorHandler = (err, req, res, next) => {
     return res.status(403).json({ success: false, message: 'Origin not allowed.' });
   }
 
+  // Multer upload errors (size limit, unexpected field) & our fileFilter rejects
+  if (err.name === 'MulterError' || /file type|file too|Only image|Unsupported/i.test(err.message || '')) {
+    const msg = err.code === 'LIMIT_FILE_SIZE' ? 'File is too large (max 10MB).' : err.message;
+    return res.status(400).json({ success: false, message: msg });
+  }
+
   const status = err.statusCode || 500;
   console.error('Server Error:', err);
   // Never leak internal error details on a 500 in production.

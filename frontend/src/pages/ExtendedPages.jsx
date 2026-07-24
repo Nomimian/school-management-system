@@ -656,7 +656,10 @@ export function Certificates() {
 
   const save = async () => {
     setSaving(true);
-    try { const res = await certificateAPI.create(form); setCerts(prev=>[res.data,...prev]); toast.success('Certificate issued'); setModal(false); }
+    try {
+      const res = await certificateAPI.create(form); setCerts(prev=>[res.data,...prev]); toast.success('Certificate issued'); setModal(false);
+      setForm({ student:'', type:'Character', issuedBy:'Principal', content:'' });   // reset for next issue
+    }
     catch(e) { toast.error(e.message); } finally { setSaving(false); }
   };
 

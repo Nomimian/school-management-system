@@ -211,7 +211,7 @@ export default function Accounts() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Type</label>
-              <Dropdown value={form.type} onChange={e=>setForm({...form,type:e.target.value,category:''})}
+              <Dropdown value={form.type} onChange={e=>{const t=e.target.value; setForm(f=>({...f,type:t,category:(t==='Income'?INCOME_CATEGORIES:EXPENSE_CATEGORIES)[0]}));}}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option>Income</option><option>Expense</option>
               </Dropdown>

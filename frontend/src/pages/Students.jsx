@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Plus, Search, Download, Eye, Edit2, Trash2, GraduationCap, Loader2, RefreshCw } from 'lucide-react';
-import { studentAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, Input, Select, Modal, Avatar, ProgressBar, useToast, useConfirm, Dropdown } from '../components/ui';
+import { Plus, Search, Eye, Edit2, Trash2, GraduationCap, Loader2, RefreshCw, Upload, X } from 'lucide-react';
+import { studentAPI, schoolAPI } from '../services/api';
+import { useClasses } from '../hooks/useClasses.js';
+import { SectionHeader, Card, Badge, Button, Input, Modal, Avatar, useToast, useConfirm, Dropdown } from '../components/ui';
 
+const API_BASE = 'http://localhost:5000';
 const feeColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
-const emptyForm = { name:'', class:'', rollNumber:'', gender:'Male', dateOfBirth:'', guardian:{name:'',phone:''}, phone:'', feeAmount:'', feeStatus:'Pending', address:'', email:'', admissionDate:'', bloodGroup:'' };
+const emptyForm = { name:'', class:'', rollNumber:'', gender:'Male', dateOfBirth:'', guardian:{name:'',phone:''}, phone:'', feeAmount:'', feeStatus:'Pending', address:'', email:'', admissionDate:'', bloodGroup:'', photo:'' };
 
 export default function Students() {
   const toast = useToast();
@@ -23,8 +25,23 @@ export default function Students() {
   const [viewOpen, setViewOpen]   = useState(false);
   const [saving, setSaving]       = useState(false);
   const [error, setError]         = useState('');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoRef = useRef();
 
-  const classes = ['Grade 6-A','Grade 7-C','Grade 8-A','Grade 9-B','Grade 10-A','Grade 10-B'];
+  // Real class list (never hardcoded) — shared source of truth.
+  const { names: classes } = useClasses();
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    setPhotoUploading(true);
+    try {
+      const fd = new FormData(); fd.append('photo', file);
+      const res = await schoolAPI.uploadStudentPhoto(fd);
+      if (res.success) { setEditData(d => ({ ...d, photo: res.url })); toast.success('Photo uploaded'); }
+      else toast.error(res.message || 'Upload failed');
+    } catch (e2) { toast.error(e2.message); }
+    finally { setPhotoUploading(false); }
+  };
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
@@ -36,9 +53,9 @@ export default function Students() {
       const res = await studentAPI.getAll(params);
       setStudents(res.data || []);
       setTotal(res.total || 0);
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error('Could not load students. Please try again.'); }
     finally { setLoading(false); }
-  }, [search, filterClass, filterFee]);
+  }, [search, filterClass, filterFee, toast]);
 
   useEffect(() => { fetchStudents(); }, [fetchStudents]);
 
@@ -121,7 +138,9 @@ export default function Students() {
                   <tr key={s._id} className="border-b border-slate-50 hover:bg-blue-50/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <Avatar name={s.name} size="md"/>
+                        {s.photo
+                          ? <img src={`${API_BASE}${s.photo}`} alt={s.name} className="w-9 h-9 rounded-full object-cover border border-slate-200 flex-shrink-0"/>
+                          : <Avatar name={s.name} size="md"/>}
                         <div>
                           <div className="font-medium text-slate-800">{s.name}</div>
                           <div className="text-xs text-slate-400">{s.studentId}</div>
@@ -157,6 +176,24 @@ export default function Students() {
         {editData && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {error && <div className="sm:col-span-2 bg-red-50 text-red-600 border border-red-200 rounded-xl px-4 py-2 text-sm">{error}</div>}
+
+            {/* Photo */}
+            <div className="sm:col-span-2 flex items-center gap-4 pb-2 border-b border-slate-100">
+              {editData.photo
+                ? <img src={`${API_BASE}${editData.photo}`} alt="Student" className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-200 shadow-sm"/>
+                : <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-600 to-blue-500 flex items-center justify-center text-white text-xl font-bold">{editData.name?.charAt(0) || <GraduationCap size={22}/>}</div>}
+              <div>
+                <div className="text-sm font-medium text-slate-700 mb-1">Student Photo</div>
+                <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange}/>
+                <div className="flex items-center gap-2">
+                  <Button variant="secondary" size="sm" icon={photoUploading ? Loader2 : Upload} onClick={() => photoRef.current?.click()} disabled={photoUploading}>
+                    {photoUploading ? 'Uploading…' : 'Upload'}
+                  </Button>
+                  {editData.photo && <Button variant="ghost" size="sm" icon={X} onClick={() => setEditData(d => ({ ...d, photo:'' }))}>Remove</Button>}
+                </div>
+              </div>
+            </div>
+
             <Input label="Full Name" value={editData.name} onChange={e => setEditData({...editData, name:e.target.value})} placeholder="Student full name"/>
             <Input label="Roll Number" value={editData.rollNumber} onChange={e => setEditData({...editData, rollNumber:e.target.value})} placeholder="G8A-01"/>
             <div className="flex flex-col gap-1.5">
@@ -204,7 +241,9 @@ export default function Students() {
         {selected && (
           <div className="space-y-4">
             <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
-              <Avatar name={selected.name} size="lg"/>
+              {selected.photo
+                ? <img src={`${API_BASE}${selected.photo}`} alt={selected.name} className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-100 flex-shrink-0"/>
+                : <Avatar name={selected.name} size="lg"/>}
               <div>
                 <h3 className="font-display font-bold text-slate-800 text-lg">{selected.name}</h3>
                 <div className="text-slate-500 text-sm">{selected.rollNumber} · {selected.class}</div>

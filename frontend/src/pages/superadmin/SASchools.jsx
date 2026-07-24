@@ -146,6 +146,13 @@ export default function SASchools() {
     catch(e) { toast.error(e.message); }
   };
 
+  // Await impersonation so a failure (e.g. school has no admin) surfaces a toast
+  // instead of a silently dead button.
+  const handleImpersonate = async (id) => {
+    try { await impersonate(id); }
+    catch(e) { toast.error(e.message || 'Could not log in as this school.'); }
+  };
+
   const openCreate = () => { setForm({...emptyForm}); setResult(null); setErr(''); setCreateModal(true); };
   const openView   = (s) => { setSelected(s); setViewModal(true); };
   const openEdit   = (s) => { setSelected(s); setEditForm({ name:s.name, city:s.city, phone:s.phone, email:s.email, address:s.address, principal:s.principal }); setErr(''); setEditModal(true); };
@@ -242,7 +249,7 @@ export default function SASchools() {
                       <td className="px-4 py-3 text-slate-600">{s.city||'—'}</td>
                       <td className="px-4 py-3"><Badge variant={PLAN_COLORS[s.plan]||'gray'}>{PLAN_LABELS[s.plan]||s.plan}</Badge></td>
                       <td className="px-4 py-3 text-slate-500 text-xs">{s.admin?.email||'—'}</td>
-                      <td className="px-4 py-3 text-slate-600 text-center">{s.maxStudents||'—'}</td>
+                      <td className="px-4 py-3 text-slate-600 text-center whitespace-nowrap">{s.studentCount ?? 0} <span className="text-slate-300">/ {s.maxStudents||'—'}</span></td>
                       <td className="px-4 py-3">
                         {s.licenseExpiry ? (
                           <div>
@@ -264,7 +271,7 @@ export default function SASchools() {
                             className="p-1.5 rounded-lg hover:bg-purple-100 text-slate-400 hover:text-purple-600 transition-colors"><CreditCard size={14}/></button>
                           <button onClick={()=>openPw(s)} title="Reset Password"
                             className="p-1.5 rounded-lg hover:bg-amber-100 text-slate-400 hover:text-amber-600 transition-colors"><Key size={14}/></button>
-                          <button onClick={()=>impersonate(s._id)} title="Login as School Admin"
+                          <button onClick={()=>handleImpersonate(s._id)} title="Login as School Admin"
                             className="p-1.5 rounded-lg hover:bg-emerald-100 text-slate-400 hover:text-emerald-600 transition-colors"><LogIn size={14}/></button>
                           <button onClick={()=>toggleActive(s)} title={s.isActive?'Deactivate':'Activate'}
                             className={`p-1.5 rounded-lg transition-colors ${s.isActive?'hover:bg-red-100 text-slate-400 hover:text-red-500':'hover:bg-emerald-100 text-slate-400 hover:text-emerald-600'}`}>
@@ -423,7 +430,7 @@ export default function SASchools() {
             <div className="flex gap-2 pt-3 border-t border-slate-100 flex-wrap">
               <button onClick={()=>{setViewModal(false);openPlan(selected);}} className="flex items-center gap-1.5 text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg font-medium"><CreditCard size={12}/>Change Plan</button>
               <button onClick={()=>{setViewModal(false);openPw(selected);}} className="flex items-center gap-1.5 text-xs bg-amber-100 text-amber-700 hover:bg-amber-200 px-3 py-2 rounded-lg font-medium"><Key size={12}/>Reset Password</button>
-              <button onClick={()=>impersonate(selected._id)} className="flex items-center gap-1.5 text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-2 rounded-lg font-medium"><LogIn size={12}/>Login as Admin</button>
+              <button onClick={()=>handleImpersonate(selected._id)} className="flex items-center gap-1.5 text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-2 rounded-lg font-medium"><LogIn size={12}/>Login as Admin</button>
               <button onClick={()=>toggleActive(selected)} className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium ${selected.isActive?'bg-red-100 text-red-600 hover:bg-red-200':'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}>
                 {selected.isActive?<><ToggleRight size={12}/>Deactivate</>:<><ToggleLeft size={12}/>Activate</>}
               </button>

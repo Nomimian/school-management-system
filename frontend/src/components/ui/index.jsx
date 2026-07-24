@@ -1,4 +1,5 @@
 import { X, Loader2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { Dropdown } from './Dropdown.jsx';
 
 // Re-export the interactive providers/hooks so pages can import from one place
@@ -200,7 +201,9 @@ export function Select({ label, children, className = '', ...props }) {
 export function Modal({ open, onClose, title, children, size = 'md' }) {
   if (!open) return null;
   const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' };
-  return (
+  // Rendered in a portal on <body> so the fixed backdrop always covers the FULL
+  // viewport — never confined by a transformed ancestor (e.g. page animations).
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-[fadeIn_.15s_ease-out]"
       onClick={onClose}>
       <div onClick={e => e.stopPropagation()}
@@ -215,7 +218,8 @@ export function Modal({ open, onClose, title, children, size = 'md' }) {
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

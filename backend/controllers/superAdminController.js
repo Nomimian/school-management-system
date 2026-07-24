@@ -4,6 +4,8 @@ const bcrypt   = require('bcryptjs');
 const mongoose = require('mongoose');
 const School   = require('../models/School');
 const User     = require('../models/User');
+const { PlatformSettings, AuditLog, Announcement } = require('../models/Platform');
+const { notify } = require('./notificationController');
 const { modulesForRole } = require('../config/permissions');
 
 // ── In-memory plan store (replace with DB model in production) ───────────────
@@ -14,11 +16,10 @@ const PLANS = [
   { id:'enterprise', name:'Enterprise',  price:14999,  duration:365, maxStudents:5000, maxTeachers:500, features:['Unlimited everything','Dedicated support','Custom branding','API access'] },
 ];
 
-const ACTIVITY_LOG = []; // In-memory, replace with MongoDB collection
-
+// Persistent audit log (survives restarts). Best-effort — never blocks the
+// action it records.
 const logActivity = (action, details, adminEmail='superadmin') => {
-  ACTIVITY_LOG.unshift({ action, details, adminEmail, timestamp: new Date() });
-  if (ACTIVITY_LOG.length > 500) ACTIVITY_LOG.pop();
+  AuditLog.create({ action, details, adminEmail }).catch(e => console.warn('audit log failed:', e.message));
 };
 
 // ── SUPERADMIN AUTH ───────────────────────────────────────────────────────────
@@ -160,10 +161,14 @@ exports.getSchool = async (req, res) => {
 
 exports.createSchool = async (req, res) => {
   try {
+    const settings = await PlatformSettings.getSingleton();
+    if (!settings.newSignups)
+      return res.status(403).json({ success:false, message:'New school signups are currently disabled in platform settings.' });
+
     const {
       schoolName, city, phone, email, address,
       adminName, adminEmail, adminPassword,
-      plan='trial', licenseMonths=1,
+      plan = settings.defaultPlan || 'trial', licenseMonths=1,
     } = req.body;
 
     if (!schoolName || !adminEmail || !adminPassword)
@@ -177,7 +182,8 @@ exports.createSchool = async (req, res) => {
     const limits  = planMap[plan] || planMap.trial;
 
     const expiry = new Date();
-    expiry.setMonth(expiry.getMonth() + (plan==='trial'?1:licenseMonths));
+    if (plan === 'trial') expiry.setDate(expiry.getDate() + (settings.trialDays || 30));
+    else expiry.setMonth(expiry.getMonth() + licenseMonths);
 
     const school = await School.create({
       name:schoolName, city, phone, email, address,
@@ -288,20 +294,68 @@ exports.assignPlan = async (req, res) => {
   } catch(e) { res.status(500).json({ success:false, message:e.message }); }
 };
 
-// ── ACTIVITY LOG ──────────────────────────────────────────────────────────────
-exports.getActivity = (req, res) => {
-  const { limit=50 } = req.query;
-  res.json({ success:true, data:ACTIVITY_LOG.slice(0, Number(limit)) });
+// ── ACTIVITY LOG (persistent) ─────────────────────────────────────────────────
+exports.getActivity = async (req, res) => {
+  try {
+    const { limit=50 } = req.query;
+    const data = await AuditLog.find().sort({ timestamp: -1 }).limit(Number(limit));
+    res.json({ success:true, data });
+  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
 };
 
-// ── ANNOUNCEMENTS (broadcast to all school admins) ────────────────────────────
-const ANNOUNCEMENTS = [];
-exports.getAnnouncements = (req, res) => res.json({ success:true, data:ANNOUNCEMENTS });
+// ── ANNOUNCEMENTS (persisted + actually delivered to school admins) ───────────
+exports.getAnnouncements = async (req, res) => {
+  try {
+    const data = await Announcement.find().sort({ sentAt: -1 }).limit(100);
+    res.json({ success:true, data });
+  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+};
+
 exports.sendAnnouncement = async (req, res) => {
   try {
-    const ann = { ...req.body, id:Date.now(), sentAt:new Date(), sentBy:'SuperAdmin' };
-    ANNOUNCEMENTS.unshift(ann);
-    logActivity('ANNOUNCEMENT', `Sent: "${ann.title}" to ${ann.audience||'All'}`, req.superadmin.email);
-    res.json({ success:true, data:ann });
+    const { title, body, audience='All', type='Info', priority='Normal' } = req.body;
+    if (!title || !body) return res.status(400).json({ success:false, message:'Title and body are required.' });
+
+    const ann = await Announcement.create({ title, body, audience, type, priority, sentBy:'SuperAdmin' });
+
+    // Deliver to every targeted school's admin/principal as an in-app notification.
+    const planByAudience = { 'Pro Schools':'pro', 'Basic Schools':'basic', 'Trial Schools':'trial' };
+    const schoolFilter = { isActive:true };
+    if (planByAudience[audience]) schoolFilter.plan = planByAudience[audience];
+    const schools = await School.find(schoolFilter).select('_id');
+    const admins = await User.find({ school:{ $in: schools.map(s=>s._id) }, role:{ $in:['admin','principal'] }, isActive:true }).select('_id school');
+    await Promise.all(admins.map(a => notify({
+      school:a.school, users:[a._id],
+      type: type==='Warning'||type==='Maintenance' ? 'warning' : 'info',
+      title:`📢 ${title}`, body, link:'/',
+    })));
+
+    logActivity('ANNOUNCEMENT', `Sent: "${title}" to ${audience} (${admins.length} admins)`, req.superadmin.email);
+    res.json({ success:true, data:ann, delivered:admins.length });
+  } catch(e) { res.status(400).json({ success:false, message:e.message }); }
+};
+
+// ── PLATFORM SETTINGS ─────────────────────────────────────────────────────────
+exports.getSettings = async (req, res) => {
+  try {
+    const s = await PlatformSettings.getSingleton();
+    res.json({ success:true, data:s });
+  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+};
+
+exports.updateSettings = async (req, res) => {
+  try {
+    const { platformName, supportEmail, defaultPlan, trialDays, autoExpire, newSignups, maintenanceMode } = req.body;
+    const s = await PlatformSettings.getSingleton();
+    if (platformName    !== undefined) s.platformName = platformName;
+    if (supportEmail    !== undefined) s.supportEmail = supportEmail;
+    if (defaultPlan     !== undefined) s.defaultPlan = defaultPlan;
+    if (trialDays       !== undefined) s.trialDays = Number(trialDays);
+    if (autoExpire      !== undefined) s.autoExpire = autoExpire;
+    if (newSignups      !== undefined) s.newSignups = newSignups;
+    if (maintenanceMode !== undefined) s.maintenanceMode = maintenanceMode;
+    await s.save();
+    logActivity('SETTINGS_UPDATED', 'Platform settings updated', req.superadmin.email);
+    res.json({ success:true, data:s });
   } catch(e) { res.status(400).json({ success:false, message:e.message }); }
 };

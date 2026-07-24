@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { useApp } from '../../hooks/useApp.jsx';
@@ -6,6 +6,7 @@ import ThemeApplier from '../ThemeApplier.jsx';
 
 export default function Layout() {
   const { sidebarOpen } = useApp();
+  const location = useLocation();
   return (
     <div className="min-h-screen bg-surface flex">
       <ThemeApplier />
@@ -14,7 +15,10 @@ export default function Layout() {
         ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-[80px]'}`}>
         <Topbar />
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          <Outlet />
+          {/* keyed by route so each page smoothly animates in on navigation */}
+          <div key={location.pathname} className="animate-rise">
+            <Outlet />
+          </div>
         </main>
         <footer className="px-6 py-3 border-t border-blue-50 bg-white text-xs text-slate-400 flex items-center justify-between">
           <span>© {new Date().getFullYear()} EduManage Pro — School Management System</span>

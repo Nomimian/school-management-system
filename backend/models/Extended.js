@@ -118,7 +118,7 @@ const promotionSchema = new mongoose.Schema({
   academicYear:  { type: String, required: true },
   student:       { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
   fromClass:     { type: String, required: true },
-  toClass:       { type: String, required: true },
+  toClass:       { type: String },   // only set for 'Promoted'; detained/left have none
   status:        { type: String, enum: ['Promoted','Detained','Left'], default: 'Promoted' },
   promotedBy:    { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   remarks:       { type: String },

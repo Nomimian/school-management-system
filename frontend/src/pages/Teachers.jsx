@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Plus, Search, Mail, Phone, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, Search, Mail, Phone, Loader2, RefreshCw, Users } from 'lucide-react';
 import { teacherAPI } from '../services/api';
 import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, ProgressBar, useToast, useConfirm, Dropdown } from '../components/ui';
 
@@ -94,7 +94,14 @@ export default function Teachers() {
           </div>
         </div>
 
-        {loading ? <div className="flex items-center justify-center py-16"><Loader2 size={28} className="animate-spin text-primary-500"/></div> : (
+        {loading ? <div className="flex items-center justify-center py-16"><Loader2 size={28} className="animate-spin text-primary-500"/></div>
+         : teachers.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/60 flex items-center justify-center mx-auto mb-4 ring-1 ring-blue-100"><Users size={28} className="text-blue-400"/></div>
+            <h3 className="font-display font-semibold text-slate-600 mb-1">No teachers yet</h3>
+            <p className="text-slate-400 text-sm">Add your teaching staff to get started.</p>
+          </div>
+        ) : (
           <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {teachers.map(t => (
               <div key={t._id} className="border border-slate-100 rounded-2xl p-4 hover:shadow-card transition-shadow">

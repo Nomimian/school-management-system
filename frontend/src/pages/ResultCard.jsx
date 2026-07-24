@@ -3,7 +3,7 @@ import { Search, Printer, Download, Award, Loader2, Star } from 'lucide-react';
 import { reportCardAPI, examAPI, studentAPI } from '../services/api';
 import { SectionHeader, Card, Badge, Button, useToast } from '../components/ui';
 import { useSchool } from '../hooks/useSchool.jsx';
-import { SchoolStamp, stampEnabled } from '../components/print/PrintComponents.jsx';
+import { SchoolStamp, stampEnabled, buildPrintPage, openPrintWindow } from '../components/print/PrintComponents.jsx';
 
 const gradeColor = (g) => {
   if (!g) return '#64748b';
@@ -23,7 +23,6 @@ export default function ResultCard() {
   const [selectedStudent, setStudent] = useState('');
   const [selectedExams, setSelExams]  = useState([]);
   const [reportCard, setReportCard]   = useState(null);
-  const [loading, setLoading]         = useState(false);
   const [generating, setGenerating]   = useState(false);
   const printRef = useRef();
 
@@ -54,43 +53,57 @@ export default function ResultCard() {
     finally { setGenerating(false); }
   };
 
+  // Build a fully-styled, branded printable report card via the shared print
+  // engine (consistent header/logo/stamp/footer with the rest of the app).
   const handlePrint = () => {
-    const content = printRef.current.innerHTML;
-    const win = window.open('', '_blank');
-    win.document.write(`
-      <html><head><title>Report Card</title>
-      <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Arial', sans-serif; color: #1e293b; }
-        .rc { max-width: 800px; margin: 0 auto; padding: 20px; }
-        .header { text-align:center; border-bottom: 3px solid #1d4ed8; padding-bottom:16px; margin-bottom:16px; }
-        .school-name { font-size:24px; font-weight:bold; color:#1d4ed8; }
-        .report-title { font-size:16px; color:#64748b; margin-top:4px; }
-        .student-info { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; background:#f8fafc; padding:12px; border-radius:8px; }
-        .info-item label { font-size:10px; color:#94a3b8; text-transform:uppercase; }
-        .info-item span { font-size:13px; font-weight:600; }
-        table { width:100%; border-collapse:collapse; margin-bottom:16px; }
-        th { background:#1d4ed8; color:white; padding:8px; text-align:left; font-size:11px; text-transform:uppercase; }
-        td { padding:8px; border-bottom:1px solid #e2e8f0; font-size:12px; }
-        tr:nth-child(even) { background:#f8fafc; }
-        .summary { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
-        .summary-item { text-align:center; padding:12px; border-radius:8px; background:#f1f5f9; }
-        .summary-item .val { font-size:20px; font-weight:bold; }
-        .summary-item .lbl { font-size:10px; color:#64748b; }
-        .grade-badge { display:inline-block; padding:3px 8px; border-radius:20px; font-weight:bold; font-size:12px; }
-        .footer { text-align:center; margin-top:20px; padding-top:12px; border-top:1px solid #e2e8f0; font-size:11px; color:#94a3b8; }
-        .signature-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-top:30px; }
-        .sig-line { text-align:center; }
-        .sig-line .line { border-top:1px solid #334155; margin-bottom:4px; }
-        .sig-line .name { font-size:11px; color:#64748b; }
-        @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
-      </style></head><body>
-      <div class="rc">${content}</div>
-      </body></html>
-    `);
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 500);
+    if (!reportCard) return;
+    const rc = reportCard;
+    const session = school?.academicYear || '—';
+    const info = [
+      ['Student Name', rc.student?.name], ['Student ID', rc.student?.studentId],
+      ['Class', rc.student?.class], ['Roll No.', rc.student?.rollNumber],
+      ['Gender', rc.student?.gender], ['Session', session],
+      ['Result Date', rc.summary?.resultDate ? new Date(rc.summary.resultDate).toLocaleDateString() : '—'],
+      ['Class Rank', rc.summary?.rank ? `${rc.summary.rank} / ${rc.summary.totalStudents}` : '—'],
+    ].map(([k, v]) => `<div class="info-item"><label>${k}</label><span>${v || '—'}</span></div>`).join('');
+
+    const tables = (rc.examResults || []).map(({ exam, results }) => {
+      const rows = results.map(r => {
+        const pct = ((r.marks / (exam?.totalMarks || 100)) * 100).toFixed(1);
+        const badge = r.isPassed ? 'badge-paid' : 'badge-overdue';
+        return `<tr>
+          <td>${exam?.subject || 'General'}</td>
+          <td style="text-align:center">${exam?.totalMarks || 100}</td>
+          <td style="text-align:center;font-weight:bold">${r.marks}</td>
+          <td style="text-align:center">${pct}%</td>
+          <td style="text-align:center"><span class="badge" style="background:#eef2ff;color:#1e3a8a">${r.grade || '—'}</span></td>
+          <td style="text-align:center"><span class="badge ${badge}">${r.isPassed ? 'Pass' : 'Fail'}</span></td>
+        </tr>`;
+      }).join('');
+      return `<h3 style="font-size:13px;font-weight:bold;color:#475569;margin:14px 0 6px;">${exam?.name || 'Exam'} · ${exam?.class || ''}</h3>
+        <table><thead><tr><th>Subject</th><th style="text-align:center">Total</th><th style="text-align:center">Obtained</th><th style="text-align:center">%</th><th style="text-align:center">Grade</th><th style="text-align:center">Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }).join('') || '<p style="text-align:center;color:#94a3b8;padding:16px;">No exam results found for this student.</p>';
+
+    const s = rc.summary || {};
+    const summary = `
+      <h3 style="font-size:13px;font-weight:bold;color:#475569;margin:14px 0 6px;">Overall Performance</h3>
+      <div class="info-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="info-item"><label>Total Marks</label><span>${s.totalMax || 0}</span></div>
+        <div class="info-item"><label>Obtained</label><span>${s.totalObtained || 0}</span></div>
+        <div class="info-item"><label>Percentage</label><span>${s.percentage || 0}%</span></div>
+        <div class="info-item"><label>GPA</label><span>${s.gpa?.toFixed?.(1) || '—'}</span></div>
+        <div class="info-item"><label>Grade</label><span>${s.grade || '—'}</span></div>
+        <div class="info-item" style="grid-column:span 2"><label>Remarks</label><span>${s.remarks || '—'}</span></div>
+        <div class="info-item"><label>Result</label><span>${s.passed ? '✓ Promoted' : '✗ Detained'}</span></div>
+      </div>
+      <div class="sig-row">
+        <div class="sig-box"><div class="sig-line"></div><div class="sig-label">Class Teacher</div></div>
+        <div class="sig-box"><div class="sig-line"></div><div class="sig-label">Examination Controller</div></div>
+        <div class="sig-box"><div class="sig-line"></div><div class="sig-label">${school?.principal || 'Principal'}</div></div>
+      </div>`;
+
+    const content = `<div class="info-grid">${info}</div>${tables}${summary}`;
+    openPrintWindow(buildPrintPage(content, school, 'Academic Report Card', 'result'));
   };
 
   const rc = reportCard;
@@ -189,7 +202,7 @@ export default function ResultCard() {
                   ['Class',        rc.student?.class],
                   ['Roll No.',     rc.student?.rollNumber],
                   ['Gender',       rc.student?.gender],
-                  ['Session',      '2024–2025'],
+                  ['Session',      school?.academicYear || '—'],
                   ['Result Date',  new Date(rc.summary?.resultDate).toLocaleDateString()],
                   ['Class Rank',   rc.summary?.rank ? `${rc.summary.rank} / ${rc.summary.totalStudents}` : '—'],
                 ].map(([k,v]) => (

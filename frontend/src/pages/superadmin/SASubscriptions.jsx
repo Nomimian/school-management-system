@@ -148,7 +148,7 @@ export default function SASubscriptions() {
                     </td>
                     <td className="px-4 py-3 font-medium text-slate-700">{plan.price===0?'Free':`Rs ${plan.price.toLocaleString()}`}</td>
                     <td className="px-4 py-3 font-bold text-slate-800 text-center">{count}</td>
-                    <td className="px-4 py-3 text-emerald-600 font-medium">Rs {((rev/12)||0).toFixed(0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-emerald-600 font-medium">Rs {Math.round((rev/12)||0).toLocaleString()}</td>
                     <td className="px-4 py-3 font-semibold text-slate-700">Rs {rev.toLocaleString()}</td>
                     <td className="px-4 py-3 text-slate-500">{plan.maxStudents.toLocaleString()}</td>
                   </tr>
@@ -158,7 +158,7 @@ export default function SASubscriptions() {
                 <td className="px-4 py-3 text-slate-700">TOTAL</td>
                 <td className="px-4 py-3">—</td>
                 <td className="px-4 py-3 text-slate-800 font-bold text-center">{stats?.totalSchools||0}</td>
-                <td className="px-4 py-3 text-emerald-600 font-bold">Rs {((totalRevenue/12)||0).toFixed(0).toLocaleString()}</td>
+                <td className="px-4 py-3 text-emerald-600 font-bold">Rs {Math.round((totalRevenue/12)||0).toLocaleString()}</td>
                 <td className="px-4 py-3 text-slate-800 font-bold">Rs {totalRevenue.toLocaleString()}</td>
                 <td className="px-4 py-3">—</td>
               </tr>

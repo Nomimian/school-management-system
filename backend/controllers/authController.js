@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
 const { modulesForRole } = require('../config/permissions');
+const { PlatformSettings } = require('../models/Platform');
 const mailer = require('../services/mailer');
 
 const hashToken = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
@@ -38,6 +39,12 @@ exports.login = async (req, res) => {
 
     if (!user.isActive)
       return res.status(403).json({ success: false, message: 'Account is deactivated.' });
+
+    // Platform maintenance mode blocks all school-side logins (superadmin uses a
+    // separate portal and is unaffected).
+    const platform = await PlatformSettings.getSingleton().catch(() => null);
+    if (platform?.maintenanceMode)
+      return res.status(503).json({ success: false, message: 'The platform is under maintenance. Please try again later.' });
 
     const token = signToken(user._id);
     let schoolData = null;

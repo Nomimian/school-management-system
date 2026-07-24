@@ -21,37 +21,39 @@ export default function Reports() {
   const [kpis, setKpis] = useState({ students:0, teachers:0, collectionRate:0, avgAttendance:0 });
 
   useEffect(() => {
+    // Each call is independently fault-tolerant so a role that lacks one module
+    // (e.g. an accountant can't read Teachers) still sees every other chart.
+    const safe = (p) => p.then(r => r).catch(() => null);
     Promise.all([
-      feeAPI.getStats({ year: new Date().getFullYear() }),
-      attendanceAPI.getTrend(),
-      studentAPI.getStats(),
-      teacherAPI.getAll(),
-      reportsAPI.subjectPerformance(),
+      safe(feeAPI.getStats({ year: new Date().getFullYear() })),
+      safe(attendanceAPI.getTrend()),
+      safe(studentAPI.getStats()),
+      safe(teacherAPI.getAll()),
+      safe(reportsAPI.subjectPerformance()),
     ]).then(([feeRes, attRes, stuRes, tchRes, subRes]) => {
-      setFeeTrend(sortByMonth(feeRes.data?.monthly));
-      setFeeSummary(feeRes.data?.summary || []);
-      const trend = attRes.data || [];
+      setFeeTrend(sortByMonth(feeRes?.data?.monthly));
+      setFeeSummary(feeRes?.data?.summary || []);
+      const trend = attRes?.data || [];
       setAtTrend(trend);
-      setSubjectPerformance(subRes.data || []);
+      setSubjectPerformance(subRes?.data || []);
 
-      const total = stuRes.data?.total || 0;
-      const male  = stuRes.data?.male  || 0;
-      const female= stuRes.data?.female|| 0;
+      const total = stuRes?.data?.total || 0;
+      const male  = stuRes?.data?.male  || 0;
+      const female= stuRes?.data?.female|| 0;
       setGenderData([{ name:'Male', value:male }, { name:'Female', value:female }]);
 
-      const collected = feeRes.data?.summary?.reduce((s,x)=>s+(x.totalPaid||0),0)||0;
-      const expected  = feeRes.data?.summary?.reduce((s,x)=>s+(x.totalAmount||0),0)||0;
-      // Average present % across the attendance trend (real data)
+      const collected = feeRes?.data?.summary?.reduce((s,x)=>s+(x.totalPaid||0),0)||0;
+      const expected  = feeRes?.data?.summary?.reduce((s,x)=>s+(x.totalAmount||0),0)||0;
       const avgAtt = trend.length
         ? Math.round(trend.reduce((s,d)=>{ const t=d.total||((d.present||0)+(d.absent||0)); return s + (t?((d.present||0)/t)*100:0); },0) / trend.length)
         : 0;
       setKpis({
         students: total,
-        teachers: (tchRes.data||[]).filter(t=>t.status==='Active').length,
+        teachers: (tchRes?.data||[]).filter(t=>t.status==='Active').length,
         collectionRate: expected ? Math.round((collected/expected)*100) : 0,
         avgAttendance: avgAtt,
       });
-    }).catch(console.error).finally(() => setLoading(false));
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading) return (
@@ -111,7 +113,7 @@ export default function Reports() {
             <BarChart data={subjectPerformance} barSize={28}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false}/>
               <XAxis dataKey="subject" tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
-              <YAxis domain={[60,100]} tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
+              <YAxis domain={[0,100]} tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
               <Tooltip contentStyle={{borderRadius:12,border:'none'}}/>
               <Bar dataKey="avg" name="Avg Score" radius={[6,6,0,0]}>
                 {subjectPerformance.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]}/>)}

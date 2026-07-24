@@ -53,4 +53,8 @@ export const saAPI = {
   // Announcements
   getAnnouncements: ()               => saGet('/announcements'),
   sendAnnouncement: (data)           => saPost('/announcements', data),
+
+  // Platform settings
+  getSettings:      ()               => saGet('/settings'),
+  updateSettings:   (data)           => saPut('/settings', data),
 };

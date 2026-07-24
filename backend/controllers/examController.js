@@ -82,7 +82,10 @@ exports.addResult = async (req, res) => {
     const exam = await Exam.findOne({ _id: req.params.examId, school: req.user.school });
     if (!exam) return res.status(404).json({ success: false, message: 'Exam not found.' });
     const { school, ...body } = req.body;
-    const result = await Result.create({ ...body, exam: req.params.examId, school: req.user.school });
+    const result = await Result.create({
+      ...body, exam: req.params.examId, school: req.user.school,
+      totalMarks: exam.totalMarks, passMark: exam.passMark,   // grade against the exam's real scale
+    });
     await result.populate('student', 'name class rollNumber');
 
     // Notify the child's linked parent(s) that a result was published.

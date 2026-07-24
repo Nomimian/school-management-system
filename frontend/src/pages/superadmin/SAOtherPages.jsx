@@ -30,7 +30,7 @@ export function SAActivity() {
   };
 
   const filtered = filter
-    ? logs.filter(l => l.action.includes(filter) || l.details.toLowerCase().includes(filter.toLowerCase()))
+    ? logs.filter(l => `${l.action} ${l.details}`.toLowerCase().includes(filter.toLowerCase()))
     : logs;
 
   return (
@@ -233,7 +233,10 @@ export function SAAnnouncements() {
 
 // ─── SUPERADMIN SETTINGS ──────────────────────────────────────────────────────
 export function SASettings() {
+  const toast = useToast();
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [form, setForm]   = useState({
     platformName: 'EduManage Pro',
     supportEmail: 'support@edumanage.pro',
@@ -244,9 +247,21 @@ export function SASettings() {
     newSignups:   true,
   });
 
-  const save = () => {
-    setSaved(true);
-    setTimeout(()=>setSaved(false), 2500);
+  useEffect(() => {
+    saAPI.getSettings()
+      .then(r => { if (r.data) { const { _id, key, __v, createdAt, updatedAt, ...s } = r.data; setForm(f => ({ ...f, ...s })); } })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await saAPI.updateSettings(form);
+      setSaved(true); setTimeout(()=>setSaved(false), 2500);
+      toast.success('Settings saved');
+    } catch (e) { toast.error(e.message); }
+    finally { setSaving(false); }
   };
 
   return (
@@ -338,9 +353,9 @@ export function SASettings() {
       </div>
 
       <div className="flex justify-end">
-        <button onClick={save}
-          className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors">
-          <Save size={14}/> Save Settings
+        <button onClick={save} disabled={saving || loading}
+          className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-60">
+          {saving ? <><Loader2 size={14} className="animate-spin"/> Saving…</> : <><Save size={14}/> Save Settings</>}
         </button>
       </div>
     </div>

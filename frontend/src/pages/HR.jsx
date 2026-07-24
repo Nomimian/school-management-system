@@ -59,8 +59,9 @@ export default function HR() {
     catch(e) { toast.error(e.message); }
   };
 
-  const filtered = staff.filter(s => s.name.toLowerCase().includes(search.toLowerCase()) || s.role.toLowerCase().includes(search.toLowerCase()));
-  const totalPayroll = staff.filter(s=>s.status==='Active').reduce((a,s) => a+s.salary,0);
+  const q = search.toLowerCase();
+  const filtered = staff.filter(s => (s.name||'').toLowerCase().includes(q) || (s.role||'').toLowerCase().includes(q));
+  const totalPayroll = staff.filter(s=>s.status==='Active').reduce((a,s) => a+(s.salary||0),0);
 
   return (
     <div className="space-y-5">

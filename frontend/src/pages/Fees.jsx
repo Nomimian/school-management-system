@@ -6,6 +6,7 @@ import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/pri
 import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, Dropdown } from '../components/ui';
 
 const statusColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
+const CURRENT_YEAR = new Date().getFullYear();
 
 export default function Fees() {
   const toast = useToast();
@@ -20,7 +21,7 @@ export default function Fees() {
   const [selected, setSelected]   = useState(null);
   const [students, setStudents]   = useState([]);
   const [saving, setSaving]       = useState(false);
-  const [form, setForm]           = useState({ student:'', month:'May', year:2025, amount:'', method:'Cash' });
+  const [form, setForm]           = useState({ student:'', month:'May', year:CURRENT_YEAR, amount:'', method:'Cash' });
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -28,7 +29,7 @@ export default function Fees() {
       const params = {};
       if (filterStatus) params.status = filterStatus;
       if (search) params.search = search;
-      const [feesRes, statsRes] = await Promise.all([feeAPI.getAll(params), feeAPI.getStats({ year:2025 })]);
+      const [feesRes, statsRes] = await Promise.all([feeAPI.getAll(params), feeAPI.getStats({ year:CURRENT_YEAR })]);
       setFees(feesRes.data || []);
       setStats(statsRes.data);
     } catch(e) { console.error(e); }
@@ -63,9 +64,8 @@ export default function Fees() {
 
   const printReceipt = (r) => {
     const statusBadge = `<span class="badge badge-${(r.status||'').toLowerCase()}">${r.status}</span>`;
-    const stampHtml = (stampEnabled(school, 'fee') && school?.stamp)
-      ? `<div style="text-align:right;margin-top:8px;opacity:0.75;"><img src="http://localhost:5000${school.stamp}" style="width:80px;height:80px;border-radius:50%;"/></div>`
-      : '';
+    // Note: the official stamp is rendered once by buildPrintPage's header
+    // (honouring the "show stamp on fee" toggle) — no separate body stamp here.
     const content = `
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
         <div>
@@ -76,7 +76,6 @@ export default function Fees() {
             <div class="info-item"><label>Date Issued</label><span>${new Date().toLocaleDateString('en-PK')}</span></div>
           </div>
         </div>
-        ${stampHtml}
       </div>
       <h3 style="font-size:13px;font-weight:bold;color:#475569;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.5px;">Student Information</h3>
       <div class="info-grid">

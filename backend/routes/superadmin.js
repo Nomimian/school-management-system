@@ -32,4 +32,8 @@ router.get('/activity',       sa.getActivity);
 router.get ('/announcements', sa.getAnnouncements);
 router.post('/announcements', sa.sendAnnouncement);
 
+// Platform settings
+router.get('/settings', sa.getSettings);
+router.put('/settings', sa.updateSettings);
+
 module.exports = router;
