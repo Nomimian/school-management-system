@@ -42,7 +42,10 @@ exports.createFee = async (req, res) => {
     const fee = await Fee.create({ ...req.body, school: req.user.school, recordedBy: req.user._id });
     // Update student fee status
     await Student.findOneAndUpdate({ _id: req.body.student, school: req.user.school }, { feeStatus: fee.status });
-    const populated = await fee.populate('student', 'name class rollNumber studentId');
+    const populated = await fee.populate([
+      { path: 'student', select: 'name class rollNumber studentId' },
+      { path: 'recordedBy', select: 'name' },
+    ]);
     res.status(201).json({ success: true, data: populated });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -53,7 +56,8 @@ exports.updateFee = async (req, res) => {
   try {
     const { school, ...updates } = req.body;
     const fee = await Fee.findOneAndUpdate({ _id: req.params.id, school: req.user.school }, { ...updates, recordedBy: req.user._id }, { new: true, runValidators: true })
-      .populate('student', 'name class rollNumber studentId');
+      .populate('student', 'name class rollNumber studentId')
+      .populate('recordedBy', 'name');
     if (!fee) return res.status(404).json({ success: false, message: 'Fee record not found.' });
     // Sync student fee status
     await Student.findOneAndUpdate({ _id: fee.student._id, school: req.user.school }, { feeStatus: fee.status });
@@ -72,9 +76,13 @@ exports.markPaid = async (req, res) => {
     fee.status = 'Paid';
     fee.method = method;
     fee.paidDate = new Date();
+    fee.recordedBy = req.user._id;   // the logged-in user who received the payment
     await fee.save();
     await Student.findOneAndUpdate({ _id: fee.student, school: req.user.school }, { feeStatus: 'Paid' });
-    const populated = await fee.populate('student', 'name class rollNumber studentId');
+    const populated = await fee.populate([
+      { path: 'student', select: 'name class rollNumber studentId' },
+      { path: 'recordedBy', select: 'name' },
+    ]);
     res.json({ success: true, data: populated });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

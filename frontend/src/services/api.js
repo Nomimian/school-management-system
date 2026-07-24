@@ -32,15 +32,77 @@ const del    = (path)          => request('DELETE', path);
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 export const authAPI = {
-  login:          (data)     => post('/auth/login', data),
-  register:       (data)     => post('/auth/register', data),
-  me:             ()         => get('/auth/me'),
-  changePassword: (data)     => put('/auth/change-password', data),
+  login:          (data)        => post('/auth/login', data),
+  register:       (data)        => post('/auth/register', data),
+  me:             ()            => get('/auth/me'),
+  changePassword: (data)        => put('/auth/change-password', data),
+  forgotPassword: (data)        => post('/auth/forgot-password', data),
+  resetPassword:  (token, data) => post(`/auth/reset-password/${token}`, data),
 };
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 export const dashboardAPI = {
   getStats: () => get('/dashboard/stats'),
+};
+
+// ─── STAFF USER ACCOUNTS (operators only) ──────────────────────────────────────
+export const userAPI = {
+  getAll:        ()          => get('/users'),
+  create:        (data)      => post('/users', data),
+  update:        (id, data)  => put(`/users/${id}`, data),
+  resetPassword: (id, data)  => put(`/users/${id}/password`, data),
+  delete:        (id)        => del(`/users/${id}`),
+};
+
+// ─── PARENT ACCOUNTS (operator management: admin/principal/frontdesk) ───────────
+export const parentAdminAPI = {
+  getAll:        ()          => get('/parents'),
+  create:        (data)      => post('/parents', data),
+  update:        (id, data)  => put(`/parents/${id}`, data),
+  resetPassword: (id, data)  => put(`/parents/${id}/password`, data),
+  delete:        (id)        => del(`/parents/${id}`),
+};
+
+// ─── PARENT PORTAL (role: parent — data scoped to own children) ─────────────────
+export const portalAPI = {
+  overview: ()   => get('/portal/overview'),
+  child:    (id) => get(`/portal/child/${id}`),
+};
+
+// ─── CHAT / MESSAGING (all authenticated users) ─────────────────────────────────
+export const chatAPI = {
+  recipients:      ()          => get('/chat/recipients'),
+  unreadCount:     ()          => get('/chat/unread-count'),
+  conversations:   ()          => get('/chat/conversations'),
+  createConvo:     (data)      => post('/chat/conversations', data),
+  getConvo:        (id)        => get(`/chat/conversations/${id}`),
+  sendMessage:     (id, body, attachments = []) => post(`/chat/conversations/${id}/messages`, { body, attachments }),
+};
+
+// ─── OUTBOUND EMAIL / WHATSAPP (staff only) ─────────────────────────────────────
+export const outboundAPI = {
+  status: ()     => get('/outbound/status'),
+  send:   (data) => post('/outbound/send', data),
+};
+
+// ─── ATTACHMENTS (images + documents, for chat & outbound) ──────────────────────
+export const attachmentAPI = {
+  upload: (formData) => {
+    const token = localStorage.getItem('token');
+    return fetch(`${BASE_URL}/attachments`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    }).then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.message || 'Upload failed'); return d; });
+  },
+};
+
+// ─── NOTIFICATIONS (all authenticated users) ────────────────────────────────────
+export const notificationAPI = {
+  list:        ()   => get('/notifications'),
+  unreadCount: ()   => get('/notifications/unread-count'),
+  markRead:    (id) => patch(`/notifications/${id}/read`),
+  markAllRead: ()   => patch('/notifications/read-all'),
 };
 
 // ─── STUDENTS ─────────────────────────────────────────────────────────────────

@@ -10,27 +10,127 @@ const examCtrl       = require('../controllers/examController');
 const otherCtrl      = require('../controllers/otherController');
 const schoolCtrl     = require('../controllers/schoolController');
 const ext            = require('../controllers/extendedController');
-const { protect, requireSchool } = require('../middleware/auth');
+const userCtrl       = require('../controllers/userController');
+const parentCtrl     = require('../controllers/parentController');
+const chatCtrl       = require('../controllers/chatController');
+const notifCtrl      = require('../controllers/notificationController');
+const outboundCtrl   = require('../controllers/outboundController');
+const attachmentCtrl = require('../controllers/attachmentController');
+const attachmentUpload = require('../middleware/attachmentUpload');
+const { protect, requireSchool, requireModule, authorize } = require('../middleware/auth');
+const { body } = require('express-validator');
+const validate = require('../middleware/validate');
 
 // ── AUTH (public + self) ────────────────────────────────────────────────────
 // NOTE: public self-registration is intentionally disabled. New schools and
 // their admin accounts are provisioned exclusively by the SuperAdmin panel.
-router.post('/auth/login',            authCtrl.login);
+router.post('/auth/login',
+  [ body('email').isEmail().withMessage('A valid email is required.').bail().customSanitizer(v => String(v).toLowerCase().trim()),
+    body('password').notEmpty().withMessage('Password is required.') ],
+  validate, authCtrl.login);
+router.post('/auth/forgot-password',
+  [ body('email').isEmail().withMessage('A valid email is required.') ],
+  validate, authCtrl.forgotPassword);
+router.post('/auth/reset-password/:token',
+  [ body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters.') ],
+  validate, authCtrl.resetPassword);
 router.get ('/auth/me',               protect, authCtrl.getMe);
-router.put ('/auth/change-password',  protect, authCtrl.changePassword);
+router.put ('/auth/change-password',  protect,
+  [ body('currentPassword').notEmpty().withMessage('Current password is required.'),
+    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters.') ],
+  validate, authCtrl.changePassword);
 
 // ── SCHOOL PROFILE (own tenant only) ────────────────────────────────────────
 // getSchool/createSchool must work before a school is linked, so they only
 // require auth; the controller enforces ownership.
+// GET stays open to every authenticated user — the SPA needs the school's
+// name/logo/theme to render for staff of ANY role. Mutations are settings-gated.
 router.get ('/school',                    protect, schoolCtrl.getSchool);
 router.post('/school',                    protect, schoolCtrl.createSchool);
-router.put ('/school',                    protect, requireSchool, schoolCtrl.updateSchool);
-router.post('/school/upload-logo',          protect, requireSchool, schoolCtrl.upload.single('logo'),  schoolCtrl.uploadLogo);
-router.post('/school/upload-stamp',         protect, requireSchool, schoolCtrl.upload.single('stamp'), schoolCtrl.uploadStamp);
+router.put ('/school',                    protect, requireSchool, requireModule('settings'), schoolCtrl.updateSchool);
+router.post('/school/upload-logo',          protect, requireSchool, requireModule('settings'), schoolCtrl.upload.single('logo'),  schoolCtrl.uploadLogo);
+router.post('/school/upload-stamp',         protect, requireSchool, requireModule('settings'), schoolCtrl.upload.single('stamp'), schoolCtrl.uploadStamp);
 router.post('/school/upload-student-photo', protect, requireSchool, schoolCtrl.upload.single('photo'), schoolCtrl.uploadStudentPhoto);
 
 // ── Everything below is tenant data: require auth AND a linked school ────────
 router.use(protect, requireSchool);
+
+// ── ROLE-BASED ACCESS CONTROL ───────────────────────────────────────────────
+// Mounted as path-prefix guards so they cover every method and sub-path of a
+// module in one place. They run BEFORE the handlers below. Read vs. write is
+// resolved from the central permission matrix (config/permissions.js).
+router.use('/dashboard',       requireModule('dashboard'));
+router.use('/students',        requireModule('students'));
+router.use('/health',          requireModule('students'));
+router.use('/teachers',        requireModule('teachers'));
+router.use('/classes',         requireModule('classes'));
+router.use('/subjects',        requireModule('classes'));
+router.use('/admissions',      requireModule('admissions'));
+router.use('/attendance',      requireModule('attendance'));
+router.use('/timetable-db',    requireModule('timetable'));
+router.use('/homework',        requireModule('homework'));
+router.use('/promotions',      requireModule('promotions'));
+router.use('/exams',           requireModule('exams'));
+router.use('/grade-scales',    requireModule('exams'));
+router.use('/report-card',     requireModule('results'));
+router.use('/fees',            requireModule('fees'));
+router.use('/fee-structures',  requireModule('fees'));
+router.use('/accounts',        requireModule('accounts'));
+router.use('/library',         requireModule('library'));
+router.use('/books',           requireModule('library'));
+router.use('/transport',       requireModule('transport'));
+router.use('/staff',           requireModule('hr'));
+router.use('/certificates',    requireModule('certificates'));
+router.use('/notices',         requireModule('notices'));
+router.use('/messages',        requireModule('messaging'));
+router.use('/reports',         requireModule('reports'));
+router.use('/events',          requireModule('calendar'));
+router.use('/hiring',          requireModule('hiring'));
+router.use('/users',           requireModule('users'));
+router.use('/parents',         requireModule('parents'));
+
+// ── STAFF USER MANAGEMENT (operators only, own school) ───────────────────────
+router.get   ('/users',              userCtrl.listUsers);
+router.post  ('/users',              userCtrl.createUser);
+router.put   ('/users/:id',          userCtrl.updateUser);
+router.put   ('/users/:id/password', userCtrl.resetPassword);
+router.delete('/users/:id',          userCtrl.deleteUser);
+
+// ── PARENT ACCOUNT MANAGEMENT (operators: admin/principal/frontdesk) ─────────
+router.get   ('/parents',              parentCtrl.listParents);
+router.post  ('/parents',              parentCtrl.createParent);
+router.put   ('/parents/:id',          parentCtrl.updateParent);
+router.put   ('/parents/:id/password', parentCtrl.resetParentPassword);
+router.delete('/parents/:id',          parentCtrl.deleteParent);
+
+// ── PARENT PORTAL (role: parent only — data double-scoped to own children) ───
+router.use('/portal', authorize('parent'));
+router.get('/portal/overview',  parentCtrl.portalOverview);
+router.get('/portal/child/:id', parentCtrl.portalChild);
+
+// ── MESSAGING / CHAT (every authenticated school user, incl. parents) ────────
+// Not module-gated: staff and parents alike must be able to converse. Access is
+// enforced per-conversation (participant + school) inside the controller.
+router.get ('/chat/recipients',                 chatCtrl.getRecipients);
+router.get ('/chat/unread-count',               chatCtrl.unreadTotal);
+router.get ('/chat/conversations',              chatCtrl.listConversations);
+router.post('/chat/conversations',              chatCtrl.createConversation);
+router.get ('/chat/conversations/:id',          chatCtrl.getConversation);
+router.post('/chat/conversations/:id/messages', chatCtrl.sendMessage);
+
+// ── NOTIFICATIONS (every authenticated school user, incl. parents) ───────────
+router.get  ('/notifications',             notifCtrl.list);
+router.get  ('/notifications/unread-count', notifCtrl.unreadCount);
+router.patch('/notifications/read-all',     notifCtrl.markAllRead);
+router.patch('/notifications/:id/read',     notifCtrl.markRead);
+
+// ── ATTACHMENTS (images + documents; every authenticated school user) ────────
+router.post('/attachments', attachmentUpload.single('file'), attachmentCtrl.uploadAttachment);
+
+// ── OUTBOUND EMAIL / WHATSAPP (staff only — parents can't broadcast) ─────────
+router.use('/outbound', authorize('admin', 'principal', 'teacher', 'accountant', 'frontdesk'));
+router.get ('/outbound/status', outboundCtrl.status);
+router.post('/outbound/send',   outboundCtrl.send);
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 router.get('/dashboard/stats', otherCtrl.getDashboardStats);

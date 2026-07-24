@@ -4,6 +4,7 @@ import { Menu, Bell, Search, ChevronDown, Check, LogOut, User, GraduationCap, Us
 import { useApp } from '../../hooks/useApp.jsx';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { studentAPI, teacherAPI } from '../../services/api';
+import NotificationBell from '../NotificationBell.jsx';
 
 const NOTIF_STYLE = {
   warning: { icon: AlertTriangle, tint: 'bg-amber-50',   color: 'text-amber-500' },
@@ -152,48 +153,8 @@ export default function Topbar() {
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
-        {/* Notifications */}
-        <div className="relative">
-          <button onClick={() => { setShowNotif(!showNotif); setShowUser(false); }}
-            className="relative p-2.5 rounded-xl hover:bg-blue-50 text-slate-500 hover:text-primary-700">
-            <Bell size={18} />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold">
-                {unreadCount}
-              </span>
-            )}
-          </button>
-          {showNotif && (
-            <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-float border border-slate-100 z-50">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                <span className="font-display font-semibold text-slate-800 text-sm">Notifications</span>
-                <button onClick={markAllRead} className="text-primary-600 text-xs flex items-center gap-1"><Check size={12}/> Mark all read</button>
-              </div>
-              <ul className="max-h-72 overflow-y-auto scrollbar-thin">
-                {notifications.map(n => {
-                  const st = NOTIF_STYLE[n.type] || NOTIF_STYLE.info;
-                  const NIcon = st.icon;
-                  return (
-                    <li key={n.id}>
-                      <button onClick={() => openNotif(n)}
-                        className={`w-full text-left px-4 py-3 border-b border-slate-50 flex gap-3 items-start hover:bg-blue-50/60 transition-colors ${!n.read ? 'bg-blue-50/40' : ''}`}>
-                        <span className={`w-8 h-8 rounded-xl ${st.tint} flex items-center justify-center flex-shrink-0`}>
-                          <NIcon size={15} className={st.color} />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm text-slate-700 font-medium truncate">{n.title || n.text}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">{n.time}</p>
-                        </div>
-                        {!n.read && <span className="mt-1 w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />}
-                      </button>
-                    </li>
-                  );
-                })}
-                {notifications.length === 0 && <li className="px-4 py-8 text-center text-sm text-slate-400">No notifications</li>}
-              </ul>
-            </div>
-          )}
-        </div>
+        {/* Notifications — API-backed, polling */}
+        <NotificationBell/>
 
         {/* User menu */}
         <div className="relative">

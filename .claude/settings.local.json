@@ -27,7 +27,31 @@
       "Bash(rm -f data/mockData.js)",
       "Bash(rmdir data *)",
       "Bash(ls data *)",
-      "Bash(node -e \"require\\('./models/School'\\); require\\('./controllers/extendedController'\\); require\\('./routes/index'\\); console.log\\('backend OK'\\);\")"
+      "Bash(node -e \"require\\('./models/School'\\); require\\('./controllers/extendedController'\\); require\\('./routes/index'\\); console.log\\('backend OK'\\);\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@school.edu\",\"password\":\"admin123\"}')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5000/api/auth/login -X POST -H \"Content-Type: application/json\" -d '{\"email\":\"admin@school.edu\",\"password\":\"admin123\"}')",
+      "Bash(cd /tmp)",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@beaconhouse.edu\",\"password\":\"admin123\"}')",
+      "Bash(node -e \"let s='';process.stdin.on\\('data',d=>s+=d\\).on\\('end',\\(\\)=>{const d=JSON.parse\\(s\\);console.log\\(d.success, d.message||\\('role:'+d.user.role\\)\\)}\\)\")",
+      "Bash(node -e \"let s='';process.stdin.on\\('data',d=>s+=d\\).on\\('end',\\(\\)=>console.log\\(JSON.parse\\(s\\).success\\)\\)\")",
+      "Bash(npm run *)",
+      "Bash(netstat -ano)",
+      "Bash(curl -s \"http://localhost:5173/src/index.css?direct\")",
+      "Bash(curl -s -o /dev/null -w \"http %{http_code}\\\\n\" \"http://localhost:5173/src/index.css?direct\")",
+      "Bash(curl -s \"http://localhost:5173/src/index.css\")",
+      "Bash(curl -s http://localhost:8080/)",
+      "Bash(curl -s \"http://localhost:5174/src/index.css\")",
+      "Bash(curl -s -o /dev/null -w \"Dropdown.jsx: http %{http_code}\\\\n\" \"http://localhost:5173/src/components/ui/Dropdown.jsx\")",
+      "Bash(curl -s \"http://localhost:5173/src/pages/Students.jsx\")",
+      "Bash(node -e \"console.log\\('helmet', require\\('helmet/package.json'\\).version\\); console.log\\('rate-limit', require\\('express-rate-limit/package.json'\\).version\\); console.log\\('mongo-sanitize', require\\('express-mongo-sanitize/package.json'\\).version\\); console.log\\('supertest', require\\('supertest/package.json'\\).version\\)\")",
+      "Bash(node -e \"require\\('helmet'\\); require\\('express-rate-limit'\\); require\\('express-mongo-sanitize'\\); require\\('supertest'\\); console.log\\('all 4 packages import OK'\\);\")",
+      "Bash(MONGO_URI=\"mongodb://localhost:27017/school_mgmt_loadcheck\" node -e \"const app=require\\('./server'\\); console.log\\('server.js loads OK \\(no listen since imported\\)'\\); process.exit\\(0\\);\")",
+      "Bash(timeout 60 npm test)",
+      "Bash(grep -vE \"^\\\\s*$\")",
+      "Bash(node -e \"require\\('nodemailer'\\); console.log\\('nodemailer OK, fetch available:', typeof fetch==='function'\\)\")",
+      "Bash(git check-ignore *)",
+      "Bash(git add *)",
+      "Bash(grep -E \"\\\\.env$|uploads/att-\")"
     ]
   }
 }

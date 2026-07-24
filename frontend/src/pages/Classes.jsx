@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Building2, Users, Pencil, Trash2 } from 'lucide-react';
 import { classAPI, teacherAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, EmptyState, TableSkeleton, useToast, useConfirm } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, EmptyState, TableSkeleton, useToast, useConfirm, Dropdown } from '../components/ui';
 
 const emptyForm = { name:'', section:'', room:'', capacity:'', classTeacher:'' };
 
@@ -120,10 +120,10 @@ export default function Classes() {
             <Input label="Capacity" type="number" value={form.capacity} onChange={e=>setForm({...form,capacity:e.target.value})} placeholder="40"/>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Class Teacher</label>
-              <select value={form.classTeacher} onChange={e=>setForm({...form,classTeacher:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.classTeacher} onChange={e=>setForm({...form,classTeacher:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option value="">Select teacher</option>
                 {teachers.map(t=><option key={t._id} value={t._id}>{t.name}</option>)}
-              </select>
+              </Dropdown>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Plus, Search, Download, Eye, Edit2, Trash2, GraduationCap, Loader2, RefreshCw } from 'lucide-react';
 import { studentAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, Input, Select, Modal, Avatar, ProgressBar, useToast, useConfirm } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Input, Select, Modal, Avatar, ProgressBar, useToast, useConfirm, Dropdown } from '../components/ui';
 
 const feeColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
 const emptyForm = { name:'', class:'', rollNumber:'', gender:'Male', dateOfBirth:'', guardian:{name:'',phone:''}, phone:'', feeAmount:'', feeStatus:'Pending', address:'', email:'', admissionDate:'', bloodGroup:'' };
@@ -92,16 +92,16 @@ export default function Students() {
             <input placeholder="Search name, roll, ID…" value={search} onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
           </div>
-          <select value={filterClass} onChange={e => setFilterClass(e.target.value)}
+          <Dropdown value={filterClass} onChange={e => setFilterClass(e.target.value)}
             className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
             <option value="">All Classes</option>
             {classes.map(c => <option key={c}>{c}</option>)}
-          </select>
-          <select value={filterFee} onChange={e => setFilterFee(e.target.value)}
+          </Dropdown>
+          <Dropdown value={filterFee} onChange={e => setFilterFee(e.target.value)}
             className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
             <option value="">All Fee Status</option>
             {['Paid','Pending','Overdue','Partial'].map(s => <option key={s}>{s}</option>)}
-          </select>
+          </Dropdown>
         </div>
 
         <div className="overflow-x-auto">
@@ -161,18 +161,18 @@ export default function Students() {
             <Input label="Roll Number" value={editData.rollNumber} onChange={e => setEditData({...editData, rollNumber:e.target.value})} placeholder="G8A-01"/>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Class</label>
-              <select value={editData.class} onChange={e => setEditData({...editData, class:e.target.value})}
+              <Dropdown value={editData.class} onChange={e => setEditData({...editData, class:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option value="">Select Class</option>
                 {classes.map(c => <option key={c}>{c}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Gender</label>
-              <select value={editData.gender} onChange={e => setEditData({...editData, gender:e.target.value})}
+              <Dropdown value={editData.gender} onChange={e => setEditData({...editData, gender:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option>Male</option><option>Female</option>
-              </select>
+              </Dropdown>
             </div>
             <Input label="Date of Birth" type="date" value={editData.dateOfBirth} onChange={e => setEditData({...editData, dateOfBirth:e.target.value})}/>
             <Input label="Blood Group" value={editData.bloodGroup} onChange={e => setEditData({...editData, bloodGroup:e.target.value})} placeholder="A+, B-, O+"/>
@@ -183,10 +183,10 @@ export default function Students() {
             <Input label="Admission Date" type="date" value={editData.admissionDate} onChange={e => setEditData({...editData, admissionDate:e.target.value})}/>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Fee Status</label>
-              <select value={editData.feeStatus} onChange={e => setEditData({...editData, feeStatus:e.target.value})}
+              <Dropdown value={editData.feeStatus} onChange={e => setEditData({...editData, feeStatus:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {['Paid','Pending','Overdue','Partial'].map(s => <option key={s}>{s}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <div className="sm:col-span-2">
               <Input label="Address" value={editData.address||''} onChange={e => setEditData({...editData, address:e.target.value})} placeholder="Full address"/>

@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { DollarSign, Search, Plus, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { feeAPI, studentAPI } from '../services/api';
 import { useSchool } from '../hooks/useSchool.jsx';
-import { buildPrintPage, openPrintWindow } from '../components/print/PrintComponents.jsx';
-import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast } from '../components/ui';
+import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/print/PrintComponents.jsx';
+import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, Dropdown } from '../components/ui';
 
 const statusColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
 
@@ -63,7 +63,7 @@ export default function Fees() {
 
   const printReceipt = (r) => {
     const statusBadge = `<span class="badge badge-${(r.status||'').toLowerCase()}">${r.status}</span>`;
-    const stampHtml = school?.stamp
+    const stampHtml = (stampEnabled(school, 'fee') && school?.stamp)
       ? `<div style="text-align:right;margin-top:8px;opacity:0.75;"><img src="http://localhost:5000${school.stamp}" style="width:80px;height:80px;border-radius:50%;"/></div>`
       : '';
     const content = `
@@ -100,14 +100,17 @@ export default function Fees() {
         <span style="font-size:15px;font-weight:bold;color:#065f46;">Amount Paid: Rs ${(r.paid||0).toLocaleString()}</span>
       </div>
       <div class="sig-row">
-        <div class="sig-box"><div class="sig-line"></div><div class="sig-label">Received By</div></div>
+        <div class="sig-box">
+          <div style="font-weight:600;font-size:12px;color:#1e293b;margin-bottom:2px;">${r.recordedBy?.name || ''}</div>
+          <div class="sig-line"></div><div class="sig-label">Received By</div>
+        </div>
         <div class="sig-box"><div class="sig-line"></div><div class="sig-label">Accountant</div></div>
         <div class="sig-box"><div class="sig-line"></div><div class="sig-label">${school?.principal||'Principal'}</div></div>
       </div>
       <div style="text-align:center;margin-top:10px;font-size:10px;color:#94a3b8;font-style:italic;">
         This is an official fee receipt. Please retain for your records.
       </div>`;
-    openPrintWindow(buildPrintPage(content, school, 'Fee Receipt'));
+    openPrintWindow(buildPrintPage(content, school, 'Fee Receipt', 'fee'));
   };
 
   return (
@@ -145,11 +148,11 @@ export default function Fees() {
             <input placeholder="Search student, class…" value={search} onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
           </div>
-          <select value={filterStatus} onChange={e => setFilter(e.target.value)}
+          <Dropdown value={filterStatus} onChange={e => setFilter(e.target.value)}
             className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
             <option value="">All Status</option>
             {['Paid','Pending','Overdue','Partial'].map(s => <option key={s}>{s}</option>)}
-          </select>
+          </Dropdown>
         </div>
 
         <div className="overflow-x-auto">
@@ -201,29 +204,29 @@ export default function Fees() {
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Student</label>
-            <select value={form.student} onChange={e => setForm({...form, student:e.target.value})}
+            <Dropdown value={form.student} onChange={e => setForm({...form, student:e.target.value})}
               className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
               <option value="">Select student</option>
               {students.map(s => <option key={s._id} value={s._id}>{s.name} ({s.class})</option>)}
-            </select>
+            </Dropdown>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Month</label>
-              <select value={form.month} onChange={e => setForm({...form, month:e.target.value})}
+              <Dropdown value={form.month} onChange={e => setForm({...form, month:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m => <option key={m}>{m}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <Input label="Year" type="number" value={form.year} onChange={e => setForm({...form, year:Number(e.target.value)})}/>
           </div>
           <Input label="Amount (Rs)" type="number" value={form.amount} onChange={e => setForm({...form, amount:e.target.value})} placeholder="5000"/>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Payment Method</label>
-            <select value={form.method} onChange={e => setForm({...form, method:e.target.value})}
+            <Dropdown value={form.method} onChange={e => setForm({...form, method:e.target.value})}
               className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
               {['Cash','Bank Transfer','Online','Cheque'].map(m => <option key={m}>{m}</option>)}
-            </select>
+            </Dropdown>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={() => setModal(false)}>Cancel</Button>
@@ -273,6 +276,7 @@ export default function Fees() {
                 ['Method', selected.method||'—'],
                 ['Paid Date', selected.paidDate?.slice(0,10)||'—'],
                 ['Due Date', selected.dueDate?.slice(0,10)||'—'],
+                ['Received By', selected.recordedBy?.name||'—'],
               ].map(([k,v]) => (
                 <div key={k} className="flex justify-between py-1.5 border-b border-slate-50 text-sm last:border-0">
                   <span className="text-slate-500">{k}</span>

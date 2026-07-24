@@ -21,11 +21,18 @@ const errorHandler = (err, req, res, next) => {
     return res.status(404).json({ success: false, message: error.message });
   }
 
+  // CORS rejection from server.js
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({ success: false, message: 'Origin not allowed.' });
+  }
+
+  const status = err.statusCode || 500;
   console.error('Server Error:', err);
-  res.status(err.statusCode || 500).json({
-    success: false,
-    message: error.message || 'Server Error',
-  });
+  // Never leak internal error details on a 500 in production.
+  const message = (status >= 500 && process.env.NODE_ENV === 'production')
+    ? 'Something went wrong. Please try again.'
+    : (error.message || 'Server Error');
+  res.status(status).json({ success: false, message });
 };
 
 module.exports = errorHandler;

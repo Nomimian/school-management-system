@@ -4,6 +4,7 @@ const bcrypt   = require('bcryptjs');
 const mongoose = require('mongoose');
 const School   = require('../models/School');
 const User     = require('../models/User');
+const { modulesForRole } = require('../config/permissions');
 
 // ── In-memory plan store (replace with DB model in production) ───────────────
 const PLANS = [
@@ -261,7 +262,7 @@ exports.impersonate = async (req, res) => {
     const school = await School.findById(req.params.id);
     const token = jwt.sign({ id:user._id, role:user.role }, process.env.JWT_SECRET, { expiresIn:'4h' });
     logActivity('IMPERSONATE', `Impersonating admin of ${school?.name}`, req.superadmin.email);
-    res.json({ success:true, token, user:{ id:user._id, name:user.name, email:user.email, role:user.role, school:user.school }, school });
+    res.json({ success:true, token, user:{ id:user._id, name:user.name, email:user.email, role:user.role, school:user.school, permissions: modulesForRole(user.role) }, school });
   } catch(e) { res.status(500).json({ success:false, message:e.message }); }
 };
 

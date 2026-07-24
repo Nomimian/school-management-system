@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle2, Save, Users, ClipboardList } from 'lucide-react';
 import { studentAPI, attendanceAPI } from '../services/api';
-import { SectionHeader, Card, Button, Badge, EmptyState, TableSkeleton, useToast } from '../components/ui';
+import { SectionHeader, Card, Button, Badge, EmptyState, TableSkeleton, useToast, Dropdown } from '../components/ui';
 import { useClasses } from '../hooks/useClasses';
 
 const today = new Date().toISOString().slice(0,10);
@@ -101,10 +101,10 @@ export default function Attendance() {
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Class</label>
-            <select value={selectedClass} onChange={e => setClass(e.target.value)}
+            <Dropdown value={selectedClass} onChange={e => setClass(e.target.value)}
               className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
               {classes.map(c => <option key={c}>{c}</option>)}
-            </select>
+            </Dropdown>
           </div>
           <div className="flex gap-2 sm:ml-auto flex-wrap">
             <Button variant="success" size="sm" onClick={() => markAll('Present')}>Mark All Present</Button>

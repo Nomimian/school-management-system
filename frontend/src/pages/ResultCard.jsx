@@ -3,6 +3,7 @@ import { Search, Printer, Download, Award, Loader2, Star } from 'lucide-react';
 import { reportCardAPI, examAPI, studentAPI } from '../services/api';
 import { SectionHeader, Card, Badge, Button, useToast } from '../components/ui';
 import { useSchool } from '../hooks/useSchool.jsx';
+import { SchoolStamp, stampEnabled } from '../components/print/PrintComponents.jsx';
 
 const gradeColor = (g) => {
   if (!g) return '#64748b';
@@ -287,6 +288,13 @@ export default function ResultCard() {
                   )}
                 </div>
               </div>
+
+              {/* Official stamp — honours the "Show Stamp On Result Cards" toggle */}
+              {stampEnabled(school, 'result') && (
+                <div className="flex justify-end pr-4 mt-6 -mb-4">
+                  <SchoolStamp size={96}/>
+                </div>
+              )}
 
               {/* Signatures */}
               <div className="grid grid-cols-3 gap-8 mt-8 pt-6">

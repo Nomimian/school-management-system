@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { saAPI } from '../../services/saApi.js';
 import { useSA } from '../../hooks/useSA.jsx';
-import { useToast, useConfirm } from '../../components/ui';
+import { useToast, useConfirm, Dropdown } from '../../components/ui';
 
 const PLAN_COLORS  = { trial:'gray', basic:'blue', pro:'purple', enterprise:'orange' };
 const PLAN_LABELS  = { trial:'Free Trial', basic:'Basic', pro:'Pro', enterprise:'Enterprise' };
@@ -191,18 +191,18 @@ export default function SASchools() {
               placeholder="Search school name, city, email…"
               className="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
           </div>
-          <select value={filterPlan} onChange={e=>{setFPlan(e.target.value);setPage(1);}}
+          <Dropdown value={filterPlan} onChange={e=>{setFPlan(e.target.value);setPage(1);}}
             className="px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
             <option value="">All Plans</option>
             {['trial','basic','pro','enterprise'].map(p=><option key={p} value={p}>{PLAN_LABELS[p]}</option>)}
-          </select>
-          <select value={filterStatus} onChange={e=>{setFStatus(e.target.value);setPage(1);}}
+          </Dropdown>
+          <Dropdown value={filterStatus} onChange={e=>{setFStatus(e.target.value);setPage(1);}}
             className="px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
             <option value="expiring">Expiring Soon</option>
-          </select>
+          </Dropdown>
           <button onClick={fetch} className="flex items-center gap-2 px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 hover:bg-white text-slate-600 transition-colors">
             <RefreshCw size={14}/> Refresh
           </button>

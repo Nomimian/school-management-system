@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Clock, Loader2, Save, Pencil, X } from 'lucide-react';
 import { classAPI, teacherAPI, timetableAPI } from '../services/api';
-import { SectionHeader, Card, Button, useToast } from '../components/ui';
+import { SectionHeader, Card, Button, useToast, Dropdown } from '../components/ui';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -124,11 +124,11 @@ export default function Timetable() {
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Select Class</label>
-          <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} disabled={editing}
+          <Dropdown value={selectedClass} onChange={e => setSelectedClass(e.target.value)} disabled={editing}
             className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:opacity-60">
             {classes.length === 0 && <option value="">No classes yet</option>}
             {classes.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
-          </select>
+          </Dropdown>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500 mt-5">
           <Clock size={16} className="text-primary-500" />
@@ -164,16 +164,16 @@ export default function Timetable() {
                     if (editing) {
                       return (
                         <td key={day} className="px-2 py-2 align-top">
-                          <select value={cell.subject} onChange={e => setCell(day, idx, { subject: e.target.value })}
-                            className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 mb-1">
+                          <Dropdown size="sm" value={cell.subject} onChange={e => setCell(day, idx, { subject: e.target.value })}
+                            className="w-full bg-white mb-1">
                             <option value="">— free —</option>
                             {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-                          </select>
-                          <select value={cell.teacher} onChange={e => setCell(day, idx, { teacher: e.target.value })}
-                            className="w-full px-2 py-1.5 text-[11px] border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                          </Dropdown>
+                          <Dropdown size="sm" value={cell.teacher} onChange={e => setCell(day, idx, { teacher: e.target.value })}
+                            className="w-full">
                             <option value="">Teacher…</option>
                             {teachers.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-                          </select>
+                          </Dropdown>
                         </td>
                       );
                     }

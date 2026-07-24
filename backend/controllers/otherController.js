@@ -3,6 +3,8 @@ const { Notice, Class, Staff, Book, Event } = require('../models/Other');
 const Student = require('../models/Student');
 const Teacher = require('../models/Teacher');
 const Fee = require('../models/Fee');
+const User = require('../models/User');
+const { notify } = require('./notificationController');
 const Attendance = require('../models/Attendance');
 
 // ── NOTICES ───────────────────────────────────────────────────────────────────
@@ -15,6 +17,21 @@ exports.getNotices = async (req, res) => {
 exports.createNotice = async (req, res) => {
   try {
     const notice = await Notice.create({ ...req.body, postedBy: req.user._id, school: req.user.school });
+
+    // Fan out a notification to the notice's audience (best-effort).
+    const audience = notice.audience || 'All';
+    const roleFilter =
+      audience === 'Teachers' ? { role: 'teacher' } :
+      audience === 'Parents'  ? { role: 'parent' } :
+      audience === 'Students' ? { role: 'parent' } :   // students reached via their guardians
+      { role: { $ne: 'superadmin' } };                 // 'All'
+    const recipients = await User.find({ school: req.user.school, isActive: true, ...roleFilter }).select('_id role');
+    const parentIds = recipients.filter(u => u.role === 'parent').map(u => u._id);
+    const staffIds  = recipients.filter(u => u.role !== 'parent').map(u => u._id);
+    const base = { school: req.user.school, type: notice.priority === 'High' ? 'warning' : 'info', title: `Notice: ${notice.title}`, body: notice.content?.slice(0, 120) || '', exclude: req.user._id };
+    await notify({ ...base, users: staffIds,  link: '/notices' });
+    await notify({ ...base, users: parentIds, link: '/parent' });
+
     res.status(201).json({ success: true, data: notice });
   } catch (err) { res.status(400).json({ success: false, message: err.message }); }
 };

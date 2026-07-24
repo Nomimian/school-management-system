@@ -1,28 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Save, School, Bell, Shield, Palette, Upload,
-  Loader2, Eye, EyeOff, CheckCircle, Stamp
+  Loader2, Eye, EyeOff, CheckCircle, Stamp, Users
 } from 'lucide-react';
-import { SectionHeader, Card, Button, Input, Switch, useToast } from '../components/ui';
+import { SectionHeader, Card, Button, Input, Switch, useToast, Dropdown } from '../components/ui';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useSchool } from '../hooks/useSchool.jsx';
 import { authAPI, schoolAPI } from '../services/api';
 import { SchoolStamp } from '../components/print/PrintComponents.jsx';
+import UsersPanel from '../components/UsersPanel.jsx';
 
 const API_BASE = 'http://localhost:5000';
 
 const tabs = [
   { id:'school',        label:'School Profile',  icon:School   },
   { id:'stamp',         label:'Logo & Stamp',    icon:Stamp    },
+  { id:'team',          label:'Team & Users',    icon:Users, module:'users' },
   { id:'notifications', label:'Notifications',   icon:Bell     },
   { id:'security',      label:'Security',        icon:Shield   },
   { id:'appearance',    label:'Appearance',      icon:Palette  },
 ];
 
 export default function Settings() {
-  const { user }            = useAuth();
+  const { user, can }       = useAuth();
   const { school, refresh } = useSchool();
   const toast               = useToast();
+  const visibleTabs         = tabs.filter(t => !t.module || can(t.module));
   const [activeTab, setTab] = useState('school');
   const [accent, setAccent] = useState('#1d4ed8');
   const [fontSize, setFontSize] = useState('medium');
@@ -143,7 +146,7 @@ export default function Settings() {
       <SectionHeader title="Settings" subtitle="Configure your school management system"/>
 
       <div className="flex gap-2 flex-wrap">
-        {tabs.map(t => (
+        {visibleTabs.map(t => (
           <button key={t.id} onClick={()=>{setTab(t.id);setMsg('');setErr('');setSaved(false);}}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
               ${activeTab===t.id?'bg-primary-600 text-white shadow-md':'bg-white text-slate-600 hover:bg-blue-50 border border-slate-200'}`}>
@@ -181,9 +184,9 @@ export default function Settings() {
             <Input label="Late Fine (Rs)" type="number" value={sf.lateFine} onChange={e=>setSf({...sf,lateFine:Number(e.target.value)})}/>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Currency</label>
-              <select value={sf.currency} onChange={e=>setSf({...sf,currency:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={sf.currency} onChange={e=>setSf({...sf,currency:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {['PKR','USD','GBP','AED','SAR'].map(c=><option key={c}>{c}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <Input label="Currency Symbol" value={sf.currencySymbol} onChange={e=>setSf({...sf,currencySymbol:e.target.value})} placeholder="Rs"/>
           </div>
@@ -256,10 +259,7 @@ export default function Settings() {
               ].map(item=>(
                 <div key={item.key} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
                   <span className="text-sm font-medium text-slate-700">{item.label}</span>
-                  <button onClick={()=>setSf(f=>({...f,[item.key]:!f[item.key]}))}
-                    className={`relative w-10 h-5 rounded-full transition-colors ${sf[item.key]?'bg-primary-600':'bg-slate-300'}`}>
-                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${sf[item.key]?'translate-x-5':'translate-x-0.5'}`}/>
-                  </button>
+                  <Switch checked={!!sf[item.key]} onChange={v=>setSf(f=>({...f,[item.key]:v}))} size="sm"/>
                 </div>
               ))}
             </div>
@@ -285,6 +285,9 @@ export default function Settings() {
           </Card>
         </div>
       )}
+
+      {/* ── TEAM & USERS ──────────────────────────────────────────────────── */}
+      {activeTab==='team' && can('users') && <UsersPanel/>}
 
       {/* ── NOTIFICATIONS ─────────────────────────────────────────────────── */}
       {activeTab==='notifications' && (
@@ -348,12 +351,20 @@ export default function Settings() {
           <h3 className="font-display font-bold text-slate-800 mb-5">Appearance</h3>
           <div className="space-y-6">
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-3">Accent Color</label>
-              <div className="flex gap-3 flex-wrap">
+              <label className="text-sm font-medium text-slate-700 block mb-1">Accent Color</label>
+              <p className="text-xs text-slate-400 mb-3">Recolors the sidebar, buttons, headers and accents across the whole site.</p>
+              <div className="flex gap-3 flex-wrap items-center">
                 {['#1d4ed8','#7c3aed','#059669','#dc2626','#d97706','#0891b2','#be185d','#0f766e'].map(c=>(
                   <button key={c} onClick={()=>setAccent(c)} style={{background:c}} title={c}
                     className={`w-10 h-10 rounded-full shadow-md hover:scale-110 transition-transform ${accent===c?'ring-2 ring-offset-2 ring-slate-400 border-4 border-white':'border-4 border-white'}`}/>
                 ))}
+                <label title="Custom color"
+                  className="relative w-10 h-10 rounded-full shadow-md border-4 border-white overflow-hidden cursor-pointer hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-br from-fuchsia-500 via-amber-400 to-emerald-500">
+                  <span className="text-white text-xs font-bold drop-shadow">+</span>
+                  <input type="color" value={accent} onChange={e=>setAccent(e.target.value)}
+                    className="absolute inset-0 opacity-0 cursor-pointer"/>
+                </label>
+                <span className="text-xs font-mono text-slate-400 ml-1">{accent}</span>
               </div>
             </div>
             <div>

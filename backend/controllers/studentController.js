@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Student = require('../models/Student');
+const School = require('../models/School');
 
 // @GET /api/students
 exports.getStudents = async (req, res) => {
@@ -41,6 +42,13 @@ exports.getStudent = async (req, res) => {
 // @POST /api/students
 exports.createStudent = async (req, res) => {
   try {
+    // Enforce the tenant's plan seat limit before creating.
+    const school = await School.findById(req.user.school).select('maxStudents plan');
+    if (school?.maxStudents) {
+      const count = await Student.countDocuments({ school: req.user.school });
+      if (count >= school.maxStudents)
+        return res.status(403).json({ success: false, message: `You've reached your ${school.plan || ''} plan limit of ${school.maxStudents} students. Upgrade your plan to add more.` });
+    }
     const student = await Student.create({ ...req.body, school: req.user.school });
     res.status(201).json({ success: true, data: student });
   } catch (err) {

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { canAccess } = require('../config/permissions');
 
 exports.protect = async (req, res, next) => {
   let token;
@@ -27,6 +28,21 @@ exports.protect = async (req, res, next) => {
 exports.authorize = (...roles) => (req, res, next) => {
   if (!roles.includes(req.user.role)) {
     return res.status(403).json({ success: false, message: `Role '${req.user.role}' not authorized.` });
+  }
+  next();
+};
+
+// Role-based module guard. Mount on a path prefix (covers all methods/subpaths):
+//   router.use('/fees', requireModule('fees'))
+// Enforces both read access and, for write methods, write access — using the
+// central permission matrix so behaviour matches the frontend exactly.
+exports.requireModule = (module) => (req, res, next) => {
+  const role = req.user?.role;
+  if (!role || !canAccess(role, module, req.method)) {
+    return res.status(403).json({
+      success: false,
+      message: `Your role (${role || 'unknown'}) is not permitted to ${req.method === 'GET' ? 'view' : 'modify'} ${module}.`,
+    });
   }
   next();
 };

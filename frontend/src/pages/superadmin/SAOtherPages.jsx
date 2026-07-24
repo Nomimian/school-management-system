@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useToast, useConfirm } from '../../components/ui';
+import { useToast, useConfirm, Dropdown } from '../../components/ui';
 import { Activity, Loader2, Send, Bell, RefreshCw, Shield, Key, Globe, Save, CheckCircle } from 'lucide-react';
 import { saAPI } from '../../services/saApi.js';
 
@@ -157,24 +157,24 @@ export function SAAnnouncements() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Audience</label>
-              <select value={form.audience} onChange={e=>setForm({...form,audience:e.target.value})}
+              <Dropdown value={form.audience} onChange={e=>setForm({...form,audience:e.target.value})}
                 className="px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-slate-50">
                 {['All','Pro Schools','Basic Schools','Trial Schools'].map(a=><option key={a}>{a}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Type</label>
-              <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})}
+              <Dropdown value={form.type} onChange={e=>setForm({...form,type:e.target.value})}
                 className="px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-slate-50">
                 {['Info','Update','Warning','Maintenance'].map(t=><option key={t}>{t}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Priority</label>
-              <select value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}
+              <Dropdown value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}
                 className="px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-slate-50">
                 {['Normal','High','Urgent'].map(p=><option key={p}>{p}</option>)}
-              </select>
+              </Dropdown>
             </div>
           </div>
           <div className="flex justify-end">
@@ -278,10 +278,10 @@ export function SASettings() {
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-slate-700">Default Plan for New Schools</label>
-            <select value={form.defaultPlan} onChange={e=>setForm({...form,defaultPlan:e.target.value})}
+            <Dropdown value={form.defaultPlan} onChange={e=>setForm({...form,defaultPlan:e.target.value})}
               className="px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-slate-50">
               {['trial','basic','pro','enterprise'].map(p=><option key={p} value={p} className="capitalize">{p}</option>)}
-            </select>
+            </Dropdown>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-slate-700">Trial Duration (days)</label>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, TrendingUp, TrendingDown, DollarSign, Trash2, Pencil, Wallet } from 'lucide-react';
 import { accountAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, Modal, Input, TableSkeleton, EmptyState, useToast, useConfirm } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, TableSkeleton, EmptyState, useToast, useConfirm, Dropdown } from '../components/ui';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const INCOME_CATEGORIES  = ['Student Fees','Registration Fee','Donation','Transport Fee','Library Fine','Other Income'];
@@ -158,12 +158,12 @@ export default function Accounts() {
       {/* Records Table */}
       <Card>
         <div className="p-4 border-b border-slate-100 flex gap-3">
-          <select value={filterType} onChange={e=>setType(e.target.value)}
+          <Dropdown value={filterType} onChange={e=>setType(e.target.value)}
             className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
             <option value="">All Records</option>
             <option>Income</option>
             <option>Expense</option>
-          </select>
+          </Dropdown>
         </div>
         {loading ? <TableSkeleton rows={6} cols={6} /> : records.length === 0 ? (
           <EmptyState icon={Wallet} title="No records found"
@@ -211,17 +211,17 @@ export default function Accounts() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Type</label>
-              <select value={form.type} onChange={e=>setForm({...form,type:e.target.value,category:''})}
+              <Dropdown value={form.type} onChange={e=>setForm({...form,type:e.target.value,category:''})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option>Income</option><option>Expense</option>
-              </select>
+              </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Category</label>
-              <select value={form.category} onChange={e=>setForm({...form,category:e.target.value})}
+              <Dropdown value={form.category} onChange={e=>setForm({...form,category:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {categories.map(c=><option key={c}>{c}</option>)}
-              </select>
+              </Dropdown>
             </div>
           </div>
           <Input label="Amount (Rs)" type="number" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})} placeholder="0"/>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, CalendarDays, Pencil, X } from 'lucide-react';
 import { eventAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, Modal, Input, EmptyState, useToast, useConfirm } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, EmptyState, useToast, useConfirm, Dropdown } from '../components/ui';
 
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -149,9 +149,9 @@ export default function Calendar() {
           <Input label="Time" value={form.time} onChange={e=>setForm({...form,time:e.target.value})} placeholder="e.g. 9:00 AM – 12:00 PM"/>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Event Type</label>
-            <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+            <Dropdown value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
               {TYPES.map(t=><option key={t}>{t}</option>)}
-            </select>
+            </Dropdown>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={()=>setModal(false)}>Cancel</Button>

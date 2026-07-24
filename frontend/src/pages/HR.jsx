@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, Users, UserCheck, Wallet, Pencil, Eye } from 'lucide-react';
 import { staffAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, StatCard, TableSkeleton, EmptyState, useToast, useConfirm } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, StatCard, TableSkeleton, EmptyState, useToast, useConfirm, Dropdown } from '../components/ui';
 
 const roleColors = { Principal:'purple', 'Vice Principal':'blue', Accountant:'green', Librarian:'orange', 'IT Admin':'teal', Receptionist:'gray', Peon:'gray', Nurse:'red', Security:'gray', Clerk:'blue', Other:'gray' };
 const ROLES = ['Principal','Vice Principal','Accountant','Librarian','IT Admin','Receptionist','Peon','Nurse','Security','Clerk','Other'];
@@ -116,10 +116,10 @@ export default function HR() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Role</label>
-              <select value={form.role} onChange={e=>setForm({...form,role:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.role} onChange={e=>setForm({...form,role:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option value="">Select role</option>
                 {ROLES.map(r=><option key={r}>{r}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <Input label="Department" value={form.department} onChange={e=>setForm({...form,department:e.target.value})} placeholder="e.g. Finance"/>
           </div>
@@ -134,15 +134,15 @@ export default function HR() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Gender</label>
-              <select value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option>Male</option><option>Female</option>
-              </select>
+              </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Status</label>
-              <select value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option>Active</option><option>Inactive</option>
-              </select>
+              </Dropdown>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">

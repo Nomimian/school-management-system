@@ -1,11 +1,13 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp.jsx';
+import { useAuth } from '../../hooks/useAuth.jsx';
+import { moduleForPath, ROLE_LABEL } from '../../config/access.js';
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, DollarSign,
   ClipboardCheck, Calendar, Award, Library, Bell, BarChart3,
   Settings, Building2, Briefcase, Clock, FileText, Bus,
   BookMarked, MessageSquare, TrendingUp, UserPlus, ArrowUpCircle,
-  Scroll, ChevronDown, ChevronRight, X
+  Scroll, ChevronDown, ChevronRight, X, UserCog
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,6 +22,7 @@ const navGroups = [
     label: 'Academics',
     items: [
       { label: 'Students',     icon: GraduationCap,   path: '/students' },
+      { label: 'Parents',      icon: UserCog,         path: '/parents' },
       { label: 'Teachers',     icon: Users,           path: '/teachers' },
       { label: 'Classes',      icon: Building2,       path: '/classes' },
       { label: 'Admissions',   icon: UserPlus,        path: '/admissions' },
@@ -71,12 +74,21 @@ const navGroups = [
 
 export default function Sidebar() {
   const { sidebarOpen, setSidebarOpen } = useApp();
+  const { user, can } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState({});
 
   // `sidebarOpen` doubles as "expanded": true → full labels; false → icons-only rail (desktop) / hidden (mobile)
   const expanded = sidebarOpen;
   const toggleGroup = (label) => setCollapsed(c => ({ ...c, [label]: !c[label] }));
+
+  // Show only the modules this user's role is allowed to access. Groups with no
+  // visible items are dropped entirely so the nav stays clean per role.
+  const visibleGroups = navGroups
+    .map(g => ({ ...g, items: g.items.filter(it => can(moduleForPath(it.path))) }))
+    .filter(g => g.items.length > 0);
+
+  const roleLabel = ROLE_LABEL[user?.role] || 'Staff';
 
   return (
     <>
@@ -85,9 +97,10 @@ export default function Sidebar() {
           onClick={() => setSidebarOpen(false)} />
       )}
 
-      <aside className={`
+      <aside
+        style={{ background: 'linear-gradient(to bottom, var(--brand-darker, #0c1e50), var(--brand-dark, #1e3a8a), var(--brand, #1e40af))' }}
+        className={`
         fixed top-0 left-0 h-full z-40 flex flex-col
-        bg-gradient-to-b from-[#0c1e50] via-[#1e3a8a] to-[#1e40af]
         shadow-float transition-all duration-300 overflow-hidden
         ${expanded ? 'w-64' : 'w-0 lg:w-[80px]'}
       `}>
@@ -112,7 +125,7 @@ export default function Sidebar() {
 
         {/* Nav */}
         <nav className={`flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin py-3 ${expanded ? 'px-2' : 'px-0'}`}>
-          {navGroups.map((group, gi) => (
+          {visibleGroups.map((group, gi) => (
             <div key={group.label} className="mb-1">
               {/* Group label (expanded) or subtle divider (collapsed) */}
               {expanded ? (
@@ -164,14 +177,14 @@ export default function Sidebar() {
         {/* Footer */}
         <div className={`py-3 border-t border-white/10 flex-shrink-0 ${expanded ? 'px-3' : 'px-0'}`}>
           <div className={`flex items-center ${expanded ? 'gap-3 px-2' : 'justify-center'}`}>
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0" title="Admin · Principal">
-              A
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0" title={`${user?.name || 'User'} · ${roleLabel}`}>
+              {(user?.name || 'U').charAt(0).toUpperCase()}
             </div>
             {expanded && (
               <>
                 <div className="flex-1 min-w-0">
-                  <div className="text-white text-xs font-semibold truncate">Admin</div>
-                  <div className="text-blue-300 text-[10px] truncate">Principal</div>
+                  <div className="text-white text-xs font-semibold truncate">{user?.name || 'User'}</div>
+                  <div className="text-blue-300 text-[10px] truncate">{roleLabel}</div>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" title="Online" />
               </>

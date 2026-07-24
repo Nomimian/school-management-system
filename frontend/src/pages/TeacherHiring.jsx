@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Plus, Search, Eye, Edit2, Trash2, Loader2, Printer, Upload, X, Briefcase } from 'lucide-react';
 import { useSchool } from '../hooks/useSchool.jsx';
 import { buildPrintPage, openPrintWindow } from '../components/print/PrintComponents.jsx';
-import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, useConfirm } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, useConfirm, Dropdown } from '../components/ui';
 import { schoolAPI, hiringAPI } from '../services/api';
 
 const API_BASE = 'http://localhost:5000';
@@ -274,11 +274,11 @@ export default function TeacherHiring() {
             <input placeholder="Search name or subject…" value={search} onChange={e=>setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
           </div>
-          <select value={filterStatus} onChange={e=>setFilter(e.target.value)}
+          <Dropdown value={filterStatus} onChange={e=>setFilter(e.target.value)}
             className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
             <option value="">All Status</option>
             {Object.keys(statusColors).map(s=><option key={s}>{s}</option>)}
-          </select>
+          </Dropdown>
         </div>
 
         <div className="overflow-x-auto">
@@ -372,16 +372,16 @@ export default function TeacherHiring() {
                 <Input label="Date of Birth" type="date" value={editData.dateOfBirth} onChange={e=>setEditData({...editData,dateOfBirth:e.target.value})}/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Gender</label>
-                  <select value={editData.gender} onChange={e=>setEditData({...editData,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.gender} onChange={e=>setEditData({...editData,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                     <option>Male</option><option>Female</option>
-                  </select>
+                  </Dropdown>
                 </div>
                 <Input label="CNIC" value={editData.cnic} onChange={e=>setEditData({...editData,cnic:e.target.value})} placeholder="XXXXX-XXXXXXX-X"/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Marital Status</label>
-                  <select value={editData.maritalStatus} onChange={e=>setEditData({...editData,maritalStatus:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.maritalStatus} onChange={e=>setEditData({...editData,maritalStatus:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                     {['Single','Married','Divorced','Widowed'].map(m=><option key={m}>{m}</option>)}
-                  </select>
+                  </Dropdown>
                 </div>
                 <Input label="Phone *" value={editData.phone} onChange={e=>setEditData({...editData,phone:e.target.value})} placeholder="03XX-XXXXXXX"/>
                 <Input label="Email" value={editData.email} onChange={e=>setEditData({...editData,email:e.target.value})} type="email"/>
@@ -397,9 +397,9 @@ export default function TeacherHiring() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Applying for Subject *</label>
-                  <select value={editData.applyingFor} onChange={e=>setEditData({...editData,applyingFor:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.applyingFor} onChange={e=>setEditData({...editData,applyingFor:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                     {SUBJECTS.map(s=><option key={s}>{s}</option>)}
-                  </select>
+                  </Dropdown>
                 </div>
                 <Input label="Experience" value={editData.experience} onChange={e=>setEditData({...editData,experience:e.target.value})} placeholder="e.g. 5 Years / Fresher"/>
                 <Input label="Previous School" value={editData.previousSchool} onChange={e=>setEditData({...editData,previousSchool:e.target.value})}/>
@@ -414,9 +414,9 @@ export default function TeacherHiring() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Highest Qualification</label>
-                  <select value={editData.qualification} onChange={e=>setEditData({...editData,qualification:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.qualification} onChange={e=>setEditData({...editData,qualification:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                     {['Matric','Intermediate','B.Ed','B.Sc','M.Sc','M.A','M.Ed','M.Phil','Ph.D','Other'].map(q=><option key={q}>{q}</option>)}
-                  </select>
+                  </Dropdown>
                 </div>
                 <Input label="University / Board" value={editData.university} onChange={e=>setEditData({...editData,university:e.target.value})} placeholder="Institution name"/>
                 <Input label="Passing Year" value={editData.passingYear} onChange={e=>setEditData({...editData,passingYear:e.target.value})} placeholder="e.g. 2020"/>
@@ -439,9 +439,9 @@ export default function TeacherHiring() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-slate-700">Status</label>
-                <select value={editData.status} onChange={e=>setEditData({...editData,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                <Dropdown value={editData.status} onChange={e=>setEditData({...editData,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                   {Object.keys(statusColors).map(s=><option key={s}>{s}</option>)}
-                </select>
+                </Dropdown>
               </div>
               <Input label="Interview Date" type="datetime-local" value={editData.interviewDate} onChange={e=>setEditData({...editData,interviewDate:e.target.value})}/>
               <div className="flex flex-col gap-1.5">

@@ -21,16 +21,19 @@ export default function Dashboard() {
   const { school } = useSchool();
 
   useEffect(() => {
+    // Each call is independently fault-tolerant: a role without access to a
+    // given module (e.g. a teacher and fees) gets a 403 for that one call only,
+    // and the rest of the dashboard still renders what they ARE allowed to see.
+    const safe = (p) => p.then(r => r).catch(() => null);
     Promise.all([
-      dashboardAPI.getStats(),
-      feeAPI.getStats({ year: CURRENT_YEAR }),
-      attendanceAPI.getTrend(),
+      safe(dashboardAPI.getStats()),
+      safe(feeAPI.getStats({ year: CURRENT_YEAR })),
+      safe(attendanceAPI.getTrend()),
     ]).then(([dash, fee, att]) => {
-      setStats(dash.data);
-      setFeeStats(fee.data);
-      setAtTrend(att.data || []);
-      setFeeTrend(sortByMonth(fee.data?.monthly));
-    }).catch(console.error).finally(() => setLoading(false));
+      if (dash) setStats(dash.data);
+      if (fee)  { setFeeStats(fee.data); setFeeTrend(sortByMonth(fee.data?.monthly)); }
+      if (att)  setAtTrend(att.data || []);
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading) return (

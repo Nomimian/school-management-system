@@ -181,6 +181,24 @@ function buildStamp(opts) {
 // Border-radius + height for an UPLOADED stamp image (always circular).
 const imgShapeStyle = () => ({ radius: '50%', h: undefined });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// STAMP VISIBILITY — honours the "Show Stamp On Printed Documents" toggles
+// saved in Settings. `docType` maps to the matching school flag; when a doc
+// type has no matching toggle (or is omitted) the stamp shows by default.
+// ─────────────────────────────────────────────────────────────────────────────
+const STAMP_DOC_KEY = {
+  fee:       'showStampOnFee',
+  admission: 'showStampOnAdmission',
+  result:    'showStampOnResult',
+  cert:      'showStampOnCert',
+};
+
+export function stampEnabled(school, docType) {
+  const key = STAMP_DOC_KEY[docType];
+  if (!key) return true;                 // unknown / generic docs → always show
+  return school?.[key] !== false;        // default ON unless explicitly disabled
+}
+
 const stampProps = (school, size) => ({
   name:      school.stampText || school.name,
   shortName: school.shortName,
@@ -223,7 +241,7 @@ export function SchoolStamp({ size = 120, opacity = 0.92, className = '' }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // PRINT HEADER (React UI)
 // ─────────────────────────────────────────────────────────────────────────────
-export function PrintHeader({ title, subtitle, showStamp = true }) {
+export function PrintHeader({ title, subtitle, showStamp = true, docType }) {
   const { school } = useSchool();
   const logoUrl = school?.logo ? `${API_BASE}${school.logo}` : null;
   return (
@@ -245,7 +263,7 @@ export function PrintHeader({ title, subtitle, showStamp = true }) {
         {title    && <div className="mt-2 bg-slate-700 text-white text-sm font-semibold py-1 px-4 rounded inline-block">{title}</div>}
         {subtitle && <div className="text-xs text-slate-400 mt-1">{subtitle}</div>}
       </div>
-      {showStamp && school?.showStampOnFee !== false && (
+      {showStamp && stampEnabled(school, docType) && (
         <div className="flex-shrink-0"><SchoolStamp size={80}/></div>
       )}
     </div>
@@ -267,10 +285,10 @@ export function generateStampHTML(school, size = 88) {
 // ─────────────────────────────────────────────────────────────────────────────
 // BUILD FULL PRINT PAGE
 // ─────────────────────────────────────────────────────────────────────────────
-export function buildPrintPage(contentHtml, school = {}, title = '') {
+export function buildPrintPage(contentHtml, school = {}, title = '', docType) {
   const color     = school?.primaryColor || '#1d4ed8';
   const logoUrl   = school?.logo ? `${API_BASE}${school.logo}` : null;
-  const stampHtml = generateStampHTML(school, 88);
+  const stampHtml = stampEnabled(school, docType) ? generateStampHTML(school, 88) : '';
 
   return `<!DOCTYPE html>
 <html lang="en">

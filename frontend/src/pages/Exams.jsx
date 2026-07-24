@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Award, Trash2, Pencil, ClipboardCheck } from 'lucide-react';
 import { examAPI, studentAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, EmptyState, TableSkeleton, useToast, useConfirm } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, EmptyState, TableSkeleton, useToast, useConfirm, Dropdown } from '../components/ui';
 import { useClasses } from '../hooks/useClasses';
 
 const statusColors = { Upcoming:'blue', Completed:'green', Ongoing:'orange' };
@@ -252,11 +252,11 @@ export default function Exams() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Class</label>
-              <select value={form.class} onChange={e => setForm({...form, class:e.target.value})}
+              <Dropdown value={form.class} onChange={e => setForm({...form, class:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option value="">Select Class</option>
                 {classes.map(c => <option key={c}>{c}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <Input label="Subject" value={form.subject} onChange={e => setForm({...form, subject:e.target.value})} placeholder="e.g. Mathematics"/>
           </div>
@@ -270,10 +270,10 @@ export default function Exams() {
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Status</label>
-            <select value={form.status} onChange={e => setForm({...form, status:e.target.value})}
+            <Dropdown value={form.status} onChange={e => setForm({...form, status:e.target.value})}
               className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
               {['Upcoming','Ongoing','Completed'].map(s => <option key={s}>{s}</option>)}
-            </select>
+            </Dropdown>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={() => { setModal(false); setEditing(null); }}>Cancel</Button>
@@ -287,13 +287,13 @@ export default function Exams() {
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Student</label>
-            <select value={resultForm.student} onChange={e => setResultForm({...resultForm, student:e.target.value})}
+            <Dropdown value={resultForm.student} onChange={e => setResultForm({...resultForm, student:e.target.value})}
               className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
               <option value="">Select student</option>
               {students.filter(s => !selectedExam?.class || s.class === selectedExam.class).map(s => (
                 <option key={s._id} value={s._id}>{s.name} ({s.rollNumber})</option>
               ))}
-            </select>
+            </Dropdown>
           </div>
           <Input label={`Marks (out of ${selectedExam?.totalMarks||100})`} type="number"
             value={resultForm.marks} onChange={e => setResultForm({...resultForm, marks:e.target.value})}

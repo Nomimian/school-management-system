@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, Bell, Trash2, Pencil, Eye } from 'lucide-react';
 import { noticeAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, Modal, Input, EmptyState, Skeleton, useToast, useConfirm } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, EmptyState, Skeleton, useToast, useConfirm, Dropdown } from '../components/ui';
 import { useAuth } from '../hooks/useAuth.jsx';
 
 const priorityColors = { High:'red', Medium:'orange', Low:'blue' };
@@ -84,16 +84,16 @@ export default function Notices() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Audience</span>
-          <select value={audienceFilter} onChange={e=>setAudienceFilter(e.target.value)} className={selectCls}>
+          <Dropdown value={audienceFilter} onChange={e=>setAudienceFilter(e.target.value)} className={selectCls}>
             {['All',...AUDIENCES.filter(a=>a!=='All')].map(a => <option key={a} value={a}>{a}</option>)}
-          </select>
+          </Dropdown>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Priority</span>
-          <select value={priorityFilter} onChange={e=>setPriorityFilter(e.target.value)} className={selectCls}>
+          <Dropdown value={priorityFilter} onChange={e=>setPriorityFilter(e.target.value)} className={selectCls}>
             <option value="All">All</option>
             {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
+          </Dropdown>
         </div>
       </div>
 
@@ -151,15 +151,15 @@ export default function Notices() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Audience</label>
-              <select value={form.audience} onChange={e => setForm({...form, audience:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.audience} onChange={e => setForm({...form, audience:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {AUDIENCES.map(a => <option key={a}>{a}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Priority</label>
-              <select value={form.priority} onChange={e => setForm({...form, priority:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.priority} onChange={e => setForm({...form, priority:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {PRIORITIES.map(p => <option key={p}>{p}</option>)}
-              </select>
+              </Dropdown>
             </div>
           </div>
           <Input label="Author" value={form.author} onChange={e => setForm({...form, author:e.target.value})}/>

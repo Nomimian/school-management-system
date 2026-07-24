@@ -1,6 +1,6 @@
 // ─── TRANSPORT PAGE ───────────────────────────────────────────────────────────
 import { useState, useEffect } from 'react';
-import { useToast, useConfirm } from '../components/ui';
+import { useToast, useConfirm, Dropdown } from '../components/ui';
 import { Plus, Bus, Loader2, Trash2, MapPin, User, BookOpen, Eye } from 'lucide-react';
 import { transportAPI } from '../services/api';
 import { SectionHeader, Card, Badge, Button, Modal, Input, Select, EmptyState } from '../components/ui';
@@ -285,11 +285,11 @@ export function Homework() {
         action={<Button variant="primary" size="sm" icon={Plus} onClick={openCreate}>Assign Homework</Button>}/>
 
       <div className="flex gap-3">
-        <select value={filterClass} onChange={e=>setFilterClass(e.target.value)}
+        <Dropdown value={filterClass} onChange={e=>setFilterClass(e.target.value)}
           className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
           <option value="">All Classes</option>
           {classes.map(c=><option key={c}>{c}</option>)}
-        </select>
+        </Dropdown>
       </div>
 
       {loading ? <div className="flex items-center justify-center py-16"><Loader2 size={28} className="animate-spin text-primary-500"/></div> : hw.length===0 ? (
@@ -327,20 +327,20 @@ export function Homework() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Class</label>
-              <select value={form.class} onChange={e=>setForm({...form,class:e.target.value})}
+              <Dropdown value={form.class} onChange={e=>setForm({...form,class:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option value="">Select</option>{classes.map(c=><option key={c}>{c}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <Input label="Subject" value={form.subject} onChange={e=>setForm({...form,subject:e.target.value})} placeholder="e.g. Mathematics"/>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Teacher</label>
-            <select value={form.teacher} onChange={e=>setForm({...form,teacher:e.target.value})}
+            <Dropdown value={form.teacher} onChange={e=>setForm({...form,teacher:e.target.value})}
               className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
               <option value="">Select teacher</option>
               {teachers.map(t=><option key={t._id} value={t._id}>{t.name}</option>)}
-            </select>
+            </Dropdown>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input label="Due Date" type="date" value={form.dueDate} onChange={e=>setForm({...form,dueDate:e.target.value})}/>
@@ -437,27 +437,27 @@ export function Messaging() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Send via</label>
-              <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})}
+              <Dropdown value={form.type} onChange={e=>setForm({...form,type:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {['In-App','SMS','WhatsApp','Email'].map(t=><option key={t}>{t}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Send to</label>
-              <select value={form.audience} onChange={e=>setForm({...form,audience:e.target.value})}
+              <Dropdown value={form.audience} onChange={e=>setForm({...form,audience:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {['All','Students','Parents','Teachers','Staff','Class'].map(a=><option key={a}>{a}</option>)}
-              </select>
+              </Dropdown>
             </div>
           </div>
           {form.audience==='Class' && (
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Target Class</label>
-              <select value={form.targetClass} onChange={e=>setForm({...form,targetClass:e.target.value})}
+              <Dropdown value={form.targetClass} onChange={e=>setForm({...form,targetClass:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option value="">Select class</option>
                 {classes.map(c=><option key={c}>{c}</option>)}
-              </select>
+              </Dropdown>
             </div>
           )}
           <div className="flex justify-end gap-3 pt-2">
@@ -540,19 +540,19 @@ export function Promotions() {
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Class</label>
-            <select value={filterClass} onChange={e=>setFilter(e.target.value)}
+            <Dropdown value={filterClass} onChange={e=>setFilter(e.target.value)}
               className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
               {classes.map(c=><option key={c}>{c}</option>)}
-            </select>
+            </Dropdown>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Promote To Class</label>
-            <select value={toClass} onChange={e=>applyToClass(e.target.value)}
+            <Dropdown value={toClass} onChange={e=>applyToClass(e.target.value)}
               className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
               <option value="">Select target class</option>
               {classes.map(c=><option key={c}>{c}</option>)}
               <option value="Passed Out">Passed Out</option>
-            </select>
+            </Dropdown>
           </div>
           <Button variant="primary" icon={saving?Loader2:CheckCircle} onClick={promote} loading={saving} className="self-end">
             {saving?'Processing…':saved?'Promoted! ✓':'Process Promotions'}
@@ -585,19 +585,19 @@ export function Promotions() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <ArrowRight size={12} className="text-slate-400"/>
-                          <select value={p.toClass||''} onChange={e=>setPromotions(prev=>({...prev,[s._id]:{...prev[s._id],toClass:e.target.value}}))}
+                          <Dropdown value={p.toClass||''} onChange={e=>setPromotions(prev=>({...prev,[s._id]:{...prev[s._id],toClass:e.target.value}}))}
                             className="px-2 py-1 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 w-36">
                             <option value="">Select</option>
                             {classes.map(c=><option key={c}>{c}</option>)}
                             <option value="Passed Out">Passed Out</option>
-                          </select>
+                          </Dropdown>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <select value={p.status||'Promoted'} onChange={e=>setPromotions(prev=>({...prev,[s._id]:{...prev[s._id],status:e.target.value}}))}
+                        <Dropdown value={p.status||'Promoted'} onChange={e=>setPromotions(prev=>({...prev,[s._id]:{...prev[s._id],status:e.target.value}}))}
                           className={`px-2 py-1 text-xs rounded-lg border font-semibold ${p.status==='Promoted'?'bg-emerald-50 text-emerald-700 border-emerald-200':p.status==='Detained'?'bg-red-50 text-red-600 border-red-200':'bg-orange-50 text-orange-700 border-orange-200'}`}>
                           <option>Promoted</option><option>Detained</option><option>Left</option>
-                        </select>
+                        </Dropdown>
                       </td>
                     </tr>
                   );
@@ -615,7 +615,7 @@ export function Promotions() {
 import { certificateAPI } from '../services/api';
 import { FileText, Printer } from 'lucide-react';
 import { useSchool } from '../hooks/useSchool.jsx';
-import { generateStampHTML } from '../components/print/PrintComponents.jsx';
+import { generateStampHTML, stampEnabled } from '../components/print/PrintComponents.jsx';
 
 export function Certificates() {
   const toast = useToast();
@@ -673,7 +673,7 @@ export function Certificates() {
     const color = school?.primaryColor || '#1d4ed8';
     const gold = '#b8912f';
     const logoUrl = school?.logo ? `http://localhost:5000${school.logo}` : '';
-    const stampHtml = generateStampHTML(school, 96);
+    const stampHtml = stampEnabled(school, 'cert') ? generateStampHTML(school, 96) : '';
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${cert.type} Certificate — ${school?.name||'School'}</title>
     <style>
       *{margin:0;padding:0;box-sizing:border-box;}
@@ -780,19 +780,19 @@ export function Certificates() {
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Student</label>
-            <select value={form.student} onChange={e=>setForm({...form,student:e.target.value})}
+            <Dropdown value={form.student} onChange={e=>setForm({...form,student:e.target.value})}
               className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
               <option value="">Select student</option>
               {students.map(s=><option key={s._id} value={s._id}>{s.name} ({s.class})</option>)}
-            </select>
+            </Dropdown>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Certificate Type</label>
-              <select value={form.type} onChange={e=>handleTypeChange(e.target.value)}
+              <Dropdown value={form.type} onChange={e=>handleTypeChange(e.target.value)}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {certTypes.map(t=><option key={t}>{t}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <Input label="Issued By" value={form.issuedBy} onChange={e=>setForm({...form,issuedBy:e.target.value})}/>
           </div>

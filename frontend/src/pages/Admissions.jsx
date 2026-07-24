@@ -5,8 +5,8 @@ import {
 } from 'lucide-react';
 import { admissionAPI, schoolAPI } from '../services/api';
 import { useSchool } from '../hooks/useSchool.jsx';
-import { buildPrintPage, openPrintWindow } from '../components/print/PrintComponents.jsx';
-import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, useConfirm } from '../components/ui';
+import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/print/PrintComponents.jsx';
+import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, useConfirm, Dropdown } from '../components/ui';
 
 const API_BASE = 'http://localhost:5000';
 
@@ -110,7 +110,7 @@ export default function Admissions() {
       ? `<img src="${API_BASE}${a.photo}" style="width:90px;height:110px;object-fit:cover;border:2px solid #e2e8f0;border-radius:6px;float:right;margin-left:12px;"/>`
       : `<div style="width:90px;height:110px;border:2px dashed #e2e8f0;border-radius:6px;float:right;margin-left:12px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#94a3b8;text-align:center;">Photo<br/>Here</div>`;
 
-    const stampHtml = school?.stamp
+    const stampHtml = (stampEnabled(school, 'admission') && school?.stamp)
       ? `<div style="text-align:center;margin-top:16px;opacity:0.7;"><img src="${API_BASE}${school.stamp}" style="width:90px;height:90px;border-radius:50%;"/></div>`
       : '';
 
@@ -166,7 +166,7 @@ export default function Admissions() {
         <div class="sig-box"><div class="sig-line"></div><div class="sig-label">${school?.principal||'Principal'}</div></div>
       </div>`;
 
-    openPrintWindow(buildPrintPage(content, school, 'Admission Form'));
+    openPrintWindow(buildPrintPage(content, school, 'Admission Form', 'admission'));
   };
 
   const stats = {
@@ -208,11 +208,11 @@ export default function Admissions() {
             <input placeholder="Search name or admission no…" value={search} onChange={e=>setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
           </div>
-          <select value={filterStatus} onChange={e=>setFilter(e.target.value)}
+          <Dropdown value={filterStatus} onChange={e=>setFilter(e.target.value)}
             className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
             <option value="">All Status</option>
             {['Applied','Test Scheduled','Interviewed','Approved','Rejected','Enrolled'].map(s=><option key={s}>{s}</option>)}
-          </select>
+          </Dropdown>
         </div>
 
         <div className="overflow-x-auto">
@@ -315,24 +315,24 @@ export default function Admissions() {
                 <Input label="Full Name *" value={editData.applicantName} onChange={e=>setEditData({...editData,applicantName:e.target.value})} placeholder="Student full name"/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Applying Class *</label>
-                  <select value={editData.applyingClass} onChange={e=>setEditData({...editData,applyingClass:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.applyingClass} onChange={e=>setEditData({...editData,applyingClass:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                     <option value="">Select class</option>
                     {classes.map(c=><option key={c}>{c}</option>)}
-                  </select>
+                  </Dropdown>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Gender</label>
-                  <select value={editData.gender} onChange={e=>setEditData({...editData,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.gender} onChange={e=>setEditData({...editData,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                     <option>Male</option><option>Female</option>
-                  </select>
+                  </Dropdown>
                 </div>
                 <Input label="Date of Birth" type="date" value={editData.dateOfBirth} onChange={e=>setEditData({...editData,dateOfBirth:e.target.value})}/>
                 <Input label="Blood Group" value={editData.bloodGroup} onChange={e=>setEditData({...editData,bloodGroup:e.target.value})} placeholder="A+, B-, O+"/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Religion</label>
-                  <select value={editData.religion} onChange={e=>setEditData({...editData,religion:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.religion} onChange={e=>setEditData({...editData,religion:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                     {['Islam','Christianity','Hinduism','Other'].map(r=><option key={r}>{r}</option>)}
-                  </select>
+                  </Dropdown>
                 </div>
                 <Input label="Previous School" value={editData.previousSchool} onChange={e=>setEditData({...editData,previousSchool:e.target.value})} placeholder="Previous school name"/>
                 <Input label="Previous Class" value={editData.previousClass} onChange={e=>setEditData({...editData,previousClass:e.target.value})} placeholder="e.g. Grade 5"/>
@@ -346,9 +346,9 @@ export default function Admissions() {
                 <Input label="Guardian Name *" value={editData.guardian?.name||''} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,name:e.target.value}})}/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Relationship</label>
-                  <select value={editData.guardian?.relationship||'Father'} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,relationship:e.target.value}})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.guardian?.relationship||'Father'} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,relationship:e.target.value}})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                     {['Father','Mother','Guardian','Uncle','Aunt'].map(r=><option key={r}>{r}</option>)}
-                  </select>
+                  </Dropdown>
                 </div>
                 <Input label="Phone *" value={editData.guardian?.phone||''} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,phone:e.target.value}})} placeholder="03XX-XXXXXXX"/>
                 <Input label="CNIC" value={editData.guardian?.cnic||''} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,cnic:e.target.value}})} placeholder="XXXXX-XXXXXXX-X"/>
@@ -369,9 +369,9 @@ export default function Admissions() {
                 <Input label="Registration Fee (Rs)" type="number" value={editData.registrationFee} onChange={e=>setEditData({...editData,registrationFee:Number(e.target.value)})}/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Status</label>
-                  <select value={editData.status} onChange={e=>setEditData({...editData,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.status} onChange={e=>setEditData({...editData,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                     {['Applied','Test Scheduled','Interviewed','Approved','Rejected','Enrolled'].map(s=><option key={s}>{s}</option>)}
-                  </select>
+                  </Dropdown>
                 </div>
                 <div className="sm:col-span-2 flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Remarks</label>

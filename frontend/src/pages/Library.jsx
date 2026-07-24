@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, Library, BookOpen, Layers, CheckCircle2, BookMarked, Pencil, Eye } from 'lucide-react';
 import { bookAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, Modal, Input, StatCard, TableSkeleton, EmptyState, useToast, useConfirm } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, StatCard, TableSkeleton, EmptyState, useToast, useConfirm, Dropdown } from '../components/ui';
 
 const CATEGORIES = ['Science','Language','Social','Technology','Religious','Literature'];
 
@@ -99,11 +99,11 @@ export default function LibraryPage() {
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search books…"
               className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
           </div>
-          <select value={category} onChange={e=>setCategory(e.target.value)}
+          <Dropdown value={category} onChange={e=>setCategory(e.target.value)}
             className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
             <option value="">All Categories</option>
             {CATEGORIES.map(c=><option key={c}>{c}</option>)}
-          </select>
+          </Dropdown>
         </div>
         {loading ? <TableSkeleton rows={6} cols={6} /> : books.length === 0 ? (
           <EmptyState icon={Library} title="No books found"
@@ -149,10 +149,10 @@ export default function LibraryPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Category</label>
-              <select value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option value="">Select</option>
                 {CATEGORIES.map(c=><option key={c}>{c}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <Input label="No. of Copies" type="number" value={form.copies} onChange={e=>setForm({...form,copies:e.target.value})}/>
           </div>

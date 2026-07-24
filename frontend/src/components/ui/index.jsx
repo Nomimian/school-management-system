@@ -1,8 +1,10 @@
 import { X, Loader2 } from 'lucide-react';
+import { Dropdown } from './Dropdown.jsx';
 
 // Re-export the interactive providers/hooks so pages can import from one place
 export { ToastProvider, useToast } from './Toast.jsx';
 export { ConfirmProvider, useConfirm } from './Confirm.jsx';
+export { Dropdown };
 
 // ─── STAT CARD ────────────────────────────────────────────────────────────────
 export function StatCard({ icon: Icon, label, value, sub, color = 'blue', trend, onClick }) {
@@ -114,14 +116,26 @@ export function Button({ children, variant = 'primary', size = 'md', onClick, cl
 }
 
 // ─── SWITCH / TOGGLE ───────────────────────────────────────────────────────────
-export function Switch({ checked, onChange, size = 'md' }) {
-  const dims = size === 'sm'
-    ? { track: 'w-9 h-5', knob: 'w-3.5 h-3.5', on: 'translate-x-4', off: 'translate-x-0.5' }
-    : { track: 'w-11 h-6', knob: 'w-4 h-4',   on: 'translate-x-6', off: 'translate-x-1' };
+export function Switch({ checked, onChange, size = 'md', disabled = false }) {
+  // Fully pixel-based (inline styles) so the knob can NEVER overflow the track
+  // regardless of the app's font-size setting. The knob slides between a fixed
+  // left inset (off) and `track − knob − gap` (on), always staying inside.
+  const cfg = size === 'sm'
+    ? { w: 36, h: 20, k: 16, gap: 2 }
+    : { w: 44, h: 24, k: 20, gap: 2 };
+  const left = checked ? cfg.w - cfg.k - cfg.gap : cfg.gap;
   return (
-    <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)}
-      className={`relative ${dims.track} rounded-full transition-colors flex-shrink-0 ${checked ? 'bg-primary-600' : 'bg-slate-300'}`}>
-      <span className={`absolute top-1/2 -translate-y-1/2 ${dims.knob} bg-white rounded-full shadow transition-transform ${checked ? dims.on : dims.off}`} />
+    <button type="button" role="switch" aria-checked={checked} disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      style={{ width: cfg.w, height: cfg.h }}
+      className={`relative rounded-full flex-shrink-0 p-0 border-0 outline-none align-middle
+        transition-colors duration-200 ease-out
+        focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500
+        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-[.97]'}
+        ${checked ? 'bg-primary-600' : 'bg-slate-300'}`}>
+      <span style={{ width: cfg.k, height: cfg.k, left, top: '50%', transform: 'translateY(-50%)' }}
+        className="absolute bg-white rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.35)] ring-1 ring-black/5
+          transition-[left] duration-200 ease-out" />
     </button>
   );
 }
@@ -170,17 +184,14 @@ export function Input({ label, ...props }) {
   );
 }
 
-// ─── SELECT ───────────────────────────────────────────────────────────────────
-export function Select({ label, children, ...props }) {
+// ─── SELECT (labeled) — now powered by the custom <Dropdown> ────────────────────
+export function Select({ label, children, className = '', ...props }) {
   return (
     <div className="flex flex-col gap-1.5">
       {label && <label className="text-sm font-medium text-slate-700">{label}</label>}
-      <select
-        {...props}
-        className="px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-slate-50 focus:bg-white"
-      >
+      <Dropdown {...props} className={`w-full ${className}`}>
         {children}
-      </select>
+      </Dropdown>
     </div>
   );
 }
@@ -288,7 +299,7 @@ export function EmptyState({ icon: Icon, title, subtitle, action }) {
 // ─── PAGE HEADER (premium gradient banner, optional for page tops) ─────────────
 export function PageHeader({ title, subtitle, icon: Icon, action, color = 'primary' }) {
   const grads = {
-    primary: 'from-[#0c1e50] via-[#1e3a8a] to-[#1d4ed8]',
+    primary: 'from-primary-800 via-primary-700 to-primary-600',
     teal:    'from-teal-800 via-teal-700 to-teal-600',
     purple:  'from-purple-800 via-purple-700 to-purple-600',
   };

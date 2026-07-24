@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Plus, Search, Mail, Phone, Loader2, RefreshCw } from 'lucide-react';
 import { teacherAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, ProgressBar, useToast, useConfirm } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, ProgressBar, useToast, useConfirm, Dropdown } from '../components/ui';
 
 const statusColors = { Active:'green', 'On Leave':'orange', Inactive:'red' };
 
@@ -160,17 +160,17 @@ export default function Teachers() {
             <Input label="Join Date" type="date" value={editData.joinDate} onChange={e => setEditData({...editData, joinDate:e.target.value})}/>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Status</label>
-              <select value={editData.status} onChange={e => setEditData({...editData, status:e.target.value})}
+              <Dropdown value={editData.status} onChange={e => setEditData({...editData, status:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {['Active','On Leave','Inactive'].map(s => <option key={s}>{s}</option>)}
-              </select>
+              </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Gender</label>
-              <select value={editData.gender} onChange={e => setEditData({...editData, gender:e.target.value})}
+              <Dropdown value={editData.gender} onChange={e => setEditData({...editData, gender:e.target.value})}
                 className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option>Male</option><option>Female</option>
-              </select>
+              </Dropdown>
             </div>
             <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
               <Button variant="secondary" onClick={() => setModal(false)}>Cancel</Button>

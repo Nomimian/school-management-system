@@ -37,8 +37,19 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // Permission check used by nav + route guards. This is a UX layer only — the
+  // backend independently enforces the same matrix on every request, so a user
+  // who forges access still gets 403s. When permissions haven't loaded yet we
+  // stay optimistic (the server remains the gate) to avoid a blank UI flicker.
+  const can = (module) => {
+    if (!module) return true;
+    const perms = user?.permissions;
+    if (!Array.isArray(perms)) return true;
+    return perms.includes(module);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, isAuthenticated: !!user, can }}>
       {children}
     </AuthContext.Provider>
   );

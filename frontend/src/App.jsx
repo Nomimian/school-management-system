@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import { SchoolProvider } from './hooks/useSchool.jsx';
 import Layout        from './components/layout/Layout';
 import Login         from './pages/Login';
+import ResetPassword  from './pages/ResetPassword';
 import Dashboard     from './pages/Dashboard';
 import Students      from './pages/Students';
 import Teachers      from './pages/Teachers';
@@ -24,7 +25,15 @@ import Admissions    from './pages/Admissions';
 import ResultCard    from './pages/ResultCard';
 import Accounts      from './pages/Accounts';
 import TeacherHiring from './pages/TeacherHiring';
-import { Transport, Homework, Messaging, Promotions, Certificates } from './pages/ExtendedPages';
+import Parents       from './pages/Parents';
+import Messaging     from './pages/Messaging';
+import { Transport, Homework, Promotions, Certificates } from './pages/ExtendedPages';
+
+// ── Parent Portal ─────────────────────────────────────────────────────────
+import ParentLayout    from './pages/parent/ParentLayout';
+import ParentDashboard from './pages/parent/ParentDashboard';
+import ParentChild     from './pages/parent/ParentChild';
+import ParentMessages  from './pages/parent/ParentMessages';
 
 // ── Global UI providers ───────────────────────────────────────────────────
 import { ToastProvider }   from './components/ui/Toast.jsx';
@@ -41,15 +50,35 @@ import { SAActivity, SAAnnouncements, SASettings } from './pages/superadmin/SAOt
 
 // ── Guards ────────────────────────────────────────────────────────────────
 function SchoolGuard({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   if (loading) return <Spinner text="Loading EduManage Pro…"/>;
-  return isAuthenticated ? children : <Navigate to="/login" replace/>;
+  if (!isAuthenticated) return <Navigate to="/login" replace/>;
+  // Parents belong to the parent portal, not the staff app.
+  if (user?.role === 'parent') return <Navigate to="/parent" replace/>;
+  return children;
+}
+
+// Parent portal guard: authenticated AND role 'parent' (staff bounced to /).
+function ParentGuard({ children }) {
+  const { isAuthenticated, loading, user } = useAuth();
+  if (loading) return <Spinner text="Loading Parent Portal…"/>;
+  if (!isAuthenticated) return <Navigate to="/login" replace/>;
+  if (user?.role !== 'parent') return <Navigate to="/" replace/>;
+  return children;
 }
 
 function SAGuard({ children }) {
   const { isAuthenticated, loading } = useSA();
   if (loading) return <Spinner dark text="Loading SuperAdmin Panel…"/>;
   return isAuthenticated ? children : <Navigate to="/superadmin/login" replace/>;
+}
+
+// Route-level RBAC guard. Redirects to the dashboard if the signed-in user's
+// role lacks access to the module. The backend enforces the same rules, so this
+// is a UX safeguard against a user typing a disallowed URL directly.
+function RequireModule({ module, children }) {
+  const { can } = useAuth();
+  return can(module) ? children : <Navigate to="/" replace/>;
 }
 
 function Spinner({ dark, text }) {
@@ -86,6 +115,7 @@ export default function App() {
 
             {/* ── School Login ──────────────────────────────────────── */}
             <Route path="/login" element={<SchoolLoginGuarded/>}/>
+            <Route path="/reset-password/:token" element={<ResetPassword/>}/>
 
             {/* ── School App ────────────────────────────────────────── */}
             <Route path="/" element={
@@ -98,28 +128,42 @@ export default function App() {
               </SchoolGuard>
             }>
               <Route index                  element={<Dashboard/>}/>
-              <Route path="students"        element={<Students/>}/>
-              <Route path="teachers"        element={<Teachers/>}/>
-              <Route path="classes"         element={<Classes/>}/>
-              <Route path="attendance"      element={<Attendance/>}/>
-              <Route path="fees"            element={<Fees/>}/>
-              <Route path="exams"           element={<Exams/>}/>
-              <Route path="result-card"     element={<ResultCard/>}/>
-              <Route path="timetable"       element={<Timetable/>}/>
-              <Route path="library"         element={<LibraryPage/>}/>
-              <Route path="hr"              element={<HR/>}/>
-              <Route path="notices"         element={<Notices/>}/>
-              <Route path="reports"         element={<Reports/>}/>
-              <Route path="calendar"        element={<Calendar/>}/>
-              <Route path="admissions"      element={<Admissions/>}/>
-              <Route path="accounts"        element={<Accounts/>}/>
-              <Route path="transport"       element={<Transport/>}/>
-              <Route path="homework"        element={<Homework/>}/>
-              <Route path="messaging"       element={<Messaging/>}/>
-              <Route path="promotions"      element={<Promotions/>}/>
-              <Route path="certificates"    element={<Certificates/>}/>
-              <Route path="hiring"          element={<TeacherHiring/>}/>
-              <Route path="settings"        element={<Settings/>}/>
+              <Route path="students"        element={<RequireModule module="students"><Students/></RequireModule>}/>
+              <Route path="parents"         element={<RequireModule module="parents"><Parents/></RequireModule>}/>
+              <Route path="teachers"        element={<RequireModule module="teachers"><Teachers/></RequireModule>}/>
+              <Route path="classes"         element={<RequireModule module="classes"><Classes/></RequireModule>}/>
+              <Route path="attendance"      element={<RequireModule module="attendance"><Attendance/></RequireModule>}/>
+              <Route path="fees"            element={<RequireModule module="fees"><Fees/></RequireModule>}/>
+              <Route path="exams"           element={<RequireModule module="exams"><Exams/></RequireModule>}/>
+              <Route path="result-card"     element={<RequireModule module="results"><ResultCard/></RequireModule>}/>
+              <Route path="timetable"       element={<RequireModule module="timetable"><Timetable/></RequireModule>}/>
+              <Route path="library"         element={<RequireModule module="library"><LibraryPage/></RequireModule>}/>
+              <Route path="hr"              element={<RequireModule module="hr"><HR/></RequireModule>}/>
+              <Route path="notices"         element={<RequireModule module="notices"><Notices/></RequireModule>}/>
+              <Route path="reports"         element={<RequireModule module="reports"><Reports/></RequireModule>}/>
+              <Route path="calendar"        element={<RequireModule module="calendar"><Calendar/></RequireModule>}/>
+              <Route path="admissions"      element={<RequireModule module="admissions"><Admissions/></RequireModule>}/>
+              <Route path="accounts"        element={<RequireModule module="accounts"><Accounts/></RequireModule>}/>
+              <Route path="transport"       element={<RequireModule module="transport"><Transport/></RequireModule>}/>
+              <Route path="homework"        element={<RequireModule module="homework"><Homework/></RequireModule>}/>
+              <Route path="messaging"       element={<RequireModule module="messaging"><Messaging/></RequireModule>}/>
+              <Route path="promotions"      element={<RequireModule module="promotions"><Promotions/></RequireModule>}/>
+              <Route path="certificates"    element={<RequireModule module="certificates"><Certificates/></RequireModule>}/>
+              <Route path="hiring"          element={<RequireModule module="hiring"><TeacherHiring/></RequireModule>}/>
+              <Route path="settings"        element={<RequireModule module="settings"><Settings/></RequireModule>}/>
+            </Route>
+
+            {/* ── Parent Portal ─────────────────────────────────────── */}
+            <Route path="/parent" element={
+              <ParentGuard>
+                <SchoolProvider>
+                  <ParentLayout/>
+                </SchoolProvider>
+              </ParentGuard>
+            }>
+              <Route index            element={<ParentDashboard/>}/>
+              <Route path="child/:id"  element={<ParentChild/>}/>
+              <Route path="messages"   element={<ParentMessages/>}/>
             </Route>
 
           </Routes>

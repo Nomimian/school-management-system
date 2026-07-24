@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const { Exam, Result } = require('../models/Exam');
+const User = require('../models/User');
+const { notify } = require('./notificationController');
 
 // @GET /api/reports/subject-performance — avg % score per subject (this school)
 exports.getSubjectPerformance = async (req, res) => {
@@ -82,6 +84,18 @@ exports.addResult = async (req, res) => {
     const { school, ...body } = req.body;
     const result = await Result.create({ ...body, exam: req.params.examId, school: req.user.school });
     await result.populate('student', 'name class rollNumber');
+
+    // Notify the child's linked parent(s) that a result was published.
+    if (result.student?._id) {
+      const parents = await User.find({ school: req.user.school, role: 'parent', children: result.student._id }).select('_id');
+      await notify({
+        school: req.user.school, users: parents.map(p => p._id), type: 'success',
+        title: `New result for ${result.student.name}`,
+        body: `${exam.name}: ${result.marks}/${exam.totalMarks} (${result.grade || '—'})`,
+        link: '/parent',
+      });
+    }
+
     res.status(201).json({ success: true, data: result });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });

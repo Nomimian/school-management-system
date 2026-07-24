@@ -16,6 +16,60 @@
   }
   h1,h2,h3,h4,h5,h6 { font-family: 'Sora', sans-serif; letter-spacing: -0.01em; }
   ::selection { background: rgba(29,78,216,0.18); }
+
+  /* ── Native <select> dropdowns ──────────────────────────────────────────────
+     Every select across the app renders the plain OS arrow otherwise. Strip it
+     and paint a consistent chevron with room to breathe. Applies globally so all
+     ~50 dropdowns match without touching each call site. */
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 1rem 1rem;
+    padding-right: 2.35rem !important;
+    cursor: pointer;
+  }
+  select:hover { border-color: #cbd5e1; }
+  select:disabled { cursor: not-allowed; opacity: .6; }
+  /* the option list itself can't be fully styled cross-browser, but keep it legible */
+  select option { color: #1e293b; background: #fff; padding: 8px; }
+
+  /* ── Native date / time pickers ─────────────────────────────────────────────
+     Tint and enlarge the calendar/clock affordance so it stops looking bare. */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  input[type="month"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: .55;
+    padding: 2px;
+    border-radius: 6px;
+    transition: opacity .15s, background-color .15s;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator:hover,
+  input[type="time"]::-webkit-calendar-picker-indicator:hover,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+  input[type="month"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    background-color: rgba(29,78,216,0.10);
+  }
+  /* File inputs (logo/stamp/photo uploads) — style the native button */
+  input[type="file"]::file-selector-button {
+    font: inherit;
+    margin-right: 12px;
+    padding: 6px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .15s, border-color .15s;
+  }
+  input[type="file"]::file-selector-button:hover { background: #eef2fb; border-color: #cbd5e1; }
 }
 
 @layer utilities {

@@ -1,4 +1,5 @@
 const Teacher = require('../models/Teacher');
+const School = require('../models/School');
 
 exports.getTeachers = async (req, res) => {
   try {
@@ -29,6 +30,13 @@ exports.getTeacher = async (req, res) => {
 
 exports.createTeacher = async (req, res) => {
   try {
+    // Enforce the tenant's plan seat limit before creating.
+    const school = await School.findById(req.user.school).select('maxTeachers plan');
+    if (school?.maxTeachers) {
+      const count = await Teacher.countDocuments({ school: req.user.school });
+      if (count >= school.maxTeachers)
+        return res.status(403).json({ success: false, message: `You've reached your ${school.plan || ''} plan limit of ${school.maxTeachers} teachers. Upgrade your plan to add more.` });
+    }
     const teacher = await Teacher.create({ ...req.body, school: req.user.school });
     res.status(201).json({ success: true, data: teacher });
   } catch (err) {
