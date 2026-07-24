@@ -21,12 +21,26 @@ connectDB();
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 // CORS allow-list is env-driven (CORS_ORIGINS="https://a.com,https://b.com").
-// Falls back to the local dev ports when unset.
-const allowedOrigins = (process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',').map(s => s.trim())
+// Falls back to the local dev ports when unset. Also allows any *.vercel.app
+// origin by default (covers production + preview deploys) — set
+// ALLOW_VERCEL=false to lock that off. Trailing slashes are tolerated.
+const clean = (u) => String(u || '').trim().replace(/\/$/, '');
+const staticOrigins = (process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(clean)
   : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:3000']);
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;                       // same-origin / curl / server-to-server
+  const o = clean(origin);
+  if (staticOrigins.includes(o)) return true;
+  if (process.env.ALLOW_VERCEL !== 'false' && /\.vercel\.app$/.test(o)) return true;
+  return false;
+};
+
 app.use(cors({
-  origin: (origin, cb) => (!origin || allowedOrigins.includes(origin)) ? cb(null, true) : cb(new Error('Not allowed by CORS')),
+  // Return false (never throw) so a disallowed preflight still gets a clean
+  // response instead of a 500.
+  origin: (origin, cb) => cb(null, isAllowedOrigin(origin)),
   credentials: true,
 }));
 

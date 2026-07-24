@@ -56,7 +56,8 @@
       "Bash(git push *)",
       "Bash(node -e \"require\\('dotenv'\\).config\\(\\);const m=require\\('mongoose'\\);\\(async\\(\\)=>{await m.connect\\(process.env.MONGO_URI\\);const r=await m.connection.collection\\('promotions'\\).deleteMany\\({academicYear:'2025-2026'}\\);await m.connection.collection\\('students'\\).updateMany\\({},{}\\);await m.disconnect\\(\\);console.log\\('removed test promotions:',r.deletedCount\\);}\\)\\(\\);\")",
       "Bash(node -e \"require\\('dotenv'\\).config\\(\\);const m=require\\('mongoose'\\);\\(async\\(\\)=>{await m.connect\\(process.env.MONGO_URI\\);const r=await m.connection.collection\\('promotions'\\).deleteMany\\({academicYear:'2025-2026'}\\);console.log\\('removed test promotions:',r.deletedCount\\);await m.disconnect\\(\\);}\\)\\(\\);\")",
-      "Bash(grep -iE \"\\\\.env$|uploads/\\(att-|17848\\)\")"
+      "Bash(grep -iE \"\\\\.env$|uploads/\\(att-|17848\\)\")",
+      "Bash(MONGO_URI=\"mongodb://localhost:27017/x\" node -e \"const app=require\\('./server'\\); console.log\\('server.js loads OK'\\);\")"
     ]
   }
 }
