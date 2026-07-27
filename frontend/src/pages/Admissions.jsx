@@ -8,6 +8,10 @@ import { admissionAPI, schoolAPI } from '../services/api';
 import { useSchool } from '../hooks/useSchool.jsx';
 import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/print/PrintComponents.jsx';
 import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, useConfirm, Dropdown, EmptyState, TableSkeleton } from '../components/ui';
+import { ReportMenu } from '../components/ReportMenu.jsx';
+import { DateRangePicker } from '../components/DateRangePicker.jsx';
+import { inDateRange, rangeLabel, rangeSlug } from '../utils/reportExport.js';
+import { startOfMonth, endOfMonth, endOfDay } from 'date-fns';
 
 const API_BASE = SERVER_URL;
 
@@ -57,6 +61,28 @@ export default function Admissions() {
   }, [search, filterStatus]);
 
   useEffect(() => { fetch(); }, [fetch]);
+
+  // ── Date-range admissions statement (by application date) ────────────────────
+  const [range, setRange] = useState({ from: startOfMonth(new Date()), to: endOfDay(endOfMonth(new Date())) });
+  const repRows = admissions.filter(a => inDateRange(a.createdAt || a.admissionDate, range.from, range.to));
+
+  const REPORT_COLS = [
+    { key:'applicantName', label:'Applicant',   value:a => a.applicantName || '—' },
+    { key:'admissionNo',   label:'Adm No',      value:a => a.admissionNo || '—' },
+    { key:'applyingClass', label:'Class',       value:a => a.applyingClass || '—' },
+    { key:'guardian',      label:'Guardian',    value:a => a.guardian?.name || '—' },
+    { key:'phone',         label:'Phone',       value:a => a.guardian?.phone || '—' },
+    { key:'status',        label:'Status',      value:a => a.status,
+      pdf:a => `<span class="badge badge-${(a.status||'').toLowerCase()==='enrolled'?'paid':'pending'}">${a.status||''}</span>` },
+    { key:'date',          label:'Applied On',  value:a => (a.createdAt || a.admissionDate || '').slice(0,10) || '—' },
+  ];
+  const byStatus = (s) => repRows.filter(a => a.status === s).length;
+  const REPORT_TOTALS = [
+    { label:'Applications', value:repRows.length },
+    { label:'Approved',     value:byStatus('Approved') },
+    { label:'Enrolled',     value:byStatus('Enrolled') },
+    { label:'Rejected',     value:byStatus('Rejected') },
+  ];
 
   const openAdd  = () => { setEditData({...emptyForm}); setErr(''); setModal(true); };
   const openEdit = (a) => {
@@ -171,11 +197,11 @@ export default function Admissions() {
   };
 
   const stats = {
-    total:admissions.length,
-    applied:admissions.filter(a=>a.status==='Applied').length,
-    approved:admissions.filter(a=>a.status==='Approved').length,
-    enrolled:admissions.filter(a=>a.status==='Enrolled').length,
-    rejected:admissions.filter(a=>a.status==='Rejected').length,
+    total:repRows.length,
+    applied:repRows.filter(a=>a.status==='Applied').length,
+    approved:repRows.filter(a=>a.status==='Approved').length,
+    enrolled:repRows.filter(a=>a.status==='Enrolled').length,
+    rejected:repRows.filter(a=>a.status==='Rejected').length,
   };
 
   return (
@@ -183,7 +209,17 @@ export default function Admissions() {
       <SectionHeader
         title="Admissions Management"
         subtitle="New-applicant pipeline — marking an applicant “Enrolled” adds them to Students automatically"
-        action={<Button variant="primary" size="sm" icon={UserPlus} onClick={openAdd}>New Application</Button>}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <DateRangePicker from={range.from} to={range.to} onApply={(from,to)=>setRange({from,to})} />
+            <ReportMenu
+              title={`Admissions Statement — ${rangeLabel(range.from, range.to)}`}
+              subtitle={school?.name}
+              filename={`admissions-${rangeSlug(range.from, range.to)}`}
+              columns={REPORT_COLS} rows={repRows} totals={REPORT_TOTALS} docType="admission" />
+            <Button variant="primary" size="sm" icon={UserPlus} onClick={openAdd}>New Application</Button>
+          </div>
+        }
       />
 
       {/* Stats */}
@@ -229,7 +265,7 @@ export default function Admissions() {
                 </tr>
               </thead>
               <tbody>
-                {admissions.map(a => (
+                {repRows.map(a => (
                   <tr key={a._id} className="border-b border-slate-50 hover:bg-primary-50/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -268,9 +304,9 @@ export default function Admissions() {
               </tbody>
             </table>
           )}
-          {!loading && admissions.length===0 && (
-            <EmptyState icon={UserPlus} title="No admissions yet"
-              subtitle="New admission applications will appear here. Click “New Admission” to add one." />
+          {!loading && repRows.length===0 && (
+            <EmptyState icon={UserPlus} title="No admissions in this range"
+              subtitle={admissions.length ? 'Try widening the date range (e.g. “All time”).' : 'New admission applications will appear here.'} />
           )}
         </div>
       </Card>

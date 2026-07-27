@@ -7,12 +7,15 @@ import {
 } from 'recharts';
 import { feeAPI, attendanceAPI, studentAPI, teacherAPI, reportsAPI } from '../services/api';
 import { brandColor } from '../config/theme.js';
+import { useSchool } from '../hooks/useSchool.jsx';
+import { ReportMenu } from '../components/ReportMenu.jsx';
 
 const COLORS = ['#1d4ed8','#3b82f6','#10b981','#f97316','#a855f7','#ef4444'];
 const MONTH_ORDER = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const sortByMonth = (arr) => [...(arr||[])].sort((a,b)=>MONTH_ORDER.indexOf(a._id)-MONTH_ORDER.indexOf(b._id));
 
 export default function Reports() {
+  const { school } = useSchool();
   const [loading, setLoading] = useState(true);
   const [feeTrend, setFeeTrend] = useState([]);
   const [feeSummary, setFeeSummary] = useState([]);
@@ -65,9 +68,31 @@ export default function Reports() {
   const BRAND = brandColor();
   const chartColors = [BRAND, ...COLORS.slice(1)];
 
+  // Annual summary export (fee collection by month + KPIs).
+  const REPORT_COLS = [
+    { key:'_id',       label:'Month',          value:r => r._id },
+    { key:'expected',  label:'Expected (Rs)',  align:'right', value:r => (r.expected||0).toLocaleString() },
+    { key:'collected', label:'Collected (Rs)', align:'right', value:r => (r.collected||0).toLocaleString() },
+    { key:'rate',      label:'Collection %',   align:'right', value:r => r.expected ? Math.round((r.collected/r.expected)*100)+'%' : '—' },
+  ];
+  const REPORT_TOTALS = [
+    { label:'Total Students', value:kpis.students },
+    { label:'Active Teachers',value:kpis.teachers },
+    { label:'Fee Recovery',   value:`${kpis.collectionRate}%` },
+    { label:'Avg Attendance', value:`${kpis.avgAttendance}%` },
+  ];
+
   return (
     <div className="space-y-6">
-      <SectionHeader title="Reports & Analytics" subtitle="Data-driven insights for your school"/>
+      <SectionHeader title="Reports & Analytics" subtitle="Data-driven insights for your school"
+        action={
+          <ReportMenu
+            title={`School Summary Report — ${new Date().getFullYear()}`}
+            subtitle={school?.name}
+            filename={`school-summary-${new Date().getFullYear()}`}
+            columns={REPORT_COLS} rows={feeTrend} totals={REPORT_TOTALS} label="Download Summary" />
+        }
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

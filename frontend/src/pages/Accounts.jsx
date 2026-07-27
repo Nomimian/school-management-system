@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { Plus, TrendingUp, TrendingDown, DollarSign, Trash2, Pencil, Wallet } from 'lucide-react';
 import { accountAPI } from '../services/api';
 import { SectionHeader, Card, Badge, Button, Modal, Input, TableSkeleton, EmptyState, useToast, useConfirm, Dropdown } from '../components/ui';
+import { ReportMenu } from '../components/ReportMenu.jsx';
+import { DateRangePicker } from '../components/DateRangePicker.jsx';
+import { inDateRange, rangeLabel, rangeSlug } from '../utils/reportExport.js';
+import { useSchool } from '../hooks/useSchool.jsx';
+import { startOfMonth, endOfMonth, endOfDay } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const INCOME_CATEGORIES  = ['Student Fees','Registration Fee','Donation','Transport Fee','Library Fine','Other Income'];
@@ -11,6 +16,7 @@ const COLORS = ['#1d4ed8','#10b981','#f97316','#8b5cf6','#ef4444','#06b6d4','#84
 export default function Accounts() {
   const toast = useToast();
   const confirm = useConfirm();
+  const { school } = useSchool();
   const [records, setRecords] = useState([]);
   const [stats, setStats]     = useState(null);
   const [loading, setLoading] = useState(true);
@@ -32,6 +38,38 @@ export default function Accounts() {
   };
 
   useEffect(() => { fetchAll(); }, [filterType]);
+
+  // ── Date-range statement (filters cards, charts, table & export together) ────
+  const [range, setRange] = useState({ from: startOfMonth(new Date()), to: endOfDay(endOfMonth(new Date())) });
+  const filteredRecords = records.filter(r => inDateRange(r.date, range.from, range.to));
+
+  const repIncome  = filteredRecords.filter(r => r.type === 'Income').reduce((s,r) => s + (r.amount||0), 0);
+  const repExpense = filteredRecords.filter(r => r.type === 'Expense').reduce((s,r) => s + (r.amount||0), 0);
+  const repNet     = repIncome - repExpense;
+
+  // Per-category aggregates for the charts, scoped to the selected range.
+  const aggCat = (type) => {
+    const m = {};
+    filteredRecords.filter(r => r.type === type).forEach(r => { m[r.category] = (m[r.category]||0) + (r.amount||0); });
+    return Object.entries(m).map(([_id, total]) => ({ _id, total }));
+  };
+  const incomeAgg = aggCat('Income');
+  const expenseAgg = aggCat('Expense');
+
+  const REPORT_COLS = [
+    { key:'date',       label:'Date',        value:r => r.date?.slice(0,10) || '—' },
+    { key:'type',       label:'Type',        value:r => r.type },
+    { key:'category',   label:'Category',    value:r => r.category },
+    { key:'description',label:'Description',  value:r => r.description || '—' },
+    { key:'reference',  label:'Reference',   value:r => r.reference || '—' },
+    { key:'amount',     label:'Amount (Rs)', align:'right', value:r => (r.amount||0).toLocaleString() },
+  ];
+  const REPORT_TOTALS = [
+    { label:'Records', value:filteredRecords.length },
+    { label:'Income',  value:`Rs ${repIncome.toLocaleString()}` },
+    { label:'Expense', value:`Rs ${repExpense.toLocaleString()}` },
+    { label:'Net',     value:`Rs ${repNet.toLocaleString()}` },
+  ];
 
   const openAdd = () => {
     setEditing(null);
@@ -64,10 +102,10 @@ export default function Accounts() {
   const categories = form.type === 'Income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
   const chartData = [
-    ...(stats?.income  || []).map(i => ({name:i._id, Income:i.total, Expense:0})),
+    ...(incomeAgg  || []).map(i => ({name:i._id, Income:i.total, Expense:0})),
   ];
   // merge expense
-  (stats?.expense||[]).forEach(e => {
+  (expenseAgg||[]).forEach(e => {
     const found = chartData.find(c => c.name === e._id);
     if (found) found.Expense = e.total;
     else chartData.push({name:e._id, Income:0, Expense:e.total});
@@ -78,7 +116,17 @@ export default function Accounts() {
       <SectionHeader
         title="Accounts & Finance"
         subtitle="Track all school income and expenses"
-        action={<Button variant="primary" size="sm" icon={Plus} onClick={openAdd}>Add Record</Button>}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <DateRangePicker from={range.from} to={range.to} onApply={(from,to)=>setRange({from,to})} />
+            <ReportMenu
+              title={`Financial Statement — ${rangeLabel(range.from, range.to)}`}
+              subtitle={school?.name}
+              filename={`accounts-${rangeSlug(range.from, range.to)}`}
+              columns={REPORT_COLS} rows={filteredRecords} totals={REPORT_TOTALS} />
+            <Button variant="primary" size="sm" icon={Plus} onClick={openAdd}>Add Record</Button>
+          </div>
+        }
       />
 
       {/* Summary Cards */}
@@ -86,22 +134,22 @@ export default function Accounts() {
         <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center"><TrendingUp size={22} className="text-white"/></div>
           <div>
-            <div className="text-2xl font-display font-bold text-emerald-700">Rs {((stats?.totalIncome||0)/1000).toFixed(0)}K</div>
+            <div className="text-2xl font-display font-bold text-emerald-700">Rs {((repIncome||0)/1000).toFixed(0)}K</div>
             <div className="text-xs text-emerald-600 font-medium">Total Income</div>
           </div>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-red-500 flex items-center justify-center"><TrendingDown size={22} className="text-white"/></div>
           <div>
-            <div className="text-2xl font-display font-bold text-red-600">Rs {((stats?.totalExpense||0)/1000).toFixed(0)}K</div>
+            <div className="text-2xl font-display font-bold text-red-600">Rs {((repExpense||0)/1000).toFixed(0)}K</div>
             <div className="text-xs text-red-500 font-medium">Total Expense</div>
           </div>
         </div>
-        <div className={`border rounded-2xl p-5 flex items-center gap-4 ${(stats?.balance||0) >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${(stats?.balance||0) >= 0 ? 'bg-primary-600' : 'bg-orange-500'}`}><DollarSign size={22} className="text-white"/></div>
+        <div className={`border rounded-2xl p-5 flex items-center gap-4 ${(repNet||0) >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${(repNet||0) >= 0 ? 'bg-primary-600' : 'bg-orange-500'}`}><DollarSign size={22} className="text-white"/></div>
           <div>
-            <div className={`text-2xl font-display font-bold ${(stats?.balance||0) >= 0 ? 'text-primary-700' : 'text-orange-600'}`}>Rs {Math.abs((stats?.balance||0)/1000).toFixed(0)}K</div>
-            <div className="text-xs font-medium text-slate-500">{(stats?.balance||0) >= 0 ? 'Net Surplus' : 'Net Deficit'}</div>
+            <div className={`text-2xl font-display font-bold ${(repNet||0) >= 0 ? 'text-primary-700' : 'text-orange-600'}`}>Rs {Math.abs((repNet||0)/1000).toFixed(0)}K</div>
+            <div className="text-xs font-medium text-slate-500">{(repNet||0) >= 0 ? 'Net Surplus' : 'Net Deficit'}</div>
           </div>
         </div>
       </div>
@@ -123,14 +171,14 @@ export default function Accounts() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-5">
           <h3 className="font-display font-bold text-slate-800 mb-4">Income Breakdown</h3>
-          {(stats?.income||[]).length === 0 ? (
+          {(incomeAgg||[]).length === 0 ? (
             <EmptyState icon={TrendingUp} title="No income yet" subtitle="Add income records to see the breakdown." />
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
-                <Pie data={stats?.income||[]} dataKey="total" nameKey="_id" cx="50%" cy="50%" outerRadius={80}
+                <Pie data={incomeAgg||[]} dataKey="total" nameKey="_id" cx="50%" cy="50%" outerRadius={80}
                   label={({_id,percent})=>`${_id} ${(percent*100).toFixed(0)}%`} fontSize={10} labelLine={false}>
-                  {(stats?.income||[]).map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
+                  {(incomeAgg||[]).map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
                 </Pie>
                 <Tooltip formatter={v=>`Rs ${v.toLocaleString()}`} contentStyle={{borderRadius:12,border:'none'}}/>
               </PieChart>
@@ -139,14 +187,14 @@ export default function Accounts() {
         </Card>
         <Card className="p-5">
           <h3 className="font-display font-bold text-slate-800 mb-4">Expense Breakdown</h3>
-          {(stats?.expense||[]).length === 0 ? (
+          {(expenseAgg||[]).length === 0 ? (
             <EmptyState icon={TrendingDown} title="No expenses yet" subtitle="Add expense records to see the breakdown." />
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
-                <Pie data={stats?.expense||[]} dataKey="total" nameKey="_id" cx="50%" cy="50%" outerRadius={80}
+                <Pie data={expenseAgg||[]} dataKey="total" nameKey="_id" cx="50%" cy="50%" outerRadius={80}
                   label={({_id,percent})=>`${_id} ${(percent*100).toFixed(0)}%`} fontSize={10} labelLine={false}>
-                  {(stats?.expense||[]).map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
+                  {(expenseAgg||[]).map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
                 </Pie>
                 <Tooltip formatter={v=>`Rs ${v.toLocaleString()}`} contentStyle={{borderRadius:12,border:'none'}}/>
               </PieChart>
@@ -165,7 +213,7 @@ export default function Accounts() {
             <option>Expense</option>
           </Dropdown>
         </div>
-        {loading ? <TableSkeleton rows={6} cols={6} /> : records.length === 0 ? (
+        {loading ? <TableSkeleton rows={6} cols={6} /> : filteredRecords.length === 0 ? (
           <EmptyState icon={Wallet} title="No records found"
             subtitle={filterType ? `No ${filterType.toLowerCase()} records yet.` : 'Add your first financial record to get started.'}
             action={<Button variant="primary" size="sm" icon={Plus} onClick={openAdd}>Add Record</Button>} />
@@ -180,7 +228,7 @@ export default function Accounts() {
                 </tr>
               </thead>
               <tbody>
-                {records.map(r => (
+                {filteredRecords.map(r => (
                   <tr key={r._id} className="border-b border-slate-50 hover:bg-primary-50/40">
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${r.type==='Income' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>

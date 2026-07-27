@@ -5,6 +5,10 @@ import { feeAPI, studentAPI } from '../services/api';
 import { useSchool } from '../hooks/useSchool.jsx';
 import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/print/PrintComponents.jsx';
 import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, Dropdown, EmptyState, TableSkeleton } from '../components/ui';
+import { ReportMenu } from '../components/ReportMenu.jsx';
+import { DateRangePicker } from '../components/DateRangePicker.jsx';
+import { inDateRange, rangeLabel, rangeSlug } from '../utils/reportExport.js';
+import { startOfMonth, endOfMonth, endOfDay } from 'date-fns';
 
 const statusColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -44,6 +48,32 @@ export default function Fees() {
     studentAPI.getAll({ limit:200 }).then(r => setStudents(r.data||[])).catch(console.error);
   }, []);
 
+  // ── Date-range filter + statement export ─────────────────────────────────────
+  // The range filters the table live AND drives the export (from → to).
+  const [range, setRange] = useState({ from: startOfMonth(new Date()), to: endOfDay(endOfMonth(new Date())) });
+  const filteredFees = fees.filter(f => inDateRange(f.createdAt, range.from, range.to));
+
+  const repExpected  = filteredFees.reduce((s,f) => s + (f.amount||0), 0);
+  const repCollected = filteredFees.reduce((s,f) => s + (f.paid||0), 0);
+  const REPORT_COLS = [
+    { key:'date',    label:'Date',    value:r => r.createdAt?.slice(0,10) || '—' },
+    { key:'student', label:'Student', value:r => r.student?.name || '—' },
+    { key:'class',   label:'Class',   value:r => r.student?.class || '—' },
+    { key:'period',  label:'Month',   value:r => `${r.month} ${r.year}` },
+    { key:'amount',  label:'Total (Rs)',   align:'right', value:r => (r.amount||0).toLocaleString() },
+    { key:'paid',    label:'Paid (Rs)',    align:'right', value:r => (r.paid||0).toLocaleString() },
+    { key:'balance', label:'Balance (Rs)', align:'right', value:r => (r.balance||0).toLocaleString() },
+    { key:'status',  label:'Status',  value:r => r.status,
+      pdf:r => `<span class="badge badge-${(r.status||'').toLowerCase()}">${r.status||''}</span>` },
+    { key:'method',  label:'Method',  value:r => r.method || '—' },
+  ];
+  const REPORT_TOTALS = [
+    { label:'Records',     value:filteredFees.length },
+    { label:'Expected',    value:`Rs ${repExpected.toLocaleString()}` },
+    { label:'Collected',   value:`Rs ${repCollected.toLocaleString()}` },
+    { label:'Outstanding', value:`Rs ${(repExpected-repCollected).toLocaleString()}` },
+  ];
+
   const markPaid = async (id) => {
     try {
       await feeAPI.markPaid(id, { method:'Cash' });
@@ -80,8 +110,8 @@ export default function Fees() {
     finally { setSaving(false); }
   };
 
-  const totalCollected = stats?.summary?.reduce((s,x) => s + (x.totalPaid||0), 0) || 0;
-  const totalExpected  = stats?.summary?.reduce((s,x) => s + (x.totalAmount||0), 0) || 0;
+  const totalCollected = repCollected;
+  const totalExpected  = repExpected;
   const totalBalance   = totalExpected - totalCollected;
 
   const printReceipt = (r) => {
@@ -140,7 +170,13 @@ export default function Fees() {
         title="Fee Management"
         subtitle="Manage student fee records and payments"
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <DateRangePicker from={range.from} to={range.to} onApply={(from,to)=>setRange({from,to})} />
+            <ReportMenu
+              title={`Fee Collection Statement — ${rangeLabel(range.from, range.to)}`}
+              subtitle={school?.name}
+              filename={`fees-${rangeSlug(range.from, range.to)}`}
+              columns={REPORT_COLS} rows={filteredFees} totals={REPORT_TOTALS} docType="fee" />
             <Button variant="secondary" size="sm" icon={RefreshCw} onClick={fetchAll}>Refresh</Button>
             <Button variant="primary"   size="sm" icon={Plus}      onClick={() => setModal(true)}>Record Payment</Button>
           </div>
@@ -187,7 +223,7 @@ export default function Fees() {
                 </tr>
               </thead>
               <tbody>
-                {fees.map(r => (
+                {filteredFees.map(r => (
                   <tr key={r._id} className="border-b border-slate-50 hover:bg-primary-50/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -216,9 +252,9 @@ export default function Fees() {
               </tbody>
             </table>
           )}
-          {!loading && fees.length === 0 && (
-            <EmptyState icon={DollarSign} title="No fee records yet"
-              subtitle="Record a payment to start tracking fees, dues and receipts for your students." />
+          {!loading && filteredFees.length === 0 && (
+            <EmptyState icon={DollarSign} title="No fee records in this range"
+              subtitle={fees.length ? 'Try widening the date range (e.g. “All time”) to see more records.' : 'Record a payment to start tracking fees, dues and receipts.'} />
           )}
         </div>
       </Card>
