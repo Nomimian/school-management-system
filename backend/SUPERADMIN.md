@@ -93,8 +93,8 @@ This creates a temporary 4-hour token for their account.
 ## 🚢 Deployment for Multiple Schools
 
 Deploy once on a VPS/server:
-- Backend: `school-backend/` → runs on port 5000
-- Frontend: `school-ms/` → build with `npm run build` → serve on port 80/443
+- Backend: `backend/` → runs on port 5000
+- Frontend: `frontend/` → build with `npm run build` → serve on port 80/443
 
 All schools use the **same deployment**. Each school's data is isolated by the `school` field in MongoDB.
 

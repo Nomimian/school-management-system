@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Plus, Search, Mail, Phone, Loader2, RefreshCw, Users } from 'lucide-react';
 import { teacherAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, ProgressBar, useToast, useConfirm, Dropdown } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, ProgressBar, useToast, useConfirm, Dropdown, TableSkeleton } from '../components/ui';
 
 const statusColors = { Active:'green', 'On Leave':'orange', Inactive:'red' };
 
@@ -90,11 +90,11 @@ export default function Teachers() {
           <div className="relative max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search teachers…"
-              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200"/>
           </div>
         </div>
 
-        {loading ? <div className="flex items-center justify-center py-16"><Loader2 size={28} className="animate-spin text-primary-500"/></div>
+        {loading ? <TableSkeleton rows={6} cols={5}/>
          : teachers.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/60 flex items-center justify-center mx-auto mb-4 ring-1 ring-blue-100"><Users size={28} className="text-blue-400"/></div>
@@ -168,14 +168,14 @@ export default function Teachers() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Status</label>
               <Dropdown value={editData.status} onChange={e => setEditData({...editData, status:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 {['Active','On Leave','Inactive'].map(s => <option key={s}>{s}</option>)}
               </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Gender</label>
               <Dropdown value={editData.gender} onChange={e => setEditData({...editData, gender:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 <option>Male</option><option>Female</option>
               </Dropdown>
             </div>

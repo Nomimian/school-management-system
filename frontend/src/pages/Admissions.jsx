@@ -7,7 +7,7 @@ import {
 import { admissionAPI, schoolAPI } from '../services/api';
 import { useSchool } from '../hooks/useSchool.jsx';
 import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/print/PrintComponents.jsx';
-import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, useConfirm, Dropdown } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, useConfirm, Dropdown, EmptyState, TableSkeleton } from '../components/ui';
 
 const API_BASE = SERVER_URL;
 
@@ -207,10 +207,10 @@ export default function Admissions() {
           <div className="relative flex-1 max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
             <input placeholder="Search name or admission no…" value={search} onChange={e=>setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200"/>
           </div>
           <Dropdown value={filterStatus} onChange={e=>setFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
             <option value="">All Status</option>
             {['Applied','Test Scheduled','Interviewed','Approved','Rejected','Enrolled'].map(s=><option key={s}>{s}</option>)}
           </Dropdown>
@@ -218,7 +218,7 @@ export default function Admissions() {
 
         <div className="overflow-x-auto">
           {loading
-            ? <div className="flex items-center justify-center py-16"><Loader2 size={28} className="animate-spin text-primary-500"/></div>
+            ? <TableSkeleton rows={6} cols={6}/>
             : (
             <table className="w-full text-sm">
               <thead>
@@ -230,7 +230,7 @@ export default function Admissions() {
               </thead>
               <tbody>
                 {admissions.map(a => (
-                  <tr key={a._id} className="border-b border-slate-50 hover:bg-blue-50/40">
+                  <tr key={a._id} className="border-b border-slate-50 hover:bg-primary-50/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {a.photo
@@ -268,7 +268,10 @@ export default function Admissions() {
               </tbody>
             </table>
           )}
-          {!loading && admissions.length===0 && <div className="text-center py-12 text-slate-400">No admission records found</div>}
+          {!loading && admissions.length===0 && (
+            <EmptyState icon={UserPlus} title="No admissions yet"
+              subtitle="New admission applications will appear here. Click “New Admission” to add one." />
+          )}
         </div>
       </Card>
 
@@ -316,14 +319,14 @@ export default function Admissions() {
                 <Input label="Full Name *" value={editData.applicantName} onChange={e=>setEditData({...editData,applicantName:e.target.value})} placeholder="Student full name"/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Applying Class *</label>
-                  <Dropdown value={editData.applyingClass} onChange={e=>setEditData({...editData,applyingClass:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.applyingClass} onChange={e=>setEditData({...editData,applyingClass:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                     <option value="">Select class</option>
                     {classes.map(c=><option key={c}>{c}</option>)}
                   </Dropdown>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Gender</label>
-                  <Dropdown value={editData.gender} onChange={e=>setEditData({...editData,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.gender} onChange={e=>setEditData({...editData,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                     <option>Male</option><option>Female</option>
                   </Dropdown>
                 </div>
@@ -331,7 +334,7 @@ export default function Admissions() {
                 <Input label="Blood Group" value={editData.bloodGroup} onChange={e=>setEditData({...editData,bloodGroup:e.target.value})} placeholder="A+, B-, O+"/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Religion</label>
-                  <Dropdown value={editData.religion} onChange={e=>setEditData({...editData,religion:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.religion} onChange={e=>setEditData({...editData,religion:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                     {['Islam','Christianity','Hinduism','Other'].map(r=><option key={r}>{r}</option>)}
                   </Dropdown>
                 </div>
@@ -347,7 +350,7 @@ export default function Admissions() {
                 <Input label="Guardian Name *" value={editData.guardian?.name||''} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,name:e.target.value}})}/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Relationship</label>
-                  <Dropdown value={editData.guardian?.relationship||'Father'} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,relationship:e.target.value}})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.guardian?.relationship||'Father'} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,relationship:e.target.value}})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                     {['Father','Mother','Guardian','Uncle','Aunt'].map(r=><option key={r}>{r}</option>)}
                   </Dropdown>
                 </div>
@@ -370,14 +373,14 @@ export default function Admissions() {
                 <Input label="Registration Fee (Rs)" type="number" value={editData.registrationFee} onChange={e=>setEditData({...editData,registrationFee:Number(e.target.value)})}/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Status</label>
-                  <Dropdown value={editData.status} onChange={e=>setEditData({...editData,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.status} onChange={e=>setEditData({...editData,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                     {['Applied','Test Scheduled','Interviewed','Approved','Rejected','Enrolled'].map(s=><option key={s}>{s}</option>)}
                   </Dropdown>
                 </div>
                 <div className="sm:col-span-2 flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Remarks</label>
                   <textarea value={editData.remarks||''} onChange={e=>setEditData({...editData,remarks:e.target.value})} rows={2}
-                    className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"/>
+                    className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200 resize-none"/>
                 </div>
               </div>
             </div>

@@ -147,11 +147,11 @@ export function Transport() {
           <div><div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Stops</div>
             <div className="flex gap-2 mb-2">
               <input value={newStop.stopName} onChange={e=>setNewStop({...newStop,stopName:e.target.value})} placeholder="Stop name"
-                className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+                className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200"/>
               <input value={newStop.time} onChange={e=>setNewStop({...newStop,time:e.target.value})} placeholder="Time"
-                className="w-24 px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+                className="w-24 px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200"/>
               <input value={newStop.fare} onChange={e=>setNewStop({...newStop,fare:e.target.value})} placeholder="Fare" type="number"
-                className="w-20 px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+                className="w-20 px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200"/>
               <Button variant="primary" size="sm" onClick={addStop}>+</Button>
             </div>
             <div className="space-y-1 max-h-32 overflow-y-auto">
@@ -287,7 +287,7 @@ export function Homework() {
 
       <div className="flex gap-3">
         <Dropdown value={filterClass} onChange={e=>setFilterClass(e.target.value)}
-          className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
+          className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200">
           <option value="">All Classes</option>
           {classes.map(c=><option key={c}>{c}</option>)}
         </Dropdown>
@@ -329,7 +329,7 @@ export function Homework() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Class</label>
               <Dropdown value={form.class} onChange={e=>setForm({...form,class:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 <option value="">Select</option>{classes.map(c=><option key={c}>{c}</option>)}
               </Dropdown>
             </div>
@@ -338,7 +338,7 @@ export function Homework() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Teacher</label>
             <Dropdown value={form.teacher} onChange={e=>setForm({...form,teacher:e.target.value})}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
               <option value="">Select teacher</option>
               {teachers.map(t=><option key={t._id} value={t._id}>{t.name}</option>)}
             </Dropdown>
@@ -350,7 +350,7 @@ export function Homework() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Description</label>
             <textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={3} placeholder="Homework details…"
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"/>
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200 resize-none"/>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={()=>setModal(false)}>Cancel</Button>
@@ -362,114 +362,6 @@ export function Homework() {
   );
 }
 
-// ─── MESSAGING PAGE ───────────────────────────────────────────────────────────
-import { messageAPI } from '../services/api';
-import { Send, MessageSquare } from 'lucide-react';
-
-export function Messaging() {
-  const toast = useToast();
-  const confirm = useConfirm();
-  const [msgs, setMsgs]       = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modal, setModal]     = useState(false);
-  const [saving, setSaving]   = useState(false);
-  const [form, setForm] = useState({ title:'', body:'', type:'In-App', audience:'All', targetClass:'' });
-  const { names: classes } = useClasses();
-
-  const fetchMsgs = async () => {
-    setLoading(true);
-    try { const res = await messageAPI.getAll(); setMsgs(res.data||[]); }
-    catch(e) { console.error(e); } finally { setLoading(false); }
-  };
-  useEffect(() => { fetchMsgs(); }, []);
-
-  const send = async () => {
-    setSaving(true);
-    try { await messageAPI.send(form); toast.success('Message sent'); setModal(false); fetchMsgs(); }
-    catch(e) { toast.error(e.message); } finally { setSaving(false); }
-  };
-
-  const typeColors = { 'In-App':'blue', SMS:'green', WhatsApp:'teal', Email:'purple' };
-  const audienceColors = { All:'purple', Students:'blue', Parents:'green', Teachers:'orange', Staff:'red' };
-
-  return (
-    <div className="space-y-5">
-      <SectionHeader title="Communication Center" subtitle={`${msgs.length} messages sent`}
-        action={<Button variant="primary" size="sm" icon={Send} onClick={()=>setModal(true)}>Send Message</Button>}/>
-
-      {loading ? <div className="flex items-center justify-center py-16"><Loader2 size={28} className="animate-spin text-primary-500"/></div> : msgs.length===0 ? (
-        <EmptyState icon={MessageSquare} title="No messages yet" subtitle="Send announcements, SMS, or WhatsApp messages to students, parents, and staff."
-          action={<Button variant="primary" size="sm" icon={Send} onClick={()=>setModal(true)}>Send Message</Button>}/>
-      ) : (
-        <div className="grid grid-cols-1 gap-3">
-          {msgs.map(m => (
-            <Card key={m._id} hover className="p-4">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center flex-shrink-0"><MessageSquare size={18} className="text-blue-600"/></div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-slate-800">{m.title}</h3>
-                    <Badge variant={typeColors[m.type]||'blue'}>{m.type}</Badge>
-                    <Badge variant={audienceColors[m.audience]||'gray'}>{m.audience}</Badge>
-                  </div>
-                  <p className="text-sm text-slate-500">{m.body}</p>
-                  <div className="text-xs text-slate-400 mt-1.5 flex gap-3">
-                    <span>📨 {m.recipients} recipients</span>
-                    <span>🕐 {new Date(m.sentAt).toLocaleString()}</span>
-                    {m.sentBy?.name && <span>👤 {m.sentBy.name}</span>}
-                  </div>
-                </div>
-                <button onClick={async()=>{if(!(await confirm({title:'Delete message?',message:`Delete "${m.title}"? This cannot be undone.`,tone:'danger',confirmText:'Delete'})))return;await messageAPI.delete(m._id);toast.success('Message deleted');fetchMsgs();}}
-                  className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-400 flex-shrink-0"><Trash2 size={14}/></button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <Modal open={modal} onClose={()=>setModal(false)} title="Send Message" size="md">
-        <div className="space-y-4">
-          <Input label="Title / Subject" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Message subject"/>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700">Message</label>
-            <textarea value={form.body} onChange={e=>setForm({...form,body:e.target.value})} rows={4} placeholder="Type your message here…"
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"/>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">Send via</label>
-              <Dropdown value={form.type} onChange={e=>setForm({...form,type:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
-                {['In-App','SMS','WhatsApp','Email'].map(t=><option key={t}>{t}</option>)}
-              </Dropdown>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">Send to</label>
-              <Dropdown value={form.audience} onChange={e=>setForm({...form,audience:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
-                {['All','Students','Parents','Teachers','Staff','Class'].map(a=><option key={a}>{a}</option>)}
-              </Dropdown>
-            </div>
-          </div>
-          {form.audience==='Class' && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">Target Class</label>
-              <Dropdown value={form.targetClass} onChange={e=>setForm({...form,targetClass:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
-                <option value="">Select class</option>
-                {classes.map(c=><option key={c}>{c}</option>)}
-              </Dropdown>
-            </div>
-          )}
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="secondary" onClick={()=>setModal(false)}>Cancel</Button>
-            <Button variant="primary" icon={Send} onClick={send} loading={saving}>{saving?'Sending…':'Send Message'}</Button>
-          </div>
-        </div>
-      </Modal>
-    </div>
-  );
-}
 
 // ─── PROMOTIONS PAGE ──────────────────────────────────────────────────────────
 import { promotionAPI, studentAPI as stuAPI } from '../services/api';
@@ -537,19 +429,19 @@ export function Promotions() {
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Academic Year</label>
             <input value={year} onChange={e=>setYear(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200"/>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Class</label>
             <Dropdown value={filterClass} onChange={e=>setFilter(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
               {classes.map(c=><option key={c}>{c}</option>)}
             </Dropdown>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Promote To Class</label>
             <Dropdown value={toClass} onChange={e=>applyToClass(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
               <option value="">Select target class</option>
               {classes.map(c=><option key={c}>{c}</option>)}
               <option value="Passed Out">Passed Out</option>
@@ -579,7 +471,7 @@ export function Promotions() {
                 {students.map(s => {
                   const p = promotions[s._id] || {};
                   return (
-                    <tr key={s._id} className="border-b border-slate-50 hover:bg-blue-50/30">
+                    <tr key={s._id} className="border-b border-slate-50 hover:bg-primary-50/30">
                       <td className="px-4 py-3 font-medium text-slate-800">{s.name}</td>
                       <td className="px-4 py-3 text-slate-500 font-mono text-xs">{s.rollNumber}</td>
                       <td className="px-4 py-3"><Badge variant="blue">{s.class}</Badge></td>
@@ -587,7 +479,7 @@ export function Promotions() {
                         <div className="flex items-center gap-2">
                           <ArrowRight size={12} className="text-slate-400"/>
                           <Dropdown value={p.toClass||''} onChange={e=>setPromotions(prev=>({...prev,[s._id]:{...prev[s._id],toClass:e.target.value}}))}
-                            className="px-2 py-1 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 w-36">
+                            className="px-2 py-1 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-primary-200 w-36">
                             <option value="">Select</option>
                             {classes.map(c=><option key={c}>{c}</option>)}
                             <option value="Passed Out">Passed Out</option>
@@ -785,7 +677,7 @@ export function Certificates() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Student</label>
             <Dropdown value={form.student} onChange={e=>setForm({...form,student:e.target.value})}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
               <option value="">Select student</option>
               {students.map(s=><option key={s._id} value={s._id}>{s.name} ({s.class})</option>)}
             </Dropdown>
@@ -794,7 +686,7 @@ export function Certificates() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Certificate Type</label>
               <Dropdown value={form.type} onChange={e=>handleTypeChange(e.target.value)}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 {certTypes.map(t=><option key={t}>{t}</option>)}
               </Dropdown>
             </div>
@@ -803,7 +695,7 @@ export function Certificates() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Certificate Content</label>
             <textarea value={form.content} onChange={e=>setForm({...form,content:e.target.value})} rows={5}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"/>
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200 resize-none"/>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={()=>setModal(false)}>Cancel</Button>

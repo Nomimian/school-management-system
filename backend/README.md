@@ -22,7 +22,7 @@ mongod --dbpath /data/db
 
 ### 2. Backend Setup
 ```bash
-cd school-backend
+cd backend
 npm install
 
 # Copy env file and edit if needed
@@ -39,7 +39,7 @@ Backend: http://localhost:5000
 
 ### 3. Frontend Setup
 ```bash
-cd school-ms
+cd frontend
 npm install
 npm run dev
 ```

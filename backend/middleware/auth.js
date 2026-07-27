@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const School = require('../models/School');
 const { canAccess } = require('../config/permissions');
 
 exports.protect = async (req, res, next) => {
@@ -17,6 +18,21 @@ exports.protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id).select('-password');
     if (!req.user) return res.status(401).json({ success: false, message: 'User not found.' });
+
+    // Re-check status on EVERY request, not just at login. JWTs are stateless
+    // with a multi-day lifetime, so without this a deactivated user or a
+    // suspended/expired school would retain access until the token expires.
+    if (req.user.isActive === false)
+      return res.status(403).json({ success: false, message: 'Account is deactivated.' });
+
+    if (req.user.school) {
+      const school = await School.findById(req.user.school).select('isActive licenseExpiry');
+      if (school && school.isActive === false)
+        return res.status(403).json({ success: false, message: 'This school account is suspended. Please contact your provider.' });
+      if (school && school.licenseExpiry && new Date(school.licenseExpiry) < new Date())
+        return res.status(403).json({ success: false, message: 'Your subscription has expired. Please renew to continue.' });
+    }
+
     // Convenience: the tenant this request operates within
     req.schoolId = req.user.school || null;
     next();

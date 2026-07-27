@@ -33,7 +33,6 @@ const del    = (path)          => request('DELETE', path);
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 export const authAPI = {
   login:          (data)        => post('/auth/login', data),
-  register:       (data)        => post('/auth/register', data),
   me:             ()            => get('/auth/me'),
   changePassword: (data)        => put('/auth/change-password', data),
   forgotPassword: (data)        => post('/auth/forgot-password', data),
@@ -296,6 +295,8 @@ export const healthAPI = {
 // ─── SCHOOL / TENANT ──────────────────────────────────────────────────────────
 export const schoolAPI = {
   get:           ()         => get('/school'),
+  // Public branding for the login screen (no auth). Optionally scoped by slug.
+  public:        (slug)     => get('/school/public', slug ? { slug } : {}),
   create:        (data)     => post('/school', data),
   update:        (data)     => put('/school', data),
   uploadLogo:    (formData) => {

@@ -129,7 +129,7 @@ export function Dropdown({
               ${o.disabled ? 'text-slate-300 cursor-not-allowed'
                 : isActive ? 'bg-primary-600 text-white'
                 : isSel ? 'bg-blue-50 text-primary-700 font-medium'
-                : 'text-slate-700 hover:bg-blue-50'}`}
+                : 'text-slate-700 hover:bg-primary-50'}`}
           >
             <span className="truncate">{o.label}</span>
             {isSel && <Check size={14} className={isActive ? 'text-white' : 'text-primary-600'} />}
@@ -152,10 +152,10 @@ export function Dropdown({
         onClick={() => (open ? close() : openMenu())}
         onKeyDown={onKeyDown}
         className={`inline-flex items-center justify-between gap-2 rounded-xl border bg-slate-50 text-left
-          border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400
+          border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400
           transition-colors ${pad}
           ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-slate-300'}
-          ${open ? 'ring-2 ring-blue-200 border-blue-400 bg-white' : ''}
+          ${open ? 'ring-2 ring-primary-200 border-blue-400 bg-white' : ''}
           ${className}`}
       >
         <span className={`truncate ${selected ? 'text-slate-700' : 'text-slate-400'}`}>

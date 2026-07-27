@@ -150,7 +150,7 @@ export default function Settings() {
         {visibleTabs.map(t => (
           <button key={t.id} onClick={()=>{setTab(t.id);setMsg('');setErr('');setSaved(false);}}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
-              ${activeTab===t.id?'bg-primary-600 text-white shadow-md':'bg-white text-slate-600 hover:bg-blue-50 border border-slate-200'}`}>
+              ${activeTab===t.id?'bg-primary-600 text-white shadow-md':'bg-white text-slate-600 hover:bg-primary-50 border border-slate-200'}`}>
             <t.icon size={15}/>{t.label}
           </button>
         ))}
@@ -185,7 +185,7 @@ export default function Settings() {
             <Input label="Late Fine (Rs)" type="number" value={sf.lateFine} onChange={e=>setSf({...sf,lateFine:Number(e.target.value)})}/>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Currency</label>
-              <Dropdown value={sf.currency} onChange={e=>setSf({...sf,currency:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={sf.currency} onChange={e=>setSf({...sf,currency:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 {['PKR','USD','GBP','AED','SAR'].map(c=><option key={c}>{c}</option>)}
               </Dropdown>
             </div>
@@ -210,7 +210,7 @@ export default function Settings() {
               <div className="flex items-center gap-5 mb-4">
                 {logoUrl
                   ? <img src={logoUrl} alt="Logo" className="w-20 h-20 rounded-2xl object-contain border border-slate-200 bg-white p-1"/>
-                  : <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-600 to-blue-500 flex items-center justify-center text-white text-3xl font-bold">
+                  : <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-500 flex items-center justify-center text-white text-3xl font-bold">
                       {sf.shortName?.charAt(0)||sf.name?.charAt(0)||'S'}
                     </div>
                 }
@@ -330,7 +330,7 @@ export default function Settings() {
               <div className="relative">
                 <input type={showPw?'text':'password'} value={pw.currentPassword}
                   onChange={e=>setPw({...pw,currentPassword:e.target.value})} placeholder="••••••••"
-                  className="w-full px-3 py-2 pr-10 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+                  className="w-full px-3 py-2 pr-10 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200"/>
                 <button type="button" onClick={()=>setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                   {showPw?<EyeOff size={15}/>:<Eye size={15}/>}
                 </button>
@@ -373,7 +373,7 @@ export default function Settings() {
               <div className="flex gap-2">
                 {[['small','Small'],['medium','Medium (Default)'],['large','Large']].map(([val,label])=>(
                   <button key={val} onClick={()=>setFontSize(val)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${fontSize===val?'bg-primary-600 text-white border-primary-600':'bg-white text-slate-600 border-slate-200 hover:bg-blue-50'}`}>{label}</button>
+                    className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${fontSize===val?'bg-primary-600 text-white border-primary-600':'bg-white text-slate-600 border-slate-200 hover:bg-primary-50'}`}>{label}</button>
                 ))}
               </div>
             </div>

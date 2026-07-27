@@ -124,7 +124,7 @@ export default function Exams() {
       <div className="flex gap-2">
         {['exams','results'].map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all ${tab===t ? 'bg-primary-600 text-white' : 'bg-white text-slate-600 hover:bg-blue-50 border border-slate-200'}`}>
+            className={`px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all ${tab===t ? 'bg-primary-600 text-white' : 'bg-white text-slate-600 hover:bg-primary-50 border border-slate-200'}`}>
             {t === 'results' ? `Results${selectedExam ? ` – ${selectedExam.name}` : ''}` : 'Exams'}
           </button>
         ))}
@@ -148,7 +148,7 @@ export default function Exams() {
               {exams.map(e => (
                 <Card key={e._id} hover className="p-5">
                   <div className="flex items-start justify-between mb-3">
-                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary-600 to-blue-500 flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-500 flex items-center justify-center">
                       <Award size={20} className="text-white"/>
                     </div>
                     <Badge variant={statusColors[e.status]||'gray'} dot>{e.status}</Badge>
@@ -165,7 +165,7 @@ export default function Exams() {
                     <button onClick={() => openResults(e)}
                       className="flex-1 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 py-1.5 rounded-lg font-medium">View Results</button>
                     <button onClick={() => openEdit(e)} title="Edit exam"
-                      className="p-1.5 rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600"><Pencil size={14}/></button>
+                      className="p-1.5 rounded-lg text-slate-400 hover:bg-primary-50 hover:text-blue-600"><Pencil size={14}/></button>
                     <button onClick={() => deleteExam(e._id)} title="Delete exam"
                       className="p-1.5 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"><Trash2 size={14}/></button>
                   </div>
@@ -206,7 +206,7 @@ export default function Exams() {
               </thead>
               <tbody>
                 {results.map(r => (
-                  <tr key={r._id} className="border-b border-slate-50 hover:bg-blue-50/40">
+                  <tr key={r._id} className="border-b border-slate-50 hover:bg-primary-50/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar name={r.student?.name||'?'} size="sm"/>
@@ -253,7 +253,7 @@ export default function Exams() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Class</label>
               <Dropdown value={form.class} onChange={e => setForm({...form, class:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 <option value="">Select Class</option>
                 {classes.map(c => <option key={c}>{c}</option>)}
               </Dropdown>
@@ -271,7 +271,7 @@ export default function Exams() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Status</label>
             <Dropdown value={form.status} onChange={e => setForm({...form, status:e.target.value})}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
               {['Upcoming','Ongoing','Completed'].map(s => <option key={s}>{s}</option>)}
             </Dropdown>
           </div>
@@ -288,7 +288,7 @@ export default function Exams() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Student</label>
             <Dropdown value={resultForm.student} onChange={e => setResultForm({...resultForm, student:e.target.value})}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
               <option value="">Select student</option>
               {students.filter(s => !selectedExam?.class || s.class === selectedExam.class).map(s => (
                 <option key={s._id} value={s._id}>{s.name} ({s.rollNumber})</option>
@@ -302,7 +302,7 @@ export default function Exams() {
             <label className="text-sm font-medium text-slate-700">Remarks (optional)</label>
             <textarea value={resultForm.remarks} onChange={e => setResultForm({...resultForm, remarks:e.target.value})}
               rows={2} placeholder="Any remarks…"
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 bg-slate-50 resize-none"/>
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 bg-slate-50 resize-none"/>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={() => setResultModal(false)}>Cancel</Button>

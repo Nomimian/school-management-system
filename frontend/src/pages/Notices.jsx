@@ -70,7 +70,7 @@ export default function Notices() {
     (priorityFilter==='All' || n.priority===priorityFilter)
   ), [notices, audienceFilter, priorityFilter]);
 
-  const selectCls = 'px-3 py-1.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200';
+  const selectCls = 'px-3 py-1.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200';
 
   return (
     <div className="space-y-5">
@@ -131,7 +131,7 @@ export default function Notices() {
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button onClick={() => setViewItem(n)} className="p-2 rounded-xl hover:bg-slate-100 text-slate-300 hover:text-slate-600 transition-colors"><Eye size={15}/></button>
-                  <button onClick={() => openEdit(n)} className="p-2 rounded-xl hover:bg-blue-50 text-slate-300 hover:text-blue-500 transition-colors"><Pencil size={15}/></button>
+                  <button onClick={() => openEdit(n)} className="p-2 rounded-xl hover:bg-primary-50 text-slate-300 hover:text-blue-500 transition-colors"><Pencil size={15}/></button>
                   <button onClick={() => remove(n)} className="p-2 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors"><Trash2 size={15}/></button>
                 </div>
               </div>
@@ -146,18 +146,18 @@ export default function Notices() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Content</label>
             <textarea value={form.content} onChange={e => setForm({...form, content:e.target.value})} rows={4} placeholder="Write notice content…"
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 bg-slate-50 focus:bg-white resize-none"/>
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 bg-slate-50 focus:bg-white resize-none"/>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Audience</label>
-              <Dropdown value={form.audience} onChange={e => setForm({...form, audience:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.audience} onChange={e => setForm({...form, audience:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 {AUDIENCES.map(a => <option key={a}>{a}</option>)}
               </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Priority</label>
-              <Dropdown value={form.priority} onChange={e => setForm({...form, priority:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.priority} onChange={e => setForm({...form, priority:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 {PRIORITIES.map(p => <option key={p}>{p}</option>)}
               </Dropdown>
             </div>

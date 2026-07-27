@@ -145,7 +145,7 @@ export default function Messenger() {
               </div>
             ) : convos.map(c => (
               <button key={c._id} onClick={() => openConvo(c._id)}
-                className={`w-full text-left px-4 py-3 border-b border-slate-50 hover:bg-blue-50/50 transition-colors ${activeId === c._id ? 'bg-blue-50' : ''}`}>
+                className={`w-full text-left px-4 py-3 border-b border-slate-50 hover:bg-primary-50/50 transition-colors ${activeId === c._id ? 'bg-blue-50' : ''}`}>
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-slate-700 text-sm truncate flex-1">{titleOf(c, meId)}</span>
                   {c.unread > 0 && <span className="bg-primary-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{c.unread}</span>}
@@ -212,12 +212,12 @@ export default function Messenger() {
                   <input ref={fileRef} type="file" multiple className="hidden" onChange={onAttach}
                     accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"/>
                   <button onClick={() => fileRef.current?.click()} disabled={uploading} title="Attach file"
-                    className="p-2 rounded-xl text-slate-400 hover:text-primary-600 hover:bg-blue-50 disabled:opacity-50">
+                    className="p-2 rounded-xl text-slate-400 hover:text-primary-600 hover:bg-primary-50 disabled:opacity-50">
                     {uploading ? <Loader2 size={18} className="animate-spin"/> : <Paperclip size={18}/>}
                   </button>
                   <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={1} placeholder="Type a message…"
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-                    className="flex-1 resize-none px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200 max-h-28"/>
+                    className="flex-1 resize-none px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200 max-h-28"/>
                   <Button variant="primary" icon={sending ? Loader2 : Send} loading={sending} onClick={send} disabled={!draft.trim() && !pending.length}>Send</Button>
                 </div>
               </div>
@@ -281,13 +281,13 @@ function ComposeModal({ onClose, onCreated }) {
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search people…"
-              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200"/>
           </div>
           <div className="mt-2 max-h-40 overflow-y-auto scrollbar-thin border border-slate-100 rounded-xl">
             {loading ? <div className="p-3 text-sm text-slate-400 flex items-center gap-2"><Loader2 size={14} className="animate-spin"/> Loading…</div>
               : filtered.length === 0 ? <div className="p-3 text-sm text-slate-400 flex items-center gap-2"><Users2 size={14}/> No people found.</div>
               : filtered.slice(0, 30).map(u => (
-                <button key={u._id} onClick={() => toggle(u)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-blue-50 text-left border-b border-slate-50 last:border-0">
+                <button key={u._id} onClick={() => toggle(u)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-primary-50 text-left border-b border-slate-50 last:border-0">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-700 flex items-center justify-center text-white text-xs font-bold">{u.name.charAt(0)}</div>
                   <div className="text-sm text-slate-700">{u.name} <span className="text-xs text-slate-400">· {ROLE_LABEL[u.role] || u.role}</span></div>
                 </button>
@@ -295,9 +295,9 @@ function ComposeModal({ onClose, onCreated }) {
           </div>
         </div>
         <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Subject (optional)"
-          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200"/>
         <textarea value={body} onChange={e => setBody(e.target.value)} rows={3} placeholder="Write your message…"
-          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-y"/>
+          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200 resize-y"/>
       </div>
       <div className="flex justify-end gap-2 mt-6">
         <Button variant="secondary" onClick={onClose}>Cancel</Button>

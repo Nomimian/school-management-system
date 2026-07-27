@@ -39,6 +39,10 @@ exports.getFee = async (req, res) => {
 
 exports.createFee = async (req, res) => {
   try {
+    // The referenced student must belong to THIS school — never trust the id.
+    const student = await Student.findOne({ _id: req.body.student, school: req.user.school }).select('_id');
+    if (!student) return res.status(400).json({ success: false, message: 'Student not found in your school.' });
+
     const fee = await Fee.create({ ...req.body, school: req.user.school, recordedBy: req.user._id });
     // Update student fee status
     await Student.findOneAndUpdate({ _id: req.body.student, school: req.user.school }, { feeStatus: fee.status });

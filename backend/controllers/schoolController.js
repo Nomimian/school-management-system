@@ -25,6 +25,43 @@ const fileFilter = (req, file, cb) => {
 
 exports.upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB
 
+// ── GET /api/school/public ───────────────────────────────────────────────────
+// Unauthenticated branding for the LOGIN screen. Returns ONLY presentational
+// fields (name / logo / tagline / accent) so the sign-in page can show the
+// school's identity and honour its theme colour before anyone is logged in.
+// Never exposes contacts, licence, limits or any other tenant data.
+// Tenant resolution: ?slug=<slug> when provided (subdomain-per-school setups),
+// otherwise the sole school when the deployment hosts exactly one. When it
+// can't be resolved unambiguously it returns null and the UI falls back to the
+// generic platform branding.
+exports.getPublicBranding = async (req, res) => {
+  try {
+    const FIELDS = 'name shortName logo tagline city primaryColor fontSize';
+    const slug = String(req.query.slug || '').toLowerCase().trim();
+
+    let school = null;
+    if (slug) {
+      school = await School.findOne({ slug }).select(FIELDS);
+    } else if (await School.estimatedDocumentCount() === 1) {
+      school = await School.findOne().select(FIELDS);
+    }
+
+    if (!school) return res.json({ success: true, data: null });
+    res.json({
+      success: true,
+      data: {
+        name:         school.name,
+        shortName:    school.shortName,
+        logo:         school.logo,
+        tagline:      school.tagline,
+        city:         school.city,
+        primaryColor: school.primaryColor,
+        fontSize:     school.fontSize,
+      },
+    });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+};
+
 // ── GET /api/school ──────────────────────────────────────────────────────────
 // Returns ONLY the school linked to the caller. Never leaks another tenant.
 exports.getSchool = async (req, res) => {
@@ -42,7 +79,10 @@ exports.createSchool = async (req, res) => {
   try {
     if (req.user.school)
       return res.status(400).json({ success:false, message:'A school is already linked to this account.' });
-    const school = await School.create(req.body);
+    // Plan / license / limits are SuperAdmin-controlled — never trust them from
+    // the request body (mirrors the same strip in updateSchool).
+    const { _id, plan, maxStudents, maxTeachers, licenseExpiry, licenseKey, isActive, slug, ...safe } = req.body;
+    const school = await School.create(safe);
     await User.findByIdAndUpdate(req.user._id, { school: school._id });
     res.status(201).json({ success:true, data:school });
   } catch(e) { res.status(400).json({ success:false, message:e.message }); }

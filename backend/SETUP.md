@@ -3,8 +3,8 @@
 ## Project Structure
 ```
 EduManagePro-v4-SuperAdmin/
-├── school-backend-final/     ← Node.js + Express + MongoDB API
-└── school-ms-final/          ← React + Vite + Tailwind Frontend
+├── backend/     ← Node.js + Express + MongoDB API
+└── frontend/          ← React + Vite + Tailwind Frontend
 ```
 
 ## Step 1 — Install MongoDB
@@ -16,7 +16,7 @@ net start MongoDB
 
 ## Step 2 — Backend Setup
 ```bash
-cd school-backend-final
+cd backend
 npm install
 
 # Create .env from example
@@ -37,7 +37,7 @@ npm run dev
 
 ## Step 3 — Frontend Setup
 ```bash
-cd school-ms-final
+cd frontend
 npm install
 npm run dev
 # → http://localhost:5175
@@ -69,5 +69,5 @@ After running `npm run seed`:
 5. School logs in at /login and configures their profile
 
 ## Folder rename note
-The ZIP contains school-ms-final/ and school-backend-final/
-You can rename these to school-ms/ and school-backend/ if preferred.
+The ZIP contains frontend/ and backend/
+You can rename these to frontend/ and backend/ if preferred.

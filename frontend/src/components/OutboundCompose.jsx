@@ -64,7 +64,7 @@ export default function OutboundCompose({ open, onClose }) {
     return (
       <button onClick={() => setChannels(c => ({ ...c, [id]: !c[id] }))}
         className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all
-          ${on ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-blue-50'}`}>
+          ${on ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-primary-50'}`}>
         <Icon size={16}/> {label}
         <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${on ? 'bg-white/20' : (live ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')}`}>
           {live ? 'Live' : 'Sandbox'}
@@ -124,13 +124,13 @@ export default function OutboundCompose({ open, onClose }) {
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
               <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search staff & parents…"
-                className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+                className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200"/>
             </div>
             {q && (
               <div className="mt-2 max-h-40 overflow-y-auto scrollbar-thin border border-slate-100 rounded-xl">
                 {filtered.length === 0 ? <div className="p-3 text-sm text-slate-400 flex items-center gap-2"><Users2 size={14}/> No matches.</div>
                   : filtered.slice(0, 30).map(u => (
-                    <button key={u._id} onClick={() => { setPicked([...picked, u]); setQ(''); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-blue-50 text-left border-b border-slate-50 last:border-0">
+                    <button key={u._id} onClick={() => { setPicked([...picked, u]); setQ(''); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-primary-50 text-left border-b border-slate-50 last:border-0">
                       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-700 flex items-center justify-center text-white text-xs font-bold">{u.name.charAt(0)}</div>
                       <span className="text-sm text-slate-700">{u.name} <span className="text-xs text-slate-400">· {ROLE_LABEL[u.role] || u.role}</span></span>
                     </button>
@@ -140,9 +140,9 @@ export default function OutboundCompose({ open, onClose }) {
           </div>
 
           <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Subject (email)"
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200"/>
           <textarea value={body} onChange={e => setBody(e.target.value)} rows={4} placeholder="Write your message…"
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-y"/>
+            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200 resize-y"/>
 
           {/* Attachments */}
           <div>

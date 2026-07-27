@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { Exam, Result } = require('../models/Exam');
 const User = require('../models/User');
+const Student = require('../models/Student');
 const { notify } = require('./notificationController');
 
 // @GET /api/reports/subject-performance — avg % score per subject (this school)
@@ -81,6 +82,9 @@ exports.addResult = async (req, res) => {
     // Verify the exam belongs to the requesting user's school
     const exam = await Exam.findOne({ _id: req.params.examId, school: req.user.school });
     if (!exam) return res.status(404).json({ success: false, message: 'Exam not found.' });
+    // The student must also belong to this school (exam being in-school isn't enough).
+    const inSchool = await Student.findOne({ _id: req.body.student, school: req.user.school }).select('_id');
+    if (!inSchool) return res.status(400).json({ success: false, message: 'Student not found in your school.' });
     const { school, ...body } = req.body;
     const result = await Result.create({
       ...body, exam: req.params.examId, school: req.user.school,

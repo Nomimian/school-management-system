@@ -92,8 +92,8 @@ export default function Topbar() {
   return (
     <>
     <header className="h-16 bg-white border-b border-blue-100 flex items-center px-4 lg:px-6 gap-4 sticky top-0 z-20 shadow-sm">
-      <button onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="text-slate-500 hover:text-primary-700 hover:bg-blue-50 p-2 rounded-lg">
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar"
+        className="text-slate-500 hover:text-primary-700 hover:bg-primary-50 p-2 rounded-lg">
         <Menu size={20} />
       </button>
 
@@ -109,7 +109,7 @@ export default function Topbar() {
             onChange={e => { setSearch(e.target.value); setShowResults(true); }}
             onFocus={() => setShowResults(true)}
             placeholder="Search students, teachers…"
-            className="w-full pl-9 pr-8 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 focus:bg-white placeholder:text-slate-400" />
+            className="w-full pl-9 pr-8 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 focus:bg-white placeholder:text-slate-400" />
           {searching && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 animate-spin" />}
         </div>
 
@@ -123,7 +123,7 @@ export default function Topbar() {
                 <div className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Students</div>
                 {results.students.map(s => (
                   <button key={s._id} onClick={() => go('/students', s.name)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 text-left">
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary-50 text-left">
                     <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0"><GraduationCap size={15}/></div>
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-slate-700 truncate">{s.name}</div>
@@ -138,7 +138,7 @@ export default function Topbar() {
                 <div className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Teachers</div>
                 {results.teachers.map(t => (
                   <button key={t._id} onClick={() => go('/teachers', t.name)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 text-left">
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary-50 text-left">
                     <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><Users size={15}/></div>
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-slate-700 truncate">{t.name}</div>
@@ -178,7 +178,7 @@ export default function Topbar() {
               </div>
               <div className="p-1">
                 <button onClick={() => { navigate('/settings'); setShowUser(false); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-primary-700">
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600 hover:bg-primary-50 hover:text-primary-700">
                   <User size={15}/> Profile & Settings
                 </button>
                 <button onClick={handleLogout}

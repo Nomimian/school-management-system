@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, Printer, Download, Award, Loader2, Star } from 'lucide-react';
 import { reportCardAPI, examAPI, studentAPI } from '../services/api';
-import { SectionHeader, Card, Badge, Button, useToast } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, useToast, EmptyState } from '../components/ui';
 import { useSchool } from '../hooks/useSchool.jsx';
 import { SchoolStamp, stampEnabled, buildPrintPage, openPrintWindow } from '../components/print/PrintComponents.jsx';
 
@@ -121,13 +121,13 @@ export default function ResultCard() {
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
               <input value={searchStudent} onChange={e=>searchStudents(e.target.value)} placeholder="Type student name to search…"
-                className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+                className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200"/>
             </div>
             {students.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 z-20 border border-slate-200 rounded-xl bg-white shadow-float overflow-hidden max-h-60 overflow-y-auto scrollbar-thin">
                 {students.map(s => (
                   <button key={s._id} onClick={()=>{ setStudent(s._id); setSearch(s.name+' – '+s.class); setStudents([]); }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 text-left border-b border-slate-50 last:border-0">
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary-50 text-left border-b border-slate-50 last:border-0">
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-700 flex items-center justify-center text-white text-xs font-bold">{s.name[0]}</div>
                     <div>
                       <div className="text-sm font-medium text-slate-700">{s.name}</div>
@@ -165,7 +165,7 @@ export default function ResultCard() {
                   <button key={ex._id}
                     onClick={()=>setSelExams(on ? selectedExams.filter(id=>id!==ex._id) : [...selectedExams, ex._id])}
                     className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all
-                      ${on ? 'bg-primary-600 text-white border-primary-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-primary-300 hover:bg-blue-50'}`}>
+                      ${on ? 'bg-primary-600 text-white border-primary-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-primary-300 hover:bg-primary-50'}`}>
                     {ex.name} <span className={on?'text-blue-100':'text-slate-400'}>· {ex.class}</span>
                   </button>
                 );
@@ -260,7 +260,8 @@ export default function ResultCard() {
               ))}
 
               {(!rc.examResults || rc.examResults.length === 0) && (
-                <div className="text-center py-8 text-slate-400">No exam results found for this student.</div>
+                <EmptyState icon={Award} title="No results yet"
+                  subtitle="This student has no recorded exam results for the selected exams." />
               )}
             </div>
 

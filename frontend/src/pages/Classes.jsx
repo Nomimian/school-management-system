@@ -82,7 +82,7 @@ export default function Classes() {
           {classes.map(cls => (
             <Card key={cls._id} hover className="p-5">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-600 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30"><Building2 size={22} className="text-white"/></div>
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-500 flex items-center justify-center shadow-lg shadow-blue-500/30"><Building2 size={22} className="text-white"/></div>
                 <div className="flex flex-col items-end gap-1.5">
                   <Badge variant="blue">Room {cls.room||'—'}</Badge>
                   <Badge variant="green" dot>{cls.studentCount||0} students</Badge>
@@ -101,7 +101,7 @@ export default function Classes() {
                 <button onClick={()=>navigate('/students', { state: { search: cls.name } })}
                   className="flex-1 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 py-1.5 rounded-lg font-medium">View Students</button>
                 <button onClick={()=>openEdit(cls)} title="Edit class"
-                  className="p-1.5 rounded-lg text-slate-400 hover:bg-blue-50 hover:text-blue-600"><Pencil size={14}/></button>
+                  className="p-1.5 rounded-lg text-slate-400 hover:bg-primary-50 hover:text-blue-600"><Pencil size={14}/></button>
                 <button onClick={()=>removeClass(cls)} title="Delete class"
                   className="p-1.5 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"><Trash2 size={14}/></button>
               </div>
@@ -120,7 +120,7 @@ export default function Classes() {
             <Input label="Capacity" type="number" value={form.capacity} onChange={e=>setForm({...form,capacity:e.target.value})} placeholder="40"/>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Class Teacher</label>
-              <Dropdown value={form.classTeacher} onChange={e=>setForm({...form,classTeacher:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.classTeacher} onChange={e=>setForm({...form,classTeacher:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 <option value="">Select teacher</option>
                 {teachers.map(t=><option key={t._id} value={t._id}>{t.name}</option>)}
               </Dropdown>

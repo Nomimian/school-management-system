@@ -114,7 +114,7 @@ export default function UsersPanel() {
               {users.map(u => {
                 const isSelf = String(u._id) === String(me?.id);
                 return (
-                  <tr key={u._id} className="border-b border-slate-50 last:border-0 hover:bg-blue-50/40">
+                  <tr key={u._id} className="border-b border-slate-50 last:border-0 hover:bg-primary-50/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">

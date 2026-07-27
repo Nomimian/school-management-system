@@ -273,10 +273,10 @@ export default function TeacherHiring() {
           <div className="relative flex-1 max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
             <input placeholder="Search name or subject…" value={search} onChange={e=>setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200"/>
           </div>
           <Dropdown value={filterStatus} onChange={e=>setFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
             <option value="">All Status</option>
             {Object.keys(statusColors).map(s=><option key={s}>{s}</option>)}
           </Dropdown>
@@ -293,7 +293,7 @@ export default function TeacherHiring() {
             </thead>
             <tbody>
               {filtered.map(r => (
-                <tr key={r._id} className="border-b border-slate-50 hover:bg-blue-50/40">
+                <tr key={r._id} className="border-b border-slate-50 hover:bg-primary-50/40">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {r.photo
@@ -373,14 +373,14 @@ export default function TeacherHiring() {
                 <Input label="Date of Birth" type="date" value={editData.dateOfBirth} onChange={e=>setEditData({...editData,dateOfBirth:e.target.value})}/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Gender</label>
-                  <Dropdown value={editData.gender} onChange={e=>setEditData({...editData,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.gender} onChange={e=>setEditData({...editData,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                     <option>Male</option><option>Female</option>
                   </Dropdown>
                 </div>
                 <Input label="CNIC" value={editData.cnic} onChange={e=>setEditData({...editData,cnic:e.target.value})} placeholder="XXXXX-XXXXXXX-X"/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Marital Status</label>
-                  <Dropdown value={editData.maritalStatus} onChange={e=>setEditData({...editData,maritalStatus:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.maritalStatus} onChange={e=>setEditData({...editData,maritalStatus:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                     {['Single','Married','Divorced','Widowed'].map(m=><option key={m}>{m}</option>)}
                   </Dropdown>
                 </div>
@@ -398,7 +398,7 @@ export default function TeacherHiring() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Applying for Subject *</label>
-                  <Dropdown value={editData.applyingFor} onChange={e=>setEditData({...editData,applyingFor:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.applyingFor} onChange={e=>setEditData({...editData,applyingFor:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                     {SUBJECTS.map(s=><option key={s}>{s}</option>)}
                   </Dropdown>
                 </div>
@@ -415,7 +415,7 @@ export default function TeacherHiring() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Highest Qualification</label>
-                  <Dropdown value={editData.qualification} onChange={e=>setEditData({...editData,qualification:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <Dropdown value={editData.qualification} onChange={e=>setEditData({...editData,qualification:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                     {['Matric','Intermediate','B.Ed','B.Sc','M.Sc','M.A','M.Ed','M.Phil','Ph.D','Other'].map(q=><option key={q}>{q}</option>)}
                   </Dropdown>
                 </div>
@@ -428,11 +428,11 @@ export default function TeacherHiring() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-slate-700">Skills / Competencies</label>
-                <textarea value={editData.skills} onChange={e=>setEditData({...editData,skills:e.target.value})} rows={2} placeholder="e.g. MS Office, Smart Board, IELTS…" className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"/>
+                <textarea value={editData.skills} onChange={e=>setEditData({...editData,skills:e.target.value})} rows={2} placeholder="e.g. MS Office, Smart Board, IELTS…" className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200 resize-none"/>
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-slate-700">References</label>
-                <textarea value={editData.references} onChange={e=>setEditData({...editData,references:e.target.value})} rows={2} placeholder="Name, Position, Phone…" className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"/>
+                <textarea value={editData.references} onChange={e=>setEditData({...editData,references:e.target.value})} rows={2} placeholder="Name, Position, Phone…" className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200 resize-none"/>
               </div>
             </div>
 
@@ -440,14 +440,14 @@ export default function TeacherHiring() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-slate-700">Status</label>
-                <Dropdown value={editData.status} onChange={e=>setEditData({...editData,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                <Dropdown value={editData.status} onChange={e=>setEditData({...editData,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                   {Object.keys(statusColors).map(s=><option key={s}>{s}</option>)}
                 </Dropdown>
               </div>
               <Input label="Interview Date" type="datetime-local" value={editData.interviewDate} onChange={e=>setEditData({...editData,interviewDate:e.target.value})}/>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-slate-700">Remarks</label>
-                <textarea value={editData.remarks} onChange={e=>setEditData({...editData,remarks:e.target.value})} rows={1} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"/>
+                <textarea value={editData.remarks} onChange={e=>setEditData({...editData,remarks:e.target.value})} rows={1} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200 resize-none"/>
               </div>
             </div>
 

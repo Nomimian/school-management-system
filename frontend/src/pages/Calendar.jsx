@@ -80,9 +80,9 @@ export default function Calendar() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Card className="lg:col-span-2 p-5">
           <div className="flex items-center justify-between mb-5">
-            <button onClick={prevMonth} className="p-2 rounded-xl hover:bg-blue-50 text-slate-500"><ChevronLeft size={18}/></button>
+            <button onClick={prevMonth} className="p-2 rounded-xl hover:bg-primary-50 text-slate-500"><ChevronLeft size={18}/></button>
             <h3 className="font-display font-bold text-slate-800 text-lg">{MONTHS[month]} {year}</h3>
-            <button onClick={nextMonth} className="p-2 rounded-xl hover:bg-blue-50 text-slate-500"><ChevronRight size={18}/></button>
+            <button onClick={nextMonth} className="p-2 rounded-xl hover:bg-primary-50 text-slate-500"><ChevronRight size={18}/></button>
           </div>
           <div className="grid grid-cols-7 mb-2">
             {DAYS.map(d=><div key={d} className="text-center text-xs font-bold text-slate-400 uppercase tracking-wider py-2">{d}</div>)}
@@ -96,7 +96,7 @@ export default function Calendar() {
               const isSun = idx%7===0;
               return (
                 <button type="button" key={day} onClick={()=>openCreate(dateStr)} title="Add event on this day"
-                  className={`text-left min-h-[64px] rounded-xl p-1.5 border transition-all cursor-pointer ${isToday?'bg-primary-600 border-primary-500 text-white hover:brightness-110':isSun?'bg-red-50 border-red-100 hover:bg-red-100':'bg-white border-slate-100 hover:bg-blue-50 hover:border-blue-200'}`}>
+                  className={`text-left min-h-[64px] rounded-xl p-1.5 border transition-all cursor-pointer ${isToday?'bg-primary-600 border-primary-500 text-white hover:brightness-110':isSun?'bg-red-50 border-red-100 hover:bg-red-100':'bg-white border-slate-100 hover:bg-primary-50 hover:border-blue-200'}`}>
                   <div className={`text-sm font-bold mb-1 ${isToday?'text-white':isSun?'text-red-400':'text-slate-700'}`}>{day}</div>
                   <div className="space-y-0.5">
                     {dayEvents.slice(0,2).map(ev=>(
@@ -134,7 +134,7 @@ export default function Calendar() {
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5 flex-shrink-0">
-                    <button onClick={()=>openEdit(ev)} className="p-1.5 rounded-lg text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-colors"><Pencil size={13}/></button>
+                    <button onClick={()=>openEdit(ev)} className="p-1.5 rounded-lg text-slate-300 hover:text-blue-500 hover:bg-primary-50 transition-colors"><Pencil size={13}/></button>
                     <button onClick={()=>remove(ev)} className="p-1.5 rounded-lg text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors"><X size={14}/></button>
                   </div>
                 </div>
@@ -150,7 +150,7 @@ export default function Calendar() {
           <Input label="Time" value={form.time} onChange={e=>setForm({...form,time:e.target.value})} placeholder="e.g. 9:00 AM – 12:00 PM"/>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Event Type</label>
-            <Dropdown value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+            <Dropdown value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
               {TYPES.map(t=><option key={t}>{t}</option>)}
             </Dropdown>
           </div>

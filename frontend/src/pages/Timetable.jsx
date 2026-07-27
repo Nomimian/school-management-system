@@ -125,7 +125,7 @@ export default function Timetable() {
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Select Class</label>
           <Dropdown value={selectedClass} onChange={e => setSelectedClass(e.target.value)} disabled={editing}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:opacity-60">
+            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:opacity-60">
             {classes.length === 0 && <option value="">No classes yet</option>}
             {classes.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
           </Dropdown>

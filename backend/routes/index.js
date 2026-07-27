@@ -40,6 +40,12 @@ router.put ('/auth/change-password',  protect,
     body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters.') ],
   validate, authCtrl.changePassword);
 
+// ── PUBLIC SCHOOL BRANDING (no auth) ────────────────────────────────────────
+// Login screen needs the school's name/logo/accent BEFORE anyone signs in.
+// Returns presentational fields only (see controller). Must be declared before
+// the `router.use(protect, requireSchool)` gate further down.
+router.get('/school/public', schoolCtrl.getPublicBranding);
+
 // ── SCHOOL PROFILE (own tenant only) ────────────────────────────────────────
 // getSchool/createSchool must work before a school is linked, so they only
 // require auth; the controller enforces ownership.

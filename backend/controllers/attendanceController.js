@@ -30,6 +30,17 @@ exports.markBulk = async (req, res) => {
   try {
     const { records, date, class: cls } = req.body;
     // records = [{ student: id, status: 'Present' }, ...]
+    if (!Array.isArray(records) || records.length === 0)
+      return res.status(400).json({ success: false, message: 'records must be a non-empty array.' });
+    if (!date)
+      return res.status(400).json({ success: false, message: 'A date is required.' });
+
+    // Reject any student id that isn't in this school (no cross-tenant writes).
+    const ids = [...new Set(records.map(r => String(r.student)))];
+    const validCount = await Student.countDocuments({ _id: { $in: ids }, school: req.user.school });
+    if (validCount !== ids.length)
+      return res.status(400).json({ success: false, message: 'One or more students do not belong to your school.' });
+
     const ops = records.map(r => ({
       updateOne: {
         filter: { student: r.student, date: new Date(date), school: req.user.school },

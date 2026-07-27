@@ -49,7 +49,7 @@ export default function ParentChild() {
       {/* Header */}
       <Card className="p-5">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-600 to-blue-500 flex items-center justify-center text-white text-2xl font-display font-bold flex-shrink-0">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-500 flex items-center justify-center text-white text-2xl font-display font-bold flex-shrink-0">
             {student.name.charAt(0)}
           </div>
           <div className="min-w-0 flex-1">
@@ -69,7 +69,7 @@ export default function ParentChild() {
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
-              ${tab === t.id ? 'bg-primary-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-blue-50'}`}>
+              ${tab === t.id ? 'bg-primary-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-primary-50'}`}>
             <t.icon size={15}/>{t.label}
           </button>
         ))}
@@ -148,7 +148,7 @@ function TableCard({ head, rows, empty, emptyText }) {
             </thead>
             <tbody>
               {rows.map((r, i) => (
-                <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-blue-50/40">
+                <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-primary-50/40">
                   {r.map((cell, j) => <td key={j} className="px-4 py-3 text-slate-700 whitespace-nowrap">{cell}</td>)}
                 </tr>
               ))}

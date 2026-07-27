@@ -4,10 +4,12 @@ import { DollarSign, Search, Plus, CheckCircle, Clock, AlertCircle, Loader2, Ref
 import { feeAPI, studentAPI } from '../services/api';
 import { useSchool } from '../hooks/useSchool.jsx';
 import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/print/PrintComponents.jsx';
-import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, Dropdown } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, Dropdown, EmptyState, TableSkeleton } from '../components/ui';
 
 const statusColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
-const CURRENT_YEAR = new Date().getFullYear();
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CURRENT_YEAR  = new Date().getFullYear();
+const CURRENT_MONTH = MONTHS[new Date().getMonth()];
 
 export default function Fees() {
   const toast = useToast();
@@ -22,7 +24,7 @@ export default function Fees() {
   const [selected, setSelected]   = useState(null);
   const [students, setStudents]   = useState([]);
   const [saving, setSaving]       = useState(false);
-  const [form, setForm]           = useState({ student:'', month:'May', year:CURRENT_YEAR, amount:'', method:'Cash' });
+  const [form, setForm]           = useState({ student:'', month:CURRENT_MONTH, year:CURRENT_YEAR, amount:'', paid:'', method:'Cash' });
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -43,18 +45,37 @@ export default function Fees() {
   }, []);
 
   const markPaid = async (id) => {
-    await feeAPI.markPaid(id, { method:'Cash' });
-    fetchAll();
-    toast.success('Marked as paid');
+    try {
+      await feeAPI.markPaid(id, { method:'Cash' });
+      fetchAll();
+      toast.success('Marked as paid');
+    } catch(e) { toast.error(e.message || 'Could not update payment'); }
   };
 
+  // Derived preview of the invoice being recorded (total vs paid → status/balance)
+  const pvTotal   = Number(form.amount) || 0;
+  const pvPaid    = form.paid === '' ? pvTotal : Math.max(0, Number(form.paid) || 0);
+  const pvStatus  = pvPaid <= 0 ? 'Pending' : pvPaid >= pvTotal ? 'Paid' : 'Partial';
+  const pvBalance = Math.max(pvTotal - pvPaid, 0);
+
   const recordPayment = async () => {
+    if (!form.student) return toast.error('Please select a student.');
+    if (pvTotal <= 0)  return toast.error('Enter a valid total fee amount.');
     setSaving(true);
     try {
-      await feeAPI.create({ ...form, paid: Number(form.amount), balance:0, status:'Paid', dueDate: new Date(), paidDate: new Date() });
+      await feeAPI.create({
+        student: form.student, month: form.month, year: form.year, method: form.method,
+        amount: pvTotal, paid: pvPaid, balance: pvBalance, status: pvStatus,
+        dueDate: new Date(), paidDate: pvPaid > 0 ? new Date() : undefined,
+      });
       setModal(false);
+      setForm({ student:'', month:CURRENT_MONTH, year:CURRENT_YEAR, amount:'', paid:'', method:'Cash' });
       fetchAll();
-      toast.success('Payment recorded');
+      toast.success(
+        pvStatus === 'Paid' ? 'Payment recorded'
+          : pvStatus === 'Partial' ? `Partial payment recorded — balance Rs ${pvBalance.toLocaleString()}`
+          : 'Invoice created (pending)'
+      );
     } catch(e) { toast.error(e.message); }
     finally { setSaving(false); }
   };
@@ -146,17 +167,17 @@ export default function Fees() {
           <div className="relative flex-1 max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
             <input placeholder="Search student, class…" value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200"/>
           </div>
           <Dropdown value={filterStatus} onChange={e => setFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
             <option value="">All Status</option>
             {['Paid','Pending','Overdue','Partial'].map(s => <option key={s}>{s}</option>)}
           </Dropdown>
         </div>
 
         <div className="overflow-x-auto">
-          {loading ? <div className="flex items-center justify-center py-16"><Loader2 size={28} className="animate-spin text-primary-500"/></div> : (
+          {loading ? <TableSkeleton rows={6} cols={9}/> : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50">
@@ -167,7 +188,7 @@ export default function Fees() {
               </thead>
               <tbody>
                 {fees.map(r => (
-                  <tr key={r._id} className="border-b border-slate-50 hover:bg-blue-50/40">
+                  <tr key={r._id} className="border-b border-slate-50 hover:bg-primary-50/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Avatar name={r.student?.name||'?'} size="sm"/>
@@ -195,7 +216,10 @@ export default function Fees() {
               </tbody>
             </table>
           )}
-          {!loading && fees.length === 0 && <div className="text-center py-12 text-slate-400">No fee records found</div>}
+          {!loading && fees.length === 0 && (
+            <EmptyState icon={DollarSign} title="No fee records yet"
+              subtitle="Record a payment to start tracking fees, dues and receipts for your students." />
+          )}
         </div>
       </Card>
 
@@ -205,7 +229,7 @@ export default function Fees() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Student</label>
             <Dropdown value={form.student} onChange={e => setForm({...form, student:e.target.value})}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
               <option value="">Select student</option>
               {students.map(s => <option key={s._id} value={s._id}>{s.name} ({s.class})</option>)}
             </Dropdown>
@@ -214,20 +238,38 @@ export default function Fees() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Month</label>
               <Dropdown value={form.month} onChange={e => setForm({...form, month:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m => <option key={m}>{m}</option>)}
               </Dropdown>
             </div>
             <Input label="Year" type="number" value={form.year} onChange={e => setForm({...form, year:Number(e.target.value)})}/>
           </div>
-          <Input label="Amount (Rs)" type="number" value={form.amount} onChange={e => setForm({...form, amount:e.target.value})} placeholder="5000"/>
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Total Fee (Rs)" type="number" value={form.amount} onChange={e => setForm({...form, amount:e.target.value})} placeholder="5000"/>
+            <Input label="Amount Paid Now" type="number" value={form.paid} onChange={e => setForm({...form, paid:e.target.value})} placeholder="Full if blank"/>
+          </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Payment Method</label>
             <Dropdown value={form.method} onChange={e => setForm({...form, method:e.target.value})}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
               {['Cash','Bank Transfer','Online','Cheque'].map(m => <option key={m}>{m}</option>)}
             </Dropdown>
           </div>
+
+          {/* Live preview: status + balance so partial payments are unambiguous */}
+          {pvTotal > 0 && (
+            <div className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-slate-500">This invoice:</span>
+                <Badge variant={statusColors[pvStatus]}>{pvStatus}</Badge>
+              </div>
+              <div className="text-sm text-slate-600">
+                Paid <strong className="text-emerald-600">Rs {pvPaid.toLocaleString()}</strong>
+                {pvBalance > 0 && <> · Balance <strong className="text-red-500">Rs {pvBalance.toLocaleString()}</strong></>}
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={() => setModal(false)}>Cancel</Button>
             <Button variant="primary" onClick={recordPayment} disabled={saving}>{saving ? 'Saving…' : 'Record Payment'}</Button>

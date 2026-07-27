@@ -77,7 +77,7 @@ export default function HR() {
           <div className="relative max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search staff…"
-              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200"/>
           </div>
         </div>
         {loading ? <TableSkeleton rows={6} cols={6} /> : filtered.length === 0 ? (
@@ -90,7 +90,7 @@ export default function HR() {
               <thead><tr className="border-b border-slate-100 bg-slate-50/50">{['Staff Member','Role','Department','Salary','Join Date','Status','Action'].map(h=><th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>)}</tr></thead>
               <tbody>
                 {filtered.map(s => (
-                  <tr key={s._id} className="border-b border-slate-50 hover:bg-blue-50/40">
+                  <tr key={s._id} className="border-b border-slate-50 hover:bg-primary-50/40">
                     <td className="px-4 py-3"><div className="flex items-center gap-3"><Avatar name={s.name} size="md"/><div><div className="font-medium text-slate-800">{s.name}</div><div className="text-xs text-slate-400">{s.staffId}</div></div></div></td>
                     <td className="px-4 py-3"><Badge variant={roleColors[s.role]||'gray'}>{s.role}</Badge></td>
                     <td className="px-4 py-3 text-slate-600">{s.department}</td>
@@ -117,7 +117,7 @@ export default function HR() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Role</label>
-              <Dropdown value={form.role} onChange={e=>setForm({...form,role:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.role} onChange={e=>setForm({...form,role:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 <option value="">Select role</option>
                 {ROLES.map(r=><option key={r}>{r}</option>)}
               </Dropdown>
@@ -135,13 +135,13 @@ export default function HR() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Gender</label>
-              <Dropdown value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 <option>Male</option><option>Female</option>
               </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Status</label>
-              <Dropdown value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 <option>Active</option><option>Inactive</option>
               </Dropdown>
             </div>

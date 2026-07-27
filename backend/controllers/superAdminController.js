@@ -1,7 +1,16 @@
 // SuperAdmin Controller - handles all superadmin operations
 const jwt      = require('jsonwebtoken');
 const bcrypt   = require('bcryptjs');
+const crypto   = require('crypto');
 const mongoose = require('mongoose');
+
+// Constant-time string compare (hash first so unequal lengths don't throw and
+// timing doesn't leak length).
+const safeEqual = (a, b) => {
+  const ha = crypto.createHash('sha256').update(String(a)).digest();
+  const hb = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(ha, hb);
+};
 const School   = require('../models/School');
 const User     = require('../models/User');
 const { PlatformSettings, AuditLog, Announcement } = require('../models/Platform');
@@ -26,10 +35,18 @@ const logActivity = (action, details, adminEmail='superadmin') => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const SA_EMAIL = process.env.SA_EMAIL || 'superadmin@edumanage.pro';
-    const SA_PASS  = process.env.SA_PASSWORD || 'SuperAdmin@123';
+    const SA_EMAIL = process.env.SA_EMAIL;
+    const SA_PASS  = process.env.SA_PASSWORD;
 
-    if (email !== SA_EMAIL || password !== SA_PASS) {
+    // No published defaults: if the platform owner hasn't configured credentials,
+    // the portal is closed rather than reachable with a well-known password.
+    if (!SA_EMAIL || !SA_PASS) {
+      return res.status(503).json({ success:false, message:'SuperAdmin access is not configured on this server.' });
+    }
+
+    const emailOk = safeEqual(String(email || '').toLowerCase().trim(), SA_EMAIL.toLowerCase().trim());
+    const passOk  = safeEqual(password || '', SA_PASS);
+    if (!emailOk || !passOk) {
       return res.status(401).json({ success:false, message:'Invalid superadmin credentials.' });
     }
     const token = jwt.sign(

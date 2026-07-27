@@ -159,7 +159,7 @@ export default function Accounts() {
       <Card>
         <div className="p-4 border-b border-slate-100 flex gap-3">
           <Dropdown value={filterType} onChange={e=>setType(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
             <option value="">All Records</option>
             <option>Income</option>
             <option>Expense</option>
@@ -181,7 +181,7 @@ export default function Accounts() {
               </thead>
               <tbody>
                 {records.map(r => (
-                  <tr key={r._id} className="border-b border-slate-50 hover:bg-blue-50/40">
+                  <tr key={r._id} className="border-b border-slate-50 hover:bg-primary-50/40">
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${r.type==='Income' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
                         {r.type==='Income' ? <TrendingUp size={10}/> : <TrendingDown size={10}/>} {r.type}
@@ -212,14 +212,14 @@ export default function Accounts() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Type</label>
               <Dropdown value={form.type} onChange={e=>{const t=e.target.value; setForm(f=>({...f,type:t,category:(t==='Income'?INCOME_CATEGORIES:EXPENSE_CATEGORIES)[0]}));}}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 <option>Income</option><option>Expense</option>
               </Dropdown>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Category</label>
               <Dropdown value={form.category} onChange={e=>setForm({...form,category:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 {categories.map(c=><option key={c}>{c}</option>)}
               </Dropdown>
             </div>

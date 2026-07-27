@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { Plus, Search, Eye, Edit2, Trash2, GraduationCap, Loader2, RefreshCw, Upload, X } from 'lucide-react';
 import { studentAPI, schoolAPI } from '../services/api';
 import { useClasses } from '../hooks/useClasses.js';
-import { SectionHeader, Card, Badge, Button, Input, Modal, Avatar, useToast, useConfirm, Dropdown } from '../components/ui';
+import { SectionHeader, Card, Badge, Button, Input, Modal, Avatar, useToast, useConfirm, Dropdown, TableSkeleton } from '../components/ui';
 
 const API_BASE = SERVER_URL;
 const feeColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
@@ -108,15 +108,15 @@ export default function Students() {
           <div className="relative flex-1 max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
             <input placeholder="Search name, roll, ID…" value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200"/>
           </div>
           <Dropdown value={filterClass} onChange={e => setFilterClass(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
             <option value="">All Classes</option>
             {classes.map(c => <option key={c}>{c}</option>)}
           </Dropdown>
           <Dropdown value={filterFee} onChange={e => setFilterFee(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
             <option value="">All Fee Status</option>
             {['Paid','Pending','Overdue','Partial'].map(s => <option key={s}>{s}</option>)}
           </Dropdown>
@@ -124,7 +124,7 @@ export default function Students() {
 
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-16"><Loader2 size={28} className="animate-spin text-primary-500"/></div>
+            <TableSkeleton rows={8} cols={6}/>
           ) : (
             <table className="w-full text-sm">
               <thead>
@@ -136,7 +136,7 @@ export default function Students() {
               </thead>
               <tbody>
                 {students.map(s => (
-                  <tr key={s._id} className="border-b border-slate-50 hover:bg-blue-50/40">
+                  <tr key={s._id} className="border-b border-slate-50 hover:bg-primary-50/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {s.photo
@@ -182,7 +182,7 @@ export default function Students() {
             <div className="sm:col-span-2 flex items-center gap-4 pb-2 border-b border-slate-100">
               {editData.photo
                 ? <img src={`${API_BASE}${editData.photo}`} alt="Student" className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-200 shadow-sm"/>
-                : <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-600 to-blue-500 flex items-center justify-center text-white text-xl font-bold">{editData.name?.charAt(0) || <GraduationCap size={22}/>}</div>}
+                : <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-500 flex items-center justify-center text-white text-xl font-bold">{editData.name?.charAt(0) || <GraduationCap size={22}/>}</div>}
               <div>
                 <div className="text-sm font-medium text-slate-700 mb-1">Student Photo</div>
                 <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange}/>
@@ -200,7 +200,7 @@ export default function Students() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Class</label>
               <Dropdown value={editData.class} onChange={e => setEditData({...editData, class:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 <option value="">Select Class</option>
                 {classes.map(c => <option key={c}>{c}</option>)}
               </Dropdown>
@@ -208,7 +208,7 @@ export default function Students() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Gender</label>
               <Dropdown value={editData.gender} onChange={e => setEditData({...editData, gender:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 <option>Male</option><option>Female</option>
               </Dropdown>
             </div>
@@ -222,7 +222,7 @@ export default function Students() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Fee Status</label>
               <Dropdown value={editData.feeStatus} onChange={e => setEditData({...editData, feeStatus:e.target.value})}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 {['Paid','Pending','Overdue','Partial'].map(s => <option key={s}>{s}</option>)}
               </Dropdown>
             </div>

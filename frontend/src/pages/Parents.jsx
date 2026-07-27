@@ -110,7 +110,7 @@ export default function Parents() {
               </thead>
               <tbody>
                 {parents.map(p => (
-                  <tr key={p._id} className="border-b border-slate-50 last:border-0 hover:bg-blue-50/40 align-top">
+                  <tr key={p._id} className="border-b border-slate-50 last:border-0 hover:bg-primary-50/40 align-top">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-purple-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -241,13 +241,13 @@ function ChildPicker({ selected, onChange }) {
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search students by name to link…"
-          className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+          className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200"/>
         {searching && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 animate-spin"/>}
         {results.length > 0 && (
           <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-float max-h-56 overflow-y-auto scrollbar-thin">
             {results.map(s => (
               <button key={s._id} onClick={() => add(s)}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-blue-50 text-left border-b border-slate-50 last:border-0">
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-primary-50 text-left border-b border-slate-50 last:border-0">
                 <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-700 flex items-center justify-center text-white text-xs font-bold">{s.name.charAt(0)}</div>
                 <div className="min-w-0">
                   <div className="text-sm font-medium text-slate-700 truncate">{s.name}</div>

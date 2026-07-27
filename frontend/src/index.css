@@ -118,3 +118,115 @@ a, button, input, select, textarea, [role="button"], .transition-all {
   background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent);
   animation: shimmer 1.4s infinite;
 }
+
+/* ── Auth / login screen motion system ──────────────────────────────────────
+   Shared by the school Login and the SuperAdmin portal. Everything here is
+   GPU-friendly (transform/opacity only) so it stays smooth on low-end laptops. */
+@keyframes authGradient {
+  0%   { background-position:   0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+@keyframes floatBlob {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%     { transform: translate(30px,-40px) scale(1.08); }
+  66%     { transform: translate(-25px,25px) scale(.95); }
+}
+@keyframes floatSoft {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  50%     { transform: translateY(-16px) rotate(3deg); }
+}
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes riseInLeft {
+  from { opacity: 0; transform: translateX(-26px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulseRing {
+  0%   { transform: scale(.9);  opacity: .7; }
+  70%  { transform: scale(1.6); opacity: 0;  }
+  100% { transform: scale(1.6); opacity: 0;  }
+}
+@keyframes sheen {
+  0%   { transform: translateX(-120%) skewX(-18deg); }
+  60%,100% { transform: translateX(240%) skewX(-18deg); }
+}
+@keyframes twinkle {
+  0%,100% { opacity: .15; transform: scale(.8); }
+  50%     { opacity: .9;  transform: scale(1.15); }
+}
+@keyframes spinSlow { to { transform: rotate(360deg); } }
+
+/* Brand-shade defaults so the auth gradient is coloured before the JS theme
+   injector (config/theme.js) runs. Overridden at runtime with the school's
+   saved accent, which is how the login screen recolours with the app theme. */
+:root {
+  --brand:        #1d4ed8;
+  --brand-light:  #6f9bf0;
+  --brand-mid:    #1a46c2;
+  --brand-dark:   #17357e;
+  --brand-darker: #0f2356;
+}
+.auth-gradient {
+  background: linear-gradient(125deg,
+    var(--brand-darker), var(--brand-dark), var(--brand-mid),
+    var(--brand), var(--brand-dark));
+  background-size: 300% 300%;
+  animation: authGradient 18s ease infinite;
+}
+.auth-blob   { animation: floatBlob 16s ease-in-out infinite; will-change: transform; }
+.auth-float  { animation: floatSoft 7s ease-in-out infinite; }
+.auth-rise   { animation: riseIn .7s cubic-bezier(.16,.84,.44,1) both; }
+.auth-rise-l { animation: riseInLeft .7s cubic-bezier(.16,.84,.44,1) both; }
+.auth-d1 { animation-delay: .08s; }
+.auth-d2 { animation-delay: .18s; }
+.auth-d3 { animation-delay: .30s; }
+.auth-d4 { animation-delay: .42s; }
+.auth-d5 { animation-delay: .54s; }
+.auth-d6 { animation-delay: .66s; }
+.auth-spin-slow { animation: spinSlow 34s linear infinite; }
+.auth-twinkle   { animation: twinkle 3.5s ease-in-out infinite; }
+/* Sweeping sheen used on the primary auth button */
+.auth-sheen { position: relative; overflow: hidden; }
+.auth-sheen::after {
+  content: ''; position: absolute; top: 0; left: 0; width: 45%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+}
+.auth-sheen:hover::after { animation: sheen 1s ease; }
+/* Premium glass card — crisp top highlight + layered depth shadow */
+.auth-card {
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,.7) inset,
+    0 34px 70px -34px rgba(15,35,86,.45),
+    0 10px 26px -14px rgba(15,35,86,.20);
+}
+/* Fine grid mesh, faded toward the edges — adds depth to the brand panel */
+.auth-grid {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.055) 1px, transparent 1px);
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 75% at 50% 35%, #000 35%, transparent 100%);
+          mask-image: radial-gradient(ellipse 75% 75% at 50% 35%, #000 35%, transparent 100%);
+}
+/* Soft moving spotlight glow */
+.auth-spotlight {
+  background: radial-gradient(closest-side, rgba(255,255,255,.16), transparent 70%);
+  animation: floatBlob 20s ease-in-out infinite;
+}
+/* Live "online" pulse ring */
+.auth-pulse { position: relative; }
+.auth-pulse::before {
+  content: ''; position: absolute; inset: 0; border-radius: 9999px;
+  background: currentColor; animation: pulseRing 2.4s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-gradient, .auth-blob, .auth-float, .auth-rise, .auth-rise-l,
+  .auth-spin-slow, .auth-twinkle, .auth-pulse::before, .auth-sheen::after {
+    animation: none !important;
+  }
+}

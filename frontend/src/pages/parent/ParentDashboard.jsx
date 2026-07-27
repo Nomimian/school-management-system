@@ -47,7 +47,7 @@ export default function ParentDashboard() {
               className="text-left group">
               <Card hover className="p-5 h-full">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-600 to-blue-500 flex items-center justify-center text-white text-xl font-display font-bold flex-shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-500 flex items-center justify-center text-white text-xl font-display font-bold flex-shrink-0">
                     {student.name.charAt(0)}
                   </div>
                   <div className="min-w-0 flex-1">

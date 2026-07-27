@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { Dropdown } from './Dropdown.jsx';
@@ -10,7 +11,7 @@ export { Dropdown };
 // ─── STAT CARD ────────────────────────────────────────────────────────────────
 export function StatCard({ icon: Icon, label, value, sub, color = 'blue', trend, onClick }) {
   const colors = {
-    blue:   { grad: 'from-blue-500 to-blue-700',      tint: 'bg-blue-500/10',    glow: 'shadow-blue-500/30' },
+    blue:   { grad: 'from-primary-600 to-primary-700', tint: 'bg-primary-100',   glow: 'shadow-primary-500/30' },
     orange: { grad: 'from-orange-400 to-orange-600',  tint: 'bg-orange-500/10',  glow: 'shadow-orange-500/30' },
     green:  { grad: 'from-emerald-500 to-emerald-700',tint: 'bg-emerald-500/10', glow: 'shadow-emerald-500/30' },
     purple: { grad: 'from-purple-500 to-purple-700',  tint: 'bg-purple-500/10',  glow: 'shadow-purple-500/30' },
@@ -44,7 +45,7 @@ export function StatCard({ icon: Icon, label, value, sub, color = 'blue', trend,
 // ─── BADGE ────────────────────────────────────────────────────────────────────
 export function Badge({ children, variant = 'blue', dot = false }) {
   const variants = {
-    blue:   'bg-blue-50 text-blue-700 ring-blue-600/15',
+    blue:   'bg-primary-50 text-primary-700 ring-primary-600/15',
     green:  'bg-emerald-50 text-emerald-700 ring-emerald-600/15',
     orange: 'bg-orange-50 text-orange-700 ring-orange-600/15',
     red:    'bg-red-50 text-red-600 ring-red-600/15',
@@ -93,7 +94,7 @@ export function Button({ children, variant = 'primary', size = 'md', onClick, cl
     primary: 'bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 shadow-md',
     secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50',
     danger: 'bg-red-500 text-white hover:bg-red-600',
-    ghost: 'text-primary-600 hover:bg-blue-50',
+    ghost: 'text-primary-600 hover:bg-primary-50',
     success: 'bg-emerald-500 text-white hover:bg-emerald-600',
     print: 'bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-700 hover:to-purple-600 shadow-md shadow-purple-500/25',
   };
@@ -143,12 +144,14 @@ export function Switch({ checked, onChange, size = 'md', disabled = false }) {
 }
 
 // ─── TEXTAREA ──────────────────────────────────────────────────────────────────
-export function Textarea({ label, rows = 3, ...props }) {
+export function Textarea({ label, rows = 3, id, ...props }) {
+  const gid = useId();
+  const fid = id || gid;
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <label className="text-sm font-medium text-slate-700">{label}</label>}
-      <textarea rows={rows} {...props}
-        className="px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-slate-50 focus:bg-white placeholder:text-slate-400 resize-y" />
+      {label && <label htmlFor={fid} className="text-sm font-medium text-slate-700">{label}</label>}
+      <textarea id={fid} rows={rows} {...props}
+        className="px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 bg-slate-50 focus:bg-white placeholder:text-slate-400 resize-y" />
     </div>
   );
 }
@@ -174,24 +177,29 @@ export function TableSkeleton({ rows = 6, cols = 5 }) {
 }
 
 // ─── INPUT ────────────────────────────────────────────────────────────────────
-export function Input({ label, ...props }) {
+export function Input({ label, id, ...props }) {
+  const gid = useId();
+  const fid = id || gid;
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <label className="text-sm font-medium text-slate-700">{label}</label>}
+      {label && <label htmlFor={fid} className="text-sm font-medium text-slate-700">{label}</label>}
       <input
+        id={fid}
         {...props}
-        className="px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-slate-50 focus:bg-white placeholder:text-slate-400"
+        className="px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 bg-slate-50 focus:bg-white placeholder:text-slate-400"
       />
     </div>
   );
 }
 
 // ─── SELECT (labeled) — now powered by the custom <Dropdown> ────────────────────
-export function Select({ label, children, className = '', ...props }) {
+export function Select({ label, children, className = '', id, ...props }) {
+  const gid = useId();
+  const fid = id || gid;
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <label className="text-sm font-medium text-slate-700">{label}</label>}
-      <Dropdown {...props} className={`w-full ${className}`}>
+      {label && <label htmlFor={fid} className="text-sm font-medium text-slate-700">{label}</label>}
+      <Dropdown id={fid} {...props} className={`w-full ${className}`}>
         {children}
       </Dropdown>
     </div>
@@ -211,7 +219,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }) {
         className={`bg-white rounded-3xl shadow-float w-full ${sizes[size]} max-h-[90vh] flex flex-col animate-[popIn_.18s_ease-out] ring-1 ring-black/5`}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
           <h3 className="font-display font-bold text-slate-800 text-lg">{title}</h3>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+          <button onClick={onClose} aria-label="Close dialog" className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -243,7 +251,7 @@ export function Table({ columns, data, onRowClick }) {
             <tr
               key={row.id || i}
               onClick={() => onRowClick && onRowClick(row)}
-              className={`border-b border-slate-50 last:border-0 transition-colors hover:bg-blue-50/50 ${onRowClick ? 'cursor-pointer' : ''}`}
+              className={`border-b border-slate-50 last:border-0 transition-colors hover:bg-primary-50 ${onRowClick ? 'cursor-pointer' : ''}`}
             >
               {columns.map(col => (
                 <td key={col.key} className="px-4 py-3 text-slate-700 whitespace-nowrap">
@@ -276,7 +284,7 @@ export function Avatar({ name, size = 'md', color = 'blue' }) {
 // ─── PROGRESS BAR ─────────────────────────────────────────────────────────────
 export function ProgressBar({ value, max = 100, color = 'blue' }) {
   const pct = Math.round((value / max) * 100);
-  const colors = { blue: 'bg-blue-500', green: 'bg-emerald-500', orange: 'bg-orange-500', red: 'bg-red-500' };
+  const colors = { blue: 'bg-primary-600', green: 'bg-emerald-500', orange: 'bg-orange-500', red: 'bg-red-500' };
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -291,8 +299,8 @@ export function ProgressBar({ value, max = 100, color = 'blue' }) {
 export function EmptyState({ icon: Icon, title, subtitle, action }) {
   return (
     <div className="flex flex-col items-center py-16 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/60 flex items-center justify-center mb-4 ring-1 ring-blue-100">
-        {Icon && <Icon size={28} className="text-blue-400" />}
+      <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mb-4 ring-1 ring-primary-100">
+        {Icon && <Icon size={28} className="text-primary-400" />}
       </div>
       <h3 className="font-display font-semibold text-slate-600 mb-1">{title}</h3>
       {subtitle && <p className="text-slate-400 text-sm max-w-sm">{subtitle}</p>}

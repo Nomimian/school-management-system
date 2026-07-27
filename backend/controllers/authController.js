@@ -11,20 +11,10 @@ const hashToken = (t) => crypto.createHash('sha256').update(String(t)).digest('h
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
 
-// @route POST /api/auth/register
-exports.register = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ success: false, message: 'Email already registered.' });
-
-    const user = await User.create({ name, email, password, role });
-    const token = signToken(user._id);
-    res.status(201).json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
+// NOTE: public self-registration is intentionally NOT implemented. New schools
+// and their admin accounts are provisioned exclusively by the SuperAdmin panel,
+// and staff/parent accounts by a school operator. A former `register` handler
+// that trusted `role` from the body was removed as a privilege-escalation risk.
 
 // @route POST /api/auth/login
 exports.login = async (req, res) => {

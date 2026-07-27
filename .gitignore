@@ -70,7 +70,8 @@ desktop.ini
 # Optional Uploads
 # Uncomment if uploads should not be tracked
 # ==========================
-# backend/uploads/
+backend/uploads/*
+!backend/uploads/.gitkeep
 # frontend/public/uploads/
 
 # ==========================

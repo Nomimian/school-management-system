@@ -50,8 +50,8 @@ export default function NotificationBell({ dark = false }) {
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen(o => !o)}
-        className={`relative p-2.5 rounded-xl transition-colors ${dark ? 'text-white hover:bg-white/15' : 'text-slate-500 hover:bg-blue-50 hover:text-primary-700'}`}>
+      <button onClick={() => setOpen(o => !o)} aria-label="Notifications"
+        className={`relative p-2.5 rounded-xl transition-colors ${dark ? 'text-white hover:bg-white/15' : 'text-slate-500 hover:bg-primary-50 hover:text-primary-700'}`}>
         <Bell size={18}/>
         {unread > 0 && (
           <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold">
@@ -75,7 +75,7 @@ export default function NotificationBell({ dark = false }) {
               return (
                 <li key={n._id}>
                   <button onClick={() => openItem(n)}
-                    className={`w-full text-left px-4 py-3 border-b border-slate-50 flex gap-3 items-start hover:bg-blue-50/60 transition-colors ${!n.read ? 'bg-blue-50/40' : ''}`}>
+                    className={`w-full text-left px-4 py-3 border-b border-slate-50 flex gap-3 items-start hover:bg-primary-50/60 transition-colors ${!n.read ? 'bg-blue-50/40' : ''}`}>
                     <span className={`w-8 h-8 rounded-xl ${st.tint} flex items-center justify-center flex-shrink-0`}><st.Icon size={15} className={st.color}/></span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-slate-700 font-medium truncate">{n.title}</p>

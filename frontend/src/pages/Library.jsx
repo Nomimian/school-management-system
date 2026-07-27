@@ -97,10 +97,10 @@ export default function LibraryPage() {
           <div className="relative max-w-xs flex-1 min-w-[180px]">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search books…"
-              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200"/>
+              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-200"/>
           </div>
           <Dropdown value={category} onChange={e=>setCategory(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+            className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
             <option value="">All Categories</option>
             {CATEGORIES.map(c=><option key={c}>{c}</option>)}
           </Dropdown>
@@ -117,7 +117,7 @@ export default function LibraryPage() {
                 {books.map(b => {
                   const issued = b.copies - b.available;
                   return (
-                    <tr key={b._id} className="border-b border-slate-50 hover:bg-blue-50/40">
+                    <tr key={b._id} className="border-b border-slate-50 hover:bg-primary-50/40">
                       <td className="px-4 py-3"><div className="flex items-center gap-3"><div className="w-9 h-12 rounded-lg bg-gradient-to-b from-primary-600 to-primary-800 flex items-center justify-center flex-shrink-0"><Library size={14} className="text-white"/></div><span className="font-medium text-slate-800 max-w-[180px] leading-tight">{b.title}</span></div></td>
                       <td className="px-4 py-3 text-slate-600">{b.author}</td>
                       <td className="px-4 py-3"><Badge variant={categoryColors[b.category]||'blue'}>{b.category}</Badge></td>
@@ -149,7 +149,7 @@ export default function LibraryPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Category</label>
-              <Dropdown value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <Dropdown value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
                 <option value="">Select</option>
                 {CATEGORIES.map(c=><option key={c}>{c}</option>)}
               </Dropdown>

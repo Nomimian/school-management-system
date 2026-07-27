@@ -9,6 +9,9 @@ const routes       = require('./routes/index');
 const errorHandler = require('./middleware/errorHandler');
 const { authLimiter, passwordResetLimiter } = require('./middleware/rateLimit');
 
+// Fail fast on a mis-configured environment (missing JWT_SECRET/MONGO_URI, etc.)
+require('./config/checkEnv')();
+
 const app = express();
 app.set('trust proxy', 1); // correct client IPs behind a proxy (for rate limiting)
 

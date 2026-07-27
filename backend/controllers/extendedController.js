@@ -269,6 +269,8 @@ exports.saveTimetable = async (req, res) => {
 exports.promoteStudents = async (req, res) => {
   try {
     const { promotions, academicYear } = req.body;
+    if (!Array.isArray(promotions) || promotions.length === 0)
+      return res.status(400).json({ success:false, message:'promotions must be a non-empty array.' });
     const ops = [];
     for (const p of promotions) {
       ops.push(Promotion.create({ ...p, academicYear, promotedBy: req.user._id, school: req.user.school }));
@@ -353,15 +355,19 @@ exports.generateReportCard = async (req, res) => {
       return           { grade:'F',  gpa:0.0, remarks:'Fail' };
     };
 
-    const finalGrade = getGrade(Number(percentage));
+    // With no results, a "0% / F / rank 0" card is misleading — report no-data.
+    const finalGrade = results.length
+      ? getGrade(Number(percentage))
+      : { grade: '—', gpa: null, remarks: 'No results recorded' };
 
     // Class rank (among students with results in same class)
-    const classResults = await Result.aggregate([
+    const classResults = results.length ? await Result.aggregate([
       { $match: { school: new mongoose.Types.ObjectId(req.user.school), exam: { $in: results.map(r=>r.exam?._id).filter(Boolean) } } },
       { $group: { _id:'$student', total:{ $sum:'$marks' } } },
       { $sort:  { total: -1 } },
-    ]);
-    const rank = classResults.findIndex(r => r._id?.toString() === studentId) + 1;
+    ]) : [];
+    const rankIdx = classResults.findIndex(r => r._id?.toString() === studentId);
+    const rank = rankIdx >= 0 ? rankIdx + 1 : null;
 
     const reportCard = {
       student: {
@@ -374,7 +380,8 @@ exports.generateReportCard = async (req, res) => {
         totalMax,
         percentage: Number(percentage),
         ...finalGrade,
-        passed,
+        passed: results.length ? passed : false,
+        hasResults: results.length > 0,
         rank,
         totalStudents: classResults.length,
         resultDate: new Date(),

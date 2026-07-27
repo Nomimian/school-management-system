@@ -5,6 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { dashboardAPI, feeAPI, attendanceAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useSchool } from '../hooks/useSchool.jsx';
+import { brandColor } from '../config/theme.js';
 
 const feeStatusColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
 const CURRENT_YEAR = new Date().getFullYear();
@@ -42,6 +43,7 @@ export default function Dashboard() {
     </div>
   );
 
+  const BRAND = brandColor();   // fee-collection series follows the school's accent
   const totalCollected = stats?.feeStats?.totalCollected || 0;
   const presentToday   = stats?.todayAttendance?.find(a => a._id === 'Present')?.count || 0;
   const totalStudents  = stats?.counts?.students || 0;
@@ -56,7 +58,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-blue-500 rounded-3xl p-6 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500 rounded-3xl p-6 text-white relative overflow-hidden">
         <div className="absolute right-6 top-0 w-48 h-48 rounded-full bg-white/5 -translate-y-12 translate-x-8" />
         <div className="absolute right-20 bottom-0 w-32 h-32 rounded-full bg-white/5 translate-y-8" />
         <div className="relative">
@@ -129,8 +131,8 @@ export default function Dashboard() {
             <AreaChart data={feeTrend}>
               <defs>
                 <linearGradient id="gc" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#1d4ed8" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#1d4ed8" stopOpacity={0}/>
+                  <stop offset="5%"  stopColor={BRAND} stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor={BRAND} stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
@@ -138,7 +140,7 @@ export default function Dashboard() {
               <YAxis tickFormatter={v=>`${(v/1000).toFixed(0)}K`} tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
               <Tooltip formatter={v=>`Rs ${(v/1000).toFixed(0)}K`} contentStyle={{borderRadius:12,border:'none',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}/>
               <Area type="monotone" dataKey="expected"  stroke="#10b981" strokeWidth={2} fill="none" strokeDasharray="5 5" name="Expected"/>
-              <Area type="monotone" dataKey="collected" stroke="#1d4ed8" strokeWidth={2.5} fill="url(#gc)" name="Collected"/>
+              <Area type="monotone" dataKey="collected" stroke={BRAND} strokeWidth={2.5} fill="url(#gc)" name="Collected"/>
             </AreaChart>
           </ResponsiveContainer>
         </Card>

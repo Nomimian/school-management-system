@@ -6,6 +6,7 @@ import {
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 import { feeAPI, attendanceAPI, studentAPI, teacherAPI, reportsAPI } from '../services/api';
+import { brandColor } from '../config/theme.js';
 
 const COLORS = ['#1d4ed8','#3b82f6','#10b981','#f97316','#a855f7','#ef4444'];
 const MONTH_ORDER = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -60,6 +61,10 @@ export default function Reports() {
     <div className="flex items-center justify-center h-64"><Loader2 size={32} className="animate-spin text-primary-600"/></div>
   );
 
+  // Primary chart series follows the school's accent; the rest stay categorical.
+  const BRAND = brandColor();
+  const chartColors = [BRAND, ...COLORS.slice(1)];
+
   return (
     <div className="space-y-6">
       <SectionHeader title="Reports & Analytics" subtitle="Data-driven insights for your school"/>
@@ -89,8 +94,8 @@ export default function Reports() {
             <AreaChart data={feeTrend}>
               <defs>
                 <linearGradient id="gc2" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#1d4ed8" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#1d4ed8" stopOpacity={0}/>
+                  <stop offset="5%"  stopColor={BRAND} stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor={BRAND} stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
@@ -98,7 +103,7 @@ export default function Reports() {
               <YAxis tickFormatter={v=>`${(v/1000).toFixed(0)}K`} tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
               <Tooltip formatter={v=>`Rs ${(v/1000).toFixed(0)}K`} contentStyle={{borderRadius:12,border:'none',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}/>
               <Area type="monotone" dataKey="expected"  stroke="#10b981" strokeWidth={2} fill="none" strokeDasharray="5 5" name="Expected"/>
-              <Area type="monotone" dataKey="collected" stroke="#1d4ed8" strokeWidth={2.5} fill="url(#gc2)" name="Collected"/>
+              <Area type="monotone" dataKey="collected" stroke={BRAND} strokeWidth={2.5} fill="url(#gc2)" name="Collected"/>
             </AreaChart>
           </ResponsiveContainer>
         </Card>
@@ -116,7 +121,7 @@ export default function Reports() {
               <YAxis domain={[0,100]} tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
               <Tooltip contentStyle={{borderRadius:12,border:'none'}}/>
               <Bar dataKey="avg" name="Avg Score" radius={[6,6,0,0]}>
-                {subjectPerformance.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
+                {subjectPerformance.map((_,i) => <Cell key={i} fill={chartColors[i%chartColors.length]}/>)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -133,7 +138,7 @@ export default function Reports() {
             <PieChart>
               <Pie data={feeSummary} dataKey="count" nameKey="_id" cx="50%" cy="50%" outerRadius={80}
                 label={({_id,percent})=>`${_id} ${(percent*100).toFixed(0)}%`} labelLine={false} fontSize={10}>
-                {feeSummary.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
+                {feeSummary.map((_,i) => <Cell key={i} fill={chartColors[i%chartColors.length]}/>)}
               </Pie>
               <Tooltip contentStyle={{borderRadius:12,border:'none'}}/>
             </PieChart>
@@ -147,7 +152,7 @@ export default function Reports() {
             <PieChart>
               <Pie data={genderData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}
                 label={({name,percent})=>`${name} ${(percent*100).toFixed(0)}%`}>
-                <Cell fill="#1d4ed8"/><Cell fill="#ec4899"/>
+                <Cell fill={BRAND}/><Cell fill="#ec4899"/>
               </Pie>
               <Tooltip contentStyle={{borderRadius:12,border:'none'}}/>
             </PieChart>
