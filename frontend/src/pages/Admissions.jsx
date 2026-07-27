@@ -12,6 +12,7 @@ import { ReportMenu } from '../components/ReportMenu.jsx';
 import { DateRangePicker } from '../components/DateRangePicker.jsx';
 import { inDateRange, rangeLabel, rangeSlug } from '../utils/reportExport.js';
 import { startOfMonth, endOfMonth, endOfDay } from 'date-fns';
+import { useClasses } from '../hooks/useClasses';
 
 const API_BASE = SERVER_URL;
 
@@ -19,11 +20,6 @@ const statusColors = {
   Applied:'blue','Test Scheduled':'orange',Interviewed:'purple',
   Approved:'teal',Rejected:'red',Enrolled:'green',
 };
-const classes = [
-  'Pre-Nursery','Nursery','Prep',
-  'Grade 1','Grade 2','Grade 3','Grade 4','Grade 5',
-  'Grade 6','Grade 7','Grade 8','Grade 9','Grade 10',
-];
 const emptyForm = {
   applicantName:'',applyingClass:'',gender:'Male',dateOfBirth:'',
   religion:'Islam',bloodGroup:'',previousSchool:'',previousClass:'',
@@ -36,6 +32,7 @@ export default function Admissions() {
   const toast = useToast();
   const confirm = useConfirm();
   const { school } = useSchool();
+  const { names: classes } = useClasses();   // dynamic class list from the school's setup (no fixed cap)
   const [admissions, setAdmissions] = useState([]);
   const [loading, setLoading]       = useState(true);
   const [search, setSearch]         = useState('');
@@ -356,7 +353,7 @@ export default function Admissions() {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Applying Class *</label>
                   <Dropdown value={editData.applyingClass} onChange={e=>setEditData({...editData,applyingClass:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
-                    <option value="">Select class</option>
+                    <option value="">{classes.length ? 'Select class' : 'No classes yet — add them in Classes'}</option>
                     {classes.map(c=><option key={c}>{c}</option>)}
                   </Dropdown>
                 </div>
