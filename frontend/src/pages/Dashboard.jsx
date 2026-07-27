@@ -110,7 +110,7 @@ export default function Dashboard() {
               </defs>
               <XAxis dataKey="label" tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false} hide/>
               <YAxis domain={[0,100]} hide/>
-              <Tooltip formatter={v=>`${v}% present`} contentStyle={{borderRadius:12,border:'none',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}/>
+              <Tooltip cursor={false} formatter={v=>`${v}% present`} contentStyle={{borderRadius:12,border:'none',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}/>
               <Area type="monotone" dataKey="pct" stroke="#10b981" strokeWidth={2.5} fill="url(#gAtt)" name="Present %"/>
             </AreaChart>
           </ResponsiveContainer>
@@ -138,7 +138,7 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
               <XAxis dataKey="_id" tick={{fontSize:12,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
               <YAxis tickFormatter={v=>`${(v/1000).toFixed(0)}K`} tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
-              <Tooltip formatter={v=>`Rs ${(v/1000).toFixed(0)}K`} contentStyle={{borderRadius:12,border:'none',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}/>
+              <Tooltip cursor={false} formatter={v=>`Rs ${(v/1000).toFixed(0)}K`} contentStyle={{borderRadius:12,border:'none',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}/>
               <Area type="monotone" dataKey="expected"  stroke="#10b981" strokeWidth={2} fill="none" strokeDasharray="5 5" name="Expected"/>
               <Area type="monotone" dataKey="collected" stroke={BRAND} strokeWidth={2.5} fill="url(#gc)" name="Collected"/>
             </AreaChart>

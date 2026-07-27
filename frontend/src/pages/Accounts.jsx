@@ -162,7 +162,7 @@ export default function Accounts() {
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false}/>
             <XAxis dataKey="name" tick={{fontSize:9,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
             <YAxis tickFormatter={v=>`${(v/1000).toFixed(0)}K`} tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
-            <Tooltip formatter={v=>`Rs ${(v/1000).toFixed(0)}K`} contentStyle={{borderRadius:12,border:'none'}}/>
+            <Tooltip cursor={false} formatter={v=>`Rs ${(v/1000).toFixed(0)}K`} contentStyle={{borderRadius:12,border:'none'}}/>
             <Bar dataKey="Income"  fill="#10b981" radius={[4,4,0,0]}/>
             <Bar dataKey="Expense" fill="#ef4444" radius={[4,4,0,0]}/>
           </BarChart>
@@ -180,7 +180,7 @@ export default function Accounts() {
                   label={({_id,percent})=>`${_id} ${(percent*100).toFixed(0)}%`} fontSize={10} labelLine={false}>
                   {(incomeAgg||[]).map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
                 </Pie>
-                <Tooltip formatter={v=>`Rs ${v.toLocaleString()}`} contentStyle={{borderRadius:12,border:'none'}}/>
+                <Tooltip cursor={false} formatter={v=>`Rs ${v.toLocaleString()}`} contentStyle={{borderRadius:12,border:'none'}}/>
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -196,7 +196,7 @@ export default function Accounts() {
                   label={({_id,percent})=>`${_id} ${(percent*100).toFixed(0)}%`} fontSize={10} labelLine={false}>
                   {(expenseAgg||[]).map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
                 </Pie>
-                <Tooltip formatter={v=>`Rs ${v.toLocaleString()}`} contentStyle={{borderRadius:12,border:'none'}}/>
+                <Tooltip cursor={false} formatter={v=>`Rs ${v.toLocaleString()}`} contentStyle={{borderRadius:12,border:'none'}}/>
               </PieChart>
             </ResponsiveContainer>
           )}

@@ -136,7 +136,7 @@ export default function SADashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
                 <XAxis dataKey="month" tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
                 <YAxis tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
-                <Tooltip contentStyle={{borderRadius:12,border:'none',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}/>
+                <Tooltip cursor={false} contentStyle={{borderRadius:12,border:'none',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}/>
                 <Area type="monotone" dataKey="schools" stroke="#3b82f6" strokeWidth={2.5}
                   fill="url(#saGrad)" name="New Schools"/>
               </AreaChart>
@@ -161,7 +161,7 @@ export default function SADashboard() {
                     paddingAngle={3}>
                     {planPieData.map((d,i)=><Cell key={i} fill={d.color}/>)}
                   </Pie>
-                  <Tooltip contentStyle={{borderRadius:12,border:'none'}}/>
+                  <Tooltip cursor={false} contentStyle={{borderRadius:12,border:'none'}}/>
                 </PieChart>
               </ResponsiveContainer>
               <div className="space-y-2 mt-2">

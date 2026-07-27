@@ -126,7 +126,7 @@ export default function Reports() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
               <XAxis dataKey="_id" tick={{fontSize:11,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
               <YAxis tickFormatter={v=>`${(v/1000).toFixed(0)}K`} tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
-              <Tooltip formatter={v=>`Rs ${(v/1000).toFixed(0)}K`} contentStyle={{borderRadius:12,border:'none',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}/>
+              <Tooltip cursor={false} formatter={v=>`Rs ${(v/1000).toFixed(0)}K`} contentStyle={{borderRadius:12,border:'none',boxShadow:'0 8px 32px rgba(0,0,0,.1)'}}/>
               <Area type="monotone" dataKey="expected"  stroke="#10b981" strokeWidth={2} fill="none" strokeDasharray="5 5" name="Expected"/>
               <Area type="monotone" dataKey="collected" stroke={BRAND} strokeWidth={2.5} fill="url(#gc2)" name="Collected"/>
             </AreaChart>
@@ -144,7 +144,7 @@ export default function Reports() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false}/>
               <XAxis dataKey="subject" tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
               <YAxis domain={[0,100]} tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
-              <Tooltip contentStyle={{borderRadius:12,border:'none'}}/>
+              <Tooltip cursor={false} contentStyle={{borderRadius:12,border:'none'}}/>
               <Bar dataKey="avg" name="Avg Score" radius={[6,6,0,0]}>
                 {subjectPerformance.map((_,i) => <Cell key={i} fill={chartColors[i%chartColors.length]}/>)}
               </Bar>
@@ -165,7 +165,7 @@ export default function Reports() {
                 label={({_id,percent})=>`${_id} ${(percent*100).toFixed(0)}%`} labelLine={false} fontSize={10}>
                 {feeSummary.map((_,i) => <Cell key={i} fill={chartColors[i%chartColors.length]}/>)}
               </Pie>
-              <Tooltip contentStyle={{borderRadius:12,border:'none'}}/>
+              <Tooltip cursor={false} contentStyle={{borderRadius:12,border:'none'}}/>
             </PieChart>
           </ResponsiveContainer>
         </Card>
@@ -179,7 +179,7 @@ export default function Reports() {
                 label={({name,percent})=>`${name} ${(percent*100).toFixed(0)}%`}>
                 <Cell fill={BRAND}/><Cell fill="#ec4899"/>
               </Pie>
-              <Tooltip contentStyle={{borderRadius:12,border:'none'}}/>
+              <Tooltip cursor={false} contentStyle={{borderRadius:12,border:'none'}}/>
             </PieChart>
           </ResponsiveContainer>
         </Card>
@@ -192,7 +192,7 @@ export default function Reports() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
               <XAxis dataKey="_id" tick={{fontSize:9,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
               <YAxis tick={{fontSize:10,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
-              <Tooltip contentStyle={{borderRadius:12,border:'none'}}/>
+              <Tooltip cursor={false} contentStyle={{borderRadius:12,border:'none'}}/>
               <Line type="monotone" dataKey="present" stroke="#10b981" strokeWidth={2.5} dot={{fill:'#10b981',r:4}} name="Present"/>
               <Line type="monotone" dataKey="absent"  stroke="#ef4444" strokeWidth={2}   dot={{fill:'#ef4444',r:3}} name="Absent"/>
             </LineChart>
