@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Bell, Search, ChevronDown, Check, LogOut, User, GraduationCap, Users, Loader2, X, ArrowRight, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
+import { Menu, Bell, Search, ChevronDown, Check, LogOut, User, GraduationCap, Users, Loader2, X, ArrowRight, AlertTriangle, Info, CheckCircle2, Sun, Moon } from 'lucide-react';
 import { useApp } from '../../hooks/useApp.jsx';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { studentAPI, teacherAPI } from '../../services/api';
@@ -35,6 +35,13 @@ export default function Topbar() {
   const { user, logout } = useAuth();
   const [showNotif, setShowNotif]   = useState(false);
   const [showUser, setShowUser]     = useState(false);
+  const [dark, setDark]             = useState(() => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
+  const toggleDark = () => {
+    const next = !document.documentElement.classList.contains('dark');
+    document.documentElement.classList.toggle('dark', next);
+    try { localStorage.setItem('theme', next ? 'dark' : 'light'); } catch { /* ignore */ }
+    setDark(next);
+  };
   const [viewedNotif, setViewedNotif] = useState(null);
   const [search, setSearch]         = useState('');
   const [results, setResults]       = useState({ students: [], teachers: [] });
@@ -153,6 +160,13 @@ export default function Topbar() {
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
+        {/* Light / dark toggle */}
+        <button onClick={toggleDark} title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label="Toggle dark mode"
+          className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+          {dark ? <Sun size={18}/> : <Moon size={18}/>}
+        </button>
+
         {/* Notifications — API-backed, polling */}
         <NotificationBell/>
 

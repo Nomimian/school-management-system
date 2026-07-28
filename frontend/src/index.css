@@ -17,6 +17,37 @@
   h1,h2,h3,h4,h5,h6 { font-family: 'Sora', sans-serif; letter-spacing: -0.01em; }
   ::selection { background: rgba(29,78,216,0.18); }
 
+  /* ── DARK MODE ───────────────────────────────────────────────────────────────
+     The UI is built on hard-coded slate utilities, so rather than editing every
+     component we remap that palette under `.dark`. `.dark .bg-white` (0,2,0)
+     out-ranks `.bg-white` (0,1,0), so these win without !important. Brand
+     (primary-*) colours are injected separately in config/theme.js and stay. */
+  html.dark body {
+    color: #e2e8f0;
+    background-color: #0b1220;
+    background-image:
+      radial-gradient(1200px 600px at 100% -10%, rgba(59,130,246,0.14), transparent 60%),
+      radial-gradient(900px 500px at -10% 10%, rgba(99,102,241,0.12), transparent 55%);
+  }
+  /* Surfaces */
+  .dark .bg-white { background-color: #131c31; }
+  .dark .bg-slate-50, .dark .bg-slate-50\/50, .dark .bg-slate-50\/40, .dark .bg-slate-50\/30 { background-color: #0f1728; }
+  .dark .bg-slate-100 { background-color: #1e293b; }
+  .dark .hover\:bg-slate-50:hover, .dark .hover\:bg-slate-100:hover { background-color: #1e293b; }
+  /* Text */
+  .dark .text-slate-900, .dark .text-slate-800, .dark .text-slate-700 { color: #e5edf7; }
+  .dark .text-slate-600 { color: #cbd5e1; }
+  .dark .text-slate-500 { color: #94a3b8; }
+  .dark .text-slate-400 { color: #6b7a90; }
+  /* Borders */
+  .dark .border-slate-100, .dark .border-slate-200, .dark .border-slate-50 { border-color: #26324a; }
+  /* Form controls */
+  .dark input, .dark textarea, .dark select { color: #e5edf7; }
+  .dark input::placeholder, .dark textarea::placeholder { color: #64748b; }
+  .dark select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); }
+  /* Soften the light-tuned shadows on dark */
+  .dark .shadow-card, .dark .shadow-float, .dark .shadow-sm, .dark .shadow-md, .dark .shadow-lg { box-shadow: 0 8px 30px rgba(0,0,0,0.45); }
+
   /* ── Native <select> dropdowns ──────────────────────────────────────────────
      Every select across the app renders the plain OS arrow otherwise. Strip it
      and paint a consistent chevron with room to breathe. Applies globally so all
