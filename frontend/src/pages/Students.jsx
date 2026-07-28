@@ -8,6 +8,7 @@ import { SectionHeader, Card, Badge, Button, Input, Modal, Avatar, useToast, use
 import FeeProfileTable from '../components/FeeProfileTable.jsx';
 import EnrollmentFields from '../components/EnrollmentFields.jsx';
 import DynamicSelect from '../components/DynamicSelect.jsx';
+import ImportStudentsModal from '../components/ImportStudentsModal.jsx';
 
 const API_BASE = SERVER_URL;
 const feeColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
@@ -72,6 +73,7 @@ export default function Students() {
   const openEdit = (s) => { setEditData({ ...s, dateOfBirth: s.dateOfBirth?.slice(0,10) || '', admissionDate: s.admissionDate?.slice(0,10) || '' }); setModalOpen(true); setError(''); };
 
   const enrollMissingRef = useRef([]);   // required enrollment categories left blank
+  const [importOpen, setImportOpen] = useState(false);
 
   const save = async () => {
     if (enrollMissingRef.current.length) {
@@ -106,10 +108,14 @@ export default function Students() {
         action={
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" icon={RefreshCw} onClick={fetchStudents}>Refresh</Button>
+            <Button variant="secondary" size="sm" icon={Upload}    onClick={() => setImportOpen(true)}>Import Excel</Button>
             <Button variant="primary"   size="sm" icon={Plus}      onClick={openAdd}>Add Student</Button>
           </div>
         }
       />
+
+      <ImportStudentsModal open={importOpen} onClose={() => setImportOpen(false)} onImported={fetchStudents} />
+
 
       <Card>
         <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3">

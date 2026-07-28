@@ -8,6 +8,8 @@ const feeCtrl        = require('../controllers/feeController');
 const feeHeadCtrl    = require('../controllers/feeHeadController');
 const enrollGrpCtrl  = require('../controllers/enrollmentGroupController');
 const optionSetCtrl  = require('../controllers/optionSetController');
+const studentImport  = require('../controllers/studentImportController');
+const importUpload   = require('../middleware/importUpload');
 const attendanceCtrl = require('../controllers/attendanceController');
 const examCtrl       = require('../controllers/examController');
 const otherCtrl      = require('../controllers/otherController');
@@ -147,6 +149,8 @@ router.get('/dashboard/stats', otherCtrl.getDashboardStats);
 
 // ── STUDENTS ──────────────────────────────────────────────────────────────────
 router.get   ('/students/stats',  studentCtrl.getStats);
+router.post  ('/students/import/preview', importUpload.single('file'), studentImport.importPreview);
+router.post  ('/students/import',         studentImport.importStudents);
 router.get   ('/students',        studentCtrl.getStudents);
 router.post  ('/students',        studentCtrl.createStudent);
 router.get   ('/students/:id',    studentCtrl.getStudent);

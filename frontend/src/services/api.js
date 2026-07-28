@@ -106,6 +106,13 @@ export const notificationAPI = {
 
 // ─── STUDENTS ─────────────────────────────────────────────────────────────────
 export const studentAPI = {
+  importPreview: (formData) => {
+    const token = localStorage.getItem('token');
+    return fetch(`${BASE_URL}/students/import/preview`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData,
+    }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.message || 'Upload failed'); return d; });
+  },
+  import: (rows) => post('/students/import', { rows }),
   getAll:    (params) => get('/students', params),
   getOne:    (id)     => get(`/students/${id}`),
   create:    (data)   => post('/students', data),
