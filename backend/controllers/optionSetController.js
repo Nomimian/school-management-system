@@ -11,6 +11,7 @@ const DEFAULTS = [
   { key: 'eventTypes',       label: 'Event Types',            options: ['Meeting','Exam','Event','Finance','Holiday'] },
   { key: 'incomeCategories', label: 'Income Categories',      options: ['Student Fees','Registration Fee','Donation','Transport Fee','Library Fine','Other Income'] },
   { key: 'expenseCategories',label: 'Expense Categories',     options: ['Teacher Salary','Staff Salary','Utility Bills','Rent','Maintenance','Stationery','Equipment','Other Expense'] },
+  { key: 'certificateTypes', label: 'Certificate Types',      options: ['Character','Leaving','Bonafide','Transfer','Merit'] },
 ];
 
 async function ensureDefaults(schoolId) {

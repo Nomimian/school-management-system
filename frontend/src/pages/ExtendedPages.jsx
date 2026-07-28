@@ -6,6 +6,7 @@ import { Plus, Bus, Loader2, Trash2, MapPin, User, BookOpen, Eye } from 'lucide-
 import { transportAPI } from '../services/api';
 import { SectionHeader, Card, Badge, Button, Modal, Input, Select, EmptyState } from '../components/ui';
 import { useClasses } from '../hooks/useClasses';
+import { useOptions } from '../hooks/useOptions.js';
 
 function ViewField({ label, children, full }) {
   return (
@@ -524,7 +525,8 @@ export function Certificates() {
   const [viewItem, setViewItem] = useState(null);
   const [certH, setCertH] = useState(420);
 
-  const certTypes = ['Character','Leaving','Bonafide','Transfer','Merit'];
+  const { get: opt } = useOptions();
+  const certTypes = opt('certificateTypes', ['Character','Leaving','Bonafide','Transfer','Merit']);
 
   const fetchAll = async () => {
     setLoading(true);

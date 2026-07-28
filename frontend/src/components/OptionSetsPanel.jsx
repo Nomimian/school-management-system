@@ -6,6 +6,20 @@ import { Card, Button, useToast, useConfirm, EmptyState } from './ui';
 
 const toArr = (str) => String(str || '').split(',').map(s => s.trim()).filter(Boolean);
 
+// Where each built-in list is used, so operators know what a change affects.
+const USAGE = {
+  bloodGroups:      'Students · Admissions',
+  relationships:    'Admissions',
+  paymentMethods:   'Fees',
+  departments:      'HR',
+  staffRoles:       'HR',
+  bookCategories:   'Library',
+  eventTypes:       'Calendar',
+  incomeCategories: 'Accounts',
+  expenseCategories:'Accounts',
+  certificateTypes: 'Certificates',
+};
+
 /**
  * Dropdown Options — one place to edit every configurable list used across the
  * app (blood groups, relationships, payment methods, categories, event types …).
@@ -78,9 +92,11 @@ export default function OptionSetsPanel() {
           return (
             <div key={s._id} className="rounded-xl border border-slate-200 p-4 space-y-2">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
                   <span className="font-semibold text-slate-800">{s.label}</span>
-                  <span className="text-[10px] font-mono bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded">{s.key}</span>
+                  <span className="text-[11px] font-medium bg-primary-50 text-primary-600 px-2 py-0.5 rounded-full whitespace-nowrap">
+                    Used in: {USAGE[s.key] || 'Custom list'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button onClick={() => saveSet(s)} disabled={savingId === s._id}

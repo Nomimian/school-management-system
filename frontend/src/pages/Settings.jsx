@@ -17,15 +17,18 @@ import OptionSetsPanel from '../components/OptionSetsPanel.jsx';
 const API_BASE = SERVER_URL;
 
 const tabs = [
-  { id:'school',        label:'School Profile',  icon:School   },
-  { id:'stamp',         label:'Logo & Stamp',    icon:Stamp    },
-  { id:'team',          label:'Team & Users',    icon:Users, module:'users' },
-  { id:'fees',          label:'Fee Configuration', icon:DollarSign, module:'fees' },
-  { id:'groups',        label:'Groups & Categories', icon:Layers, module:'students' },
-  { id:'options',       label:'Dropdown Options', icon:List, module:'students' },
-  { id:'notifications', label:'Notifications',   icon:Bell     },
-  { id:'security',      label:'Security',        icon:Shield   },
-  { id:'appearance',    label:'Appearance',      icon:Palette  },
+  // ── School & Branding ──
+  { id:'school',        label:'School Profile',      icon:School,     group:'School & Branding' },
+  { id:'stamp',         label:'Logo & Stamp',        icon:Stamp,      group:'School & Branding' },
+  { id:'appearance',    label:'Appearance',          icon:Palette,    group:'School & Branding' },
+  // ── Configuration ──
+  { id:'fees',          label:'Fee Configuration',   icon:DollarSign, group:'Configuration', module:'fees' },
+  { id:'groups',        label:'Groups & Categories', icon:Layers,     group:'Configuration', module:'students' },
+  { id:'options',       label:'Dropdown Options',    icon:List,       group:'Configuration', module:'students' },
+  // ── Access & System ──
+  { id:'team',          label:'Team & Users',        icon:Users,      group:'Access & System', module:'users' },
+  { id:'notifications', label:'Notifications',       icon:Bell,       group:'Access & System' },
+  { id:'security',      label:'Security',            icon:Shield,     group:'Access & System' },
 ];
 
 export default function Settings() {
@@ -152,13 +155,20 @@ export default function Settings() {
     <div className="space-y-5">
       <SectionHeader title="Settings" subtitle="Configure your school management system"/>
 
-      <div className="flex gap-2 flex-wrap">
-        {visibleTabs.map(t => (
-          <button key={t.id} onClick={()=>{setTab(t.id);setMsg('');setErr('');setSaved(false);}}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
-              ${activeTab===t.id?'bg-primary-600 text-white shadow-md':'bg-white text-slate-600 hover:bg-primary-50 border border-slate-200'}`}>
-            <t.icon size={15}/>{t.label}
-          </button>
+      <div className="space-y-3">
+        {[...new Set(visibleTabs.map(t => t.group))].map(groupName => (
+          <div key={groupName}>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-1">{groupName}</div>
+            <div className="flex gap-2 flex-wrap">
+              {visibleTabs.filter(t => t.group === groupName).map(t => (
+                <button key={t.id} onClick={()=>{setTab(t.id);setMsg('');setErr('');setSaved(false);}}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
+                    ${activeTab===t.id?'bg-primary-600 text-white shadow-md':'bg-white text-slate-600 hover:bg-primary-50 border border-slate-200'}`}>
+                  <t.icon size={15}/>{t.label}
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
 
