@@ -15,12 +15,25 @@
 const isConfigured = () =>
   !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM);
 
-// Keep a leading + if present (E.164), else digits only.
+// Normalise any local/loose format to E.164, defaulting the country code
+// (Pakistan +92 by default; override with SMS_COUNTRY_CODE). Examples:
+//   "0334-4968938"  → "+923344968938"
+//   "03344968938"   → "+923344968938"
+//   "3344968938"    → "+923344968938"
+//   "0092334..."    → "+92334..."
+//   "+92334..."     → "+92334..." (kept as-is)
+const DEFAULT_CC = String(process.env.SMS_COUNTRY_CODE || '92').replace(/\D/g, '');
 const normalizeNumber = (n) => {
-  const s = String(n || '').trim();
-  const plus = s.startsWith('+');
-  const digits = s.replace(/[^\d]/g, '');
-  return digits ? (plus ? `+${digits}` : digits) : '';
+  const raw = String(n || '').trim();
+  if (!raw) return '';
+  const hasPlus = raw.startsWith('+');
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return '';
+  if (hasPlus)                     return `+${digits}`;                 // already international
+  if (digits.startsWith('00'))     return `+${digits.slice(2)}`;        // 00 92 … → +92 …
+  if (digits.startsWith('0'))      return `+${DEFAULT_CC}${digits.slice(1)}`; // local 03xx → +92 3xx
+  if (digits.startsWith(DEFAULT_CC)) return `+${digits}`;              // 92xxxxxxxxxx → +92 …
+  return `+${DEFAULT_CC}${digits}`;                                     // bare 3xx → +92 3xx
 };
 
 async function sendSMS({ to, body }) {

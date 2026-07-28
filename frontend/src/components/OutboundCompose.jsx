@@ -11,8 +11,9 @@ const isImg = (t) => String(t || '').startsWith('image/');
 
 const RESULT_TONE = { sent: 'text-emerald-600', simulated: 'text-blue-500', failed: 'text-red-500', 'no-email': 'text-slate-400', 'no-phone': 'text-slate-400' };
 
-// Staff tool: send Email / WhatsApp (with attachments) to selected people.
-export default function OutboundCompose({ open, onClose }) {
+// Staff tool: send Email / WhatsApp / SMS (with attachments) to selected people.
+// `initialChannels` pre-selects channels when opened (e.g. { sms: true }).
+export default function OutboundCompose({ open, onClose, initialChannels }) {
   const toast = useToast();
   const [status, setStatus]     = useState({ email: false, whatsapp: false, sms: false });
   const [recipients, setRecipients] = useState([]);
@@ -31,9 +32,10 @@ export default function OutboundCompose({ open, onClose }) {
   useEffect(() => {
     if (!open) return;
     setResults(null); setErr(''); setPicked([]); setBody(''); setSubject(''); setAtts([]); setQ('');
+    if (initialChannels) setChannels({ email: false, whatsapp: false, sms: false, ...initialChannels });
     outboundAPI.status().then(r => setStatus(r.data)).catch(() => {});
     chatAPI.recipients().then(r => setRecipients(r.data || [])).catch(() => {});
-  }, [open]);
+  }, [open]);      // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = recipients.filter(r => r.name.toLowerCase().includes(q.toLowerCase()) && !picked.some(p => p._id === r._id));
 
