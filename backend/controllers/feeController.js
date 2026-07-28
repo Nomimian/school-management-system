@@ -7,24 +7,39 @@ const challan = require('../services/challanService');
 
 exports.getFees = async (req, res) => {
   try {
-    const { status, month, year, search } = req.query;
+    const { status, month, year, search, from, to, page = 1, limit } = req.query;
     const filter = { school: req.user.school };
     if (status) filter.status = status;
     if (month)  filter.month = month;
     if (year)   filter.year = Number(year);
-
-    let fees = await Fee.find(filter)
-      .populate('student', 'name class rollNumber studentId')
-      .populate('recordedBy', 'name')
-      .sort({ createdAt: -1 });
-
-    if (search) {
-      fees = fees.filter(f =>
-        f.student?.name?.toLowerCase().includes(search.toLowerCase()) ||
-        f.student?.class?.toLowerCase().includes(search.toLowerCase())
-      );
+    // Server-side date-range (matches the Fees page date picker → loads only the
+    // selected window instead of the whole tenant history).
+    if (from || to) {
+      filter.createdAt = {};
+      if (from) filter.createdAt.$gte = new Date(from);
+      if (to)   filter.createdAt.$lte = new Date(to);
     }
-    res.json({ success: true, count: fees.length, data: fees });
+    // Push search into Mongo: resolve matching students first, then filter fees.
+    if (search) {
+      const s = String(search);
+      const students = await Student.find({
+        school: req.user.school,
+        $or: [{ name: { $regex: s, $options: 'i' } }, { class: { $regex: s, $options: 'i' } }],
+      }).select('_id').lean();
+      filter.student = { $in: students.map(x => x._id) };
+    }
+
+    const cap = Math.min(Number(limit) || 1000, 2000);   // hard cap — never unbounded
+    const pg  = Math.max(1, Number(page) || 1);
+    const [fees, total] = await Promise.all([
+      Fee.find(filter)
+        .populate('student', 'name class rollNumber studentId')
+        .populate('recordedBy', 'name')
+        .sort({ createdAt: -1 })
+        .skip((pg - 1) * cap).limit(cap),
+      Fee.countDocuments(filter),
+    ]);
+    res.json({ success: true, count: fees.length, total, page: pg, data: fees });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

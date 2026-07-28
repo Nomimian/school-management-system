@@ -5,7 +5,7 @@ const School = require('../models/School');
 // @GET /api/students
 exports.getStudents = async (req, res) => {
   try {
-    const { class: cls, feeStatus, gender, search, page = 1, limit = 100 } = req.query;
+    const { class: cls, feeStatus, gender, search, page = 1 } = req.query;
     const filter = { school: req.user.school, isActive: true };
     if (cls)       filter.class = cls;
     if (feeStatus) filter.feeStatus = feeStatus;
@@ -17,12 +17,13 @@ exports.getStudents = async (req, res) => {
         { rollNumber: { $regex: search, $options: 'i' } },
       ];
     }
-    const skip = (page - 1) * limit;
+    const limit = Math.min(Number(req.query.limit) || 100, 1000);   // hard cap
+    const pg    = Math.max(1, Number(page) || 1);
     const [students, total] = await Promise.all([
-      Student.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+      Student.find(filter).sort({ createdAt: -1 }).skip((pg - 1) * limit).limit(limit),
       Student.countDocuments(filter),
     ]);
-    res.json({ success: true, total, count: students.length, data: students });
+    res.json({ success: true, total, count: students.length, page: pg, data: students });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

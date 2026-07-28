@@ -39,11 +39,14 @@ export default function Fees() {
   const [payTarget, setPayTarget] = useState(null);
   const [payForm, setPayForm]     = useState({ method:'Cash', amount:'', paidDate:new Date().toISOString().slice(0,10) });
   const [payingNow, setPaying]    = useState(false);
+  // Date-range filter — also scopes the SERVER fetch so only the selected window
+  // loads (default: current month), then drives the statement export.
+  const [range, setRange] = useState({ from: startOfMonth(new Date()), to: endOfDay(endOfMonth(new Date())) });
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const params = {};
+      const params = { from: range.from.toISOString(), to: range.to.toISOString() };
       if (filterStatus) params.status = filterStatus;
       if (search) params.search = search;
       const [feesRes, statsRes] = await Promise.all([feeAPI.getAll(params), feeAPI.getStats({ year:CURRENT_YEAR })]);
@@ -51,16 +54,14 @@ export default function Fees() {
       setStats(statsRes.data);
     } catch(e) { console.error(e); }
     finally { setLoading(false); }
-  }, [filterStatus, search]);
+  }, [filterStatus, search, range]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
   useEffect(() => {
     studentAPI.getAll({ limit:200 }).then(r => setStudents(r.data||[])).catch(console.error);
   }, []);
 
-  // ── Date-range filter + statement export ─────────────────────────────────────
-  // The range filters the table live AND drives the export (from → to).
-  const [range, setRange] = useState({ from: startOfMonth(new Date()), to: endOfDay(endOfMonth(new Date())) });
+  // Server already scoped to the range; this is a harmless client-side re-filter.
   const filteredFees = fees.filter(f => inDateRange(f.createdAt, range.from, range.to));
 
   const repExpected  = filteredFees.reduce((s,f) => s + (f.amount||0), 0);
