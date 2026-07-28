@@ -70,7 +70,12 @@ export default function Students() {
   const openAdd  = () => { setEditData({ ...emptyForm }); setModalOpen(true); setError(''); };
   const openEdit = (s) => { setEditData({ ...s, dateOfBirth: s.dateOfBirth?.slice(0,10) || '', admissionDate: s.admissionDate?.slice(0,10) || '' }); setModalOpen(true); setError(''); };
 
+  const enrollMissingRef = useRef([]);   // required enrollment categories left blank
+
   const save = async () => {
+    if (enrollMissingRef.current.length) {
+      return setError(`Please select: ${enrollMissingRef.current.join(', ')}.`);
+    }
     setSaving(true); setError('');
     try {
       if (editData._id) {
@@ -237,7 +242,7 @@ export default function Students() {
                 value={editData.enrollment || []}
                 studentClass={editData.class}
                 seedKey={editData._id || 'new'}
-                onChange={(enrollment) => setEditData(d => ({ ...d, enrollment }))}
+                onChange={(enrollment, meta) => { enrollMissingRef.current = meta?.missingRequired || []; setEditData(d => ({ ...d, enrollment })); }}
               />
             </div>
 

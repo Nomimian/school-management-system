@@ -107,7 +107,12 @@ export default function Admissions() {
     finally { setPhotoUploading(false); }
   };
 
+  const enrollMissingRef = useRef([]);   // required enrollment categories left blank
+
   const save = async () => {
+    if (enrollMissingRef.current.length) {
+      return setErr(`Please select: ${enrollMissingRef.current.join(', ')}.`);
+    }
     setSaving(true); setErr('');
     try {
       if (editData._id) await admissionAPI.update(editData._id, editData);
@@ -421,19 +426,15 @@ export default function Admissions() {
             </div>
 
             {/* Enrollment (dynamic Group / House / …) — carried onto the student when enrolled */}
-            <div>
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Enrollment</div>
-              <EnrollmentFields
-                value={editData.enrollment || []}
-                studentClass={editData.applyingClass}
-                seedKey={editData._id || 'new-admission'}
-                onChange={(enrollment) => setEditData(d => ({ ...d, enrollment }))}
-              />
-            </div>
+            <EnrollmentFields
+              value={editData.enrollment || []}
+              studentClass={editData.applyingClass}
+              seedKey={editData._id || 'new-admission'}
+              onChange={(enrollment, meta) => { enrollMissingRef.current = meta?.missingRequired || []; setEditData(d => ({ ...d, enrollment })); }}
+            />
 
             {/* Fee Details — carried onto the student record when enrolled */}
             <div>
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Fee Details</div>
               <FeeProfileTable
                 value={editData.feeProfile || []}
                 seedKey={editData._id || 'new-admission'}

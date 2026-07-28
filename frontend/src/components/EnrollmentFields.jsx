@@ -1,23 +1,28 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Layers, Loader2 } from 'lucide-react';
 import { enrollmentGroupAPI } from '../services/api';
 import { Dropdown } from './ui';
 
 /**
  * Renders the school's dynamic enrollment categories (Group / House / Shift …)
- * as dropdowns for the Add-Student and New-Application forms. Categories are
- * filtered by the student's class when a category is scoped to specific classes.
+ * as dropdowns for the Add-Student and New-Application forms. A category is shown
+ * only when it applies to the selected class (a category with no class filter
+ * applies to all classes).
  *
  * Props:
- *   value       – existing enrollment [{ name, value }]
- *   studentClass– the currently selected class (to filter class-scoped categories)
- *   seedKey     – changes when the edited record changes (re-seeds selections)
- *   onChange    – (enrollment) => void
+ *   value        – existing enrollment [{ name, value }]
+ *   studentClass – selected class (to filter class-scoped categories)
+ *   seedKey      – changes when the edited record changes (re-seeds selections)
+ *   onChange     – (enrollment, { missingRequired:[names] }) => void
+ *                  `enrollment` contains ONLY the categories visible for this
+ *                  class, so what's saved always matches what's shown.
  */
 export default function EnrollmentFields({ value = [], studentClass = '', seedKey = 'new', onChange }) {
   const [groups, setGroups] = useState(null);
   const [sel, setSel] = useState({});          // { [categoryName]: value }
   const seededFor = useRef(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
     enrollmentGroupAPI.getAll()
@@ -25,7 +30,7 @@ export default function EnrollmentFields({ value = [], studentClass = '', seedKe
       .catch(() => setGroups([]));
   }, []);
 
-  // Seed selections from existing value once, or when switching records.
+  // Seed selections from the existing record once, or when switching records.
   useEffect(() => {
     if (!groups) return;
     if (seededFor.current === seedKey) return;
@@ -35,19 +40,25 @@ export default function EnrollmentFields({ value = [], studentClass = '', seedKe
     seededFor.current = seedKey;
   }, [groups, seedKey]);      // eslint-disable-line react-hooks/exhaustive-deps
 
-  const emit = (map) => {
-    const enrollment = Object.entries(map)
-      .filter(([, v]) => v)
-      .map(([name, v]) => ({ name, value: v }));
-    onChange?.(enrollment);
-  };
-  const setValue = (name, v) => setSel(s => { const next = { ...s, [name]: v }; emit(next); return next; });
+  // Categories that apply to the current class (empty filter ⇒ all classes).
+  const applicable = useMemo(
+    () => (groups || []).filter(g => !g.appliesToClasses?.length || (studentClass && g.appliesToClasses.includes(studentClass))),
+    [groups, studentClass],
+  );
+
+  // Report the value (visible categories only) + any unfilled required ones, so
+  // the parent form can save cleanly and block on missing required selections.
+  useEffect(() => {
+    if (!groups || seededFor.current !== seedKey) return;
+    const enrollment = applicable.map(g => ({ name: g.name, value: sel[g.name] || '' })).filter(e => e.value);
+    const missingRequired = applicable.filter(g => g.required && !sel[g.name]).map(g => g.name);
+    onChangeRef.current?.(enrollment, { missingRequired });
+  }, [groups, applicable, sel, seedKey]);
+
+  const setValue = (name, v) => setSel(s => ({ ...s, [name]: v }));
 
   if (groups === null) return <div className="flex items-center gap-2 text-slate-400 text-sm py-3"><Loader2 size={14} className="animate-spin"/> Loading categories…</div>;
-
-  // Only categories that apply to this class (or to all classes).
-  const applicable = groups.filter(g => !g.appliesToClasses?.length || (studentClass && g.appliesToClasses.includes(studentClass)));
-  if (!applicable.length) return null;
+  if (!applicable.length) return null;      // nothing applies to this class → render nothing
 
   return (
     <div className="rounded-xl border border-slate-200 overflow-hidden">
@@ -56,16 +67,19 @@ export default function EnrollmentFields({ value = [], studentClass = '', seedKe
         <span className="text-sm font-semibold text-slate-700">Enrollment</span>
       </div>
       <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {applicable.map(g => (
-          <div key={g._id} className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700">{g.name}{g.required && <span className="text-red-500"> *</span>}</label>
-            <Dropdown value={sel[g.name] || ''} onChange={e => setValue(g.name, e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
-              <option value="">Select {g.name}…</option>
-              {(g.options || []).map(o => <option key={o} value={o}>{o}</option>)}
-            </Dropdown>
-          </div>
-        ))}
+        {applicable.map(g => {
+          const missing = g.required && !sel[g.name];
+          return (
+            <div key={g._id} className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-700">{g.name}{g.required && <span className="text-red-500"> *</span>}</label>
+              <Dropdown value={sel[g.name] || ''} onChange={e => setValue(g.name, e.target.value)}
+                className={`px-3 py-2 text-sm border rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200 ${missing ? 'border-red-300' : 'border-slate-200'}`}>
+                <option value="">Select {g.name}…</option>
+                {(g.options || []).map(o => <option key={o} value={o}>{o}</option>)}
+              </Dropdown>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
