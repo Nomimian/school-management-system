@@ -12,9 +12,19 @@
 //     and the school can never be left without an active admin.
 // ─────────────────────────────────────────────────────────────────────────────
 const User = require('../models/User');
+const School = require('../models/School');
+const { AuditLog } = require('../models/Platform');
 
-// Roles an operator is allowed to assign. 'superadmin' is intentionally absent.
-const ASSIGNABLE_ROLES = ['admin', 'principal', 'accountant', 'teacher', 'frontdesk'];
+// Roles the principal may assign to staff. 'principal', 'admin' and 'superadmin'
+// are intentionally ABSENT: a school has exactly ONE principal (its top account),
+// and no new principals/admins can be minted from here.
+const ASSIGNABLE_ROLES = ['accountant', 'teacher', 'frontdesk'];
+
+// Records a platform-level event the superadmin sees in the Activity feed.
+async function notifySuperadmin(action, details, actorEmail) {
+  try { await AuditLog.create({ action, details, adminEmail: actorEmail || 'system' }); }
+  catch (e) { console.warn('superadmin audit failed:', e.message); }
+}
 
 const publicUser = (u) => ({
   id: u._id, _id: u._id, name: u.name, email: u.email, role: u.role,
@@ -63,6 +73,15 @@ exports.createUser = async (req, res) => {
       school: req.user.school,
       createdBy: req.user._id,
     });
+
+    // Notify the superadmin (Activity feed) with the school name.
+    const school = await School.findById(req.user.school).select('name').lean();
+    notifySuperadmin(
+      'School User Created',
+      `${school?.name || 'A school'}: ${user.name} added as ${user.role} by ${req.user.name}`,
+      req.user.email,
+    );
+
     res.status(201).json({ success: true, data: publicUser(user) });
   } catch (e) { res.status(400).json({ success: false, message: e.message }); }
 };
@@ -90,17 +109,17 @@ exports.updateUser = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid role.' });
       if (isSelf)
         return res.status(400).json({ success: false, message: 'You cannot change your own role.' });
-      // Prevent removing the last active admin from the school.
-      if (target.role === 'admin' && !(await hasOtherActiveAdmin(req.user.school, target._id)))
-        return res.status(400).json({ success: false, message: 'The school must keep at least one active admin.' });
+      // The principal is the school's single top account and can't be reassigned.
+      if (target.role === 'principal')
+        return res.status(400).json({ success: false, message: "The principal is the school's primary account and cannot be changed." });
       target.role = role;
     }
 
     if (isActive !== undefined && isActive !== target.isActive) {
       if (isSelf)
         return res.status(400).json({ success: false, message: 'You cannot deactivate your own account.' });
-      if (target.role === 'admin' && isActive === false && !(await hasOtherActiveAdmin(req.user.school, target._id)))
-        return res.status(400).json({ success: false, message: 'The school must keep at least one active admin.' });
+      if (target.role === 'principal' && isActive === false)
+        return res.status(400).json({ success: false, message: "The principal account cannot be deactivated." });
       target.isActive = isActive;
     }
 
@@ -130,15 +149,9 @@ exports.deleteUser = async (req, res) => {
     if (!target) return res.status(404).json({ success: false, message: 'User not found.' });
     if (String(target._id) === String(req.user._id))
       return res.status(400).json({ success: false, message: 'You cannot delete your own account.' });
-    if (target.role === 'admin' && !(await hasOtherActiveAdmin(req.user.school, target._id)))
-      return res.status(400).json({ success: false, message: 'The school must keep at least one active admin.' });
+    if (target.role === 'principal')
+      return res.status(400).json({ success: false, message: "The principal account cannot be deleted." });
     await target.deleteOne();
     res.json({ success: true, message: 'User removed.' });
   } catch (e) { res.status(400).json({ success: false, message: e.message }); }
 };
-
-// Is there another active admin in this school besides `exceptId`?
-async function hasOtherActiveAdmin(school, exceptId) {
-  const count = await User.countDocuments({ school, role: 'admin', isActive: true, _id: { $ne: exceptId } });
-  return count > 0;
-}

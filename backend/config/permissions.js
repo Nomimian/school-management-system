@@ -45,7 +45,7 @@ const MODULE_ACCESS = {
   calendar:     ALL,
   hiring:       OPS,
   settings:     OPS,
-  users:        OPS,                                    // staff-account management
+  users:        ['principal'],                          // ONLY the principal manages staff accounts
   parents:      [...OPS, 'frontdesk'],                  // parent-account management
 };
 

@@ -7,7 +7,9 @@ import { useAuth } from '../hooks/useAuth.jsx';
 import { ROLE_LABEL } from '../config/access.js';
 import { userAPI } from '../services/api';
 
-const ASSIGNABLE = ['admin', 'principal', 'accountant', 'teacher', 'frontdesk'];
+// The principal (the school's single top account) creates staff logins only —
+// never another principal/admin. Mirrors ASSIGNABLE_ROLES on the backend.
+const ASSIGNABLE = ['accountant', 'teacher', 'frontdesk'];
 const ROLE_BADGE = {
   admin: 'purple', principal: 'blue', accountant: 'green', teacher: 'teal', frontdesk: 'orange',
 };

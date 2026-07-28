@@ -157,7 +157,7 @@ exports.getSchools = async (req, res) => {
 
     // Attach admin user + real per-school student count
     const schoolsWithAdmin = await Promise.all(schools.map(async s => {
-      const admin = await User.findOne({ school:s._id, role:'admin' }).select('name email');
+      const admin = await User.findOne({ school:s._id, role:{ $in:['principal','admin'] } }).select('name email');
       const studentCount = await mongoose.model('Student')
         .countDocuments({ school:s._id, isActive:true }).catch(()=>0);
       return { ...s.toObject(), admin, studentCount };
@@ -209,10 +209,10 @@ exports.createSchool = async (req, res) => {
     });
 
     const user = await User.create({
-      name:adminName||`Admin – ${schoolName}`,
+      name:adminName||`Principal – ${schoolName}`,
       email:adminEmail,
       password:adminPassword,
-      role:'admin',
+      role:'principal',                 // each school's single top account
       school:school._id,
     });
 
@@ -268,7 +268,7 @@ exports.resetPassword = async (req, res) => {
     const { newPassword } = req.body;
     if (!newPassword || newPassword.length < 6)
       return res.status(400).json({ success:false, message:'Minimum 6 characters.' });
-    const user = await User.findOne({ school:req.params.id, role:'admin' });
+    const user = await User.findOne({ school:req.params.id, role:{ $in:['principal','admin'] } });
     if (!user) return res.status(404).json({ success:false, message:'Admin not found.' });
     user.password = newPassword;
     await user.save();
@@ -280,7 +280,7 @@ exports.resetPassword = async (req, res) => {
 // ── IMPERSONATE (login as school admin) ───────────────────────────────────────
 exports.impersonate = async (req, res) => {
   try {
-    const user = await User.findOne({ school:req.params.id, role:'admin' });
+    const user = await User.findOne({ school:req.params.id, role:{ $in:['principal','admin'] } });
     if (!user) return res.status(404).json({ success:false, message:'School admin not found.' });
     const school = await School.findById(req.params.id);
     const token = jwt.sign({ id:user._id, role:user.role }, process.env.JWT_SECRET, { expiresIn:'4h' });
