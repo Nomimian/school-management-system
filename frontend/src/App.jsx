@@ -22,6 +22,7 @@ const Classes       = lazy(() => import('./pages/Classes'));
 const Attendance    = lazy(() => import('./pages/Attendance'));
 const Fees          = lazy(() => import('./pages/Fees'));
 const ChallanGenerator = lazy(() => import('./pages/ChallanGenerator'));
+const NotFound      = lazy(() => import('./pages/NotFound'));
 const Exams         = lazy(() => import('./pages/Exams'));
 const Timetable     = lazy(() => import('./pages/Timetable'));
 const LibraryPage   = lazy(() => import('./pages/Library'));
@@ -122,6 +123,7 @@ export default function App() {
                 <Route path="activity"     element={<SAActivity/>}/>
                 <Route path="announcements" element={<SAAnnouncements/>}/>
                 <Route path="settings"     element={<SASettings/>}/>
+                <Route path="*"            element={<NotFound home="/superadmin"/>}/>
               </Route>
 
               {/* ── School Login ──────────────────────────────────────── */}
@@ -163,6 +165,7 @@ export default function App() {
                 <Route path="certificates"    element={<RequireModule module="certificates"><Certificates/></RequireModule>}/>
                 <Route path="hiring"          element={<RequireModule module="hiring"><TeacherHiring/></RequireModule>}/>
                 <Route path="settings"        element={<RequireModule module="settings"><Settings/></RequireModule>}/>
+                <Route path="*"               element={<NotFound/>}/>
               </Route>
 
               {/* ── Parent Portal ─────────────────────────────────────── */}
@@ -176,7 +179,11 @@ export default function App() {
                 <Route index            element={<ParentDashboard/>}/>
                 <Route path="child/:id"  element={<ParentChild/>}/>
                 <Route path="messages"   element={<ParentMessages/>}/>
+                <Route path="*"          element={<NotFound home="/parent"/>}/>
               </Route>
+
+              {/* ── Catch-all: any other unknown path ─────────────────── */}
+              <Route path="*" element={<NotFound/>}/>
 
              </Routes>
             </Suspense>
