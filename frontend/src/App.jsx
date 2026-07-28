@@ -21,6 +21,7 @@ const Teachers      = lazy(() => import('./pages/Teachers'));
 const Classes       = lazy(() => import('./pages/Classes'));
 const Attendance    = lazy(() => import('./pages/Attendance'));
 const Fees          = lazy(() => import('./pages/Fees'));
+const ChallanGenerator = lazy(() => import('./pages/ChallanGenerator'));
 const Exams         = lazy(() => import('./pages/Exams'));
 const Timetable     = lazy(() => import('./pages/Timetable'));
 const LibraryPage   = lazy(() => import('./pages/Library'));
@@ -144,6 +145,7 @@ export default function App() {
                 <Route path="classes"         element={<RequireModule module="classes"><Classes/></RequireModule>}/>
                 <Route path="attendance"      element={<RequireModule module="attendance"><Attendance/></RequireModule>}/>
                 <Route path="fees"            element={<RequireModule module="fees"><Fees/></RequireModule>}/>
+                <Route path="fees/generate"   element={<RequireModule module="fees"><ChallanGenerator/></RequireModule>}/>
                 <Route path="exams"           element={<RequireModule module="exams"><Exams/></RequireModule>}/>
                 <Route path="result-card"     element={<RequireModule module="results"><ResultCard/></RequireModule>}/>
                 <Route path="timetable"       element={<RequireModule module="timetable"><Timetable/></RequireModule>}/>

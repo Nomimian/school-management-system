@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const Fee = require('../models/Fee');
 const Student = require('../models/Student');
+const FeeHead = require('../models/FeeHead');
+const School = require('../models/School');
+const challan = require('../services/challanService');
 
 exports.getFees = async (req, res) => {
   try {
@@ -73,16 +76,24 @@ exports.updateFee = async (req, res) => {
 
 exports.markPaid = async (req, res) => {
   try {
-    const { method = 'Cash' } = req.body;
+    const { method = 'Cash', amount, paidDate } = req.body;
     const fee = await Fee.findOne({ _id: req.params.id, school: req.user.school });
     if (!fee) return res.status(404).json({ success: false, message: 'Fee record not found.' });
-    fee.paid = fee.amount;
-    fee.status = 'Paid';
+
+    // How much is being collected now. Blank ⇒ clear the whole outstanding balance
+    // (the common "paid in full" case). A smaller value records a partial payment.
+    const outstanding = Math.max(0, (fee.amount || 0) - (fee.paid || 0));
+    const payNow = (amount === undefined || amount === null || amount === '')
+      ? outstanding
+      : Math.max(0, Number(amount) || 0);
+
+    fee.paid = Math.min(fee.amount, (fee.paid || 0) + payNow);
+    fee.status = fee.paid >= fee.amount ? 'Paid' : (fee.paid > 0 ? 'Partial' : 'Pending');
     fee.method = method;
-    fee.paidDate = new Date();
+    fee.paidDate = paidDate ? new Date(paidDate) : new Date();
     fee.recordedBy = req.user._id;   // the logged-in user who received the payment
-    await fee.save();
-    await Student.findOneAndUpdate({ _id: fee.student, school: req.user.school }, { feeStatus: 'Paid' });
+    await fee.save();                // pre-save assigns a receipt number once fully Paid
+    await Student.findOneAndUpdate({ _id: fee.student, school: req.user.school }, { feeStatus: fee.status });
     const populated = await fee.populate([
       { path: 'student', select: 'name class rollNumber studentId' },
       { path: 'recordedBy', select: 'name' },
@@ -99,6 +110,81 @@ exports.deleteFee = async (req, res) => {
     res.json({ success: true, message: 'Fee record deleted.' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @GET /api/fees/generate/preview?month=August&year=2026
+// Feeds the Challan Generator: the fee heads to bill, class breakdown with
+// student counts, and how many challans already exist for that month.
+exports.previewGenerate = async (req, res) => {
+  try {
+    const month = req.query.month || challan.MONTHS[new Date().getMonth()];
+    const year  = Number(req.query.year) || new Date().getFullYear();
+    const school = req.user.school;
+
+    const [heads, students, existing, schoolDoc] = await Promise.all([
+      FeeHead.find({ school, isActive: true }).sort({ order: 1, createdAt: 1 }).lean(),
+      Student.find({ school, isActive: true }).select('class').lean(),
+      Fee.find({ school, month, year }).select('student').lean(),
+      School.findById(school).select('feeDay').lean(),
+    ]);
+
+    // Class breakdown (count of active students per class)
+    const classMap = {};
+    students.forEach(s => { const c = s.class || '—'; classMap[c] = (classMap[c] || 0) + 1; });
+    const classes = Object.keys(classMap).sort().map(name => ({ name, students: classMap[name] }));
+
+    res.json({
+      success: true,
+      data: {
+        month, year,
+        totalStudents: students.length,
+        alreadyGenerated: existing.length,
+        monthlyHeads:  heads.filter(h => h.frequency === 'Monthly').map(h => ({ name: h.name, amount: h.amount })),
+        optionalHeads: heads.filter(h => h.frequency === 'Optional').map(h => ({ name: h.name, amount: h.amount })),
+        classes,
+        dueDay: schoolDoc?.feeDay || 10,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @POST /api/fees/generate
+// body: { month, year, scope:'school'|'class'|'students', class?, studentIds?,
+//         heads:[{name,amount}], dueDay? }
+exports.generateChallans = async (req, res) => {
+  try {
+    const { month, year, scope = 'school', class: className, studentIds, heads, dueDay = 10 } = req.body;
+    if (!month || !year)
+      return res.status(400).json({ success: false, message: 'Month and year are required.' });
+    if (!Array.isArray(heads) || heads.length === 0)
+      return res.status(400).json({ success: false, message: 'Select at least one fee head to bill.' });
+    if (scope === 'class' && !className)
+      return res.status(400).json({ success: false, message: 'A class is required for class-wide generation.' });
+    if (scope === 'students' && (!Array.isArray(studentIds) || !studentIds.length))
+      return res.status(400).json({ success: false, message: 'Select at least one student.' });
+
+    // Sanitise heads → {name, amount>=0}
+    const cleanHeads = heads
+      .filter(h => h && h.name)
+      .map(h => ({ name: String(h.name).trim(), amount: Math.max(0, Number(h.amount) || 0) }));
+
+    const result = await challan.generateChallans({
+      school: req.user.school, month, year, scope,
+      className, studentIds, heads: cleanHeads,
+      dueDay: Number(dueDay) || 10, createdBy: req.user._id,
+    });
+
+    res.json({
+      success: true,
+      message: `Generated ${result.created} challan(s) for ${month} ${year}` +
+               (result.skipped ? ` · ${result.skipped} already existed and were skipped` : ''),
+      data: result,
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 

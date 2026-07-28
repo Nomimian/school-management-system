@@ -5,6 +5,8 @@ const authCtrl       = require('../controllers/authController');
 const studentCtrl    = require('../controllers/studentController');
 const teacherCtrl    = require('../controllers/teacherController');
 const feeCtrl        = require('../controllers/feeController');
+const feeHeadCtrl    = require('../controllers/feeHeadController');
+const enrollGrpCtrl  = require('../controllers/enrollmentGroupController');
 const attendanceCtrl = require('../controllers/attendanceController');
 const examCtrl       = require('../controllers/examController');
 const otherCtrl      = require('../controllers/otherController');
@@ -81,6 +83,7 @@ router.use('/grade-scales',    requireModule('exams'));
 router.use('/report-card',     requireModule('results'));
 router.use('/fees',            requireModule('fees'));
 router.use('/fee-structures',  requireModule('fees'));
+router.use('/fee-heads',       requireModule('fees'));
 router.use('/accounts',        requireModule('accounts'));
 router.use('/library',         requireModule('library'));
 router.use('/books',           requireModule('library'));
@@ -156,8 +159,24 @@ router.get   ('/teachers/:id',    teacherCtrl.getTeacher);
 router.put   ('/teachers/:id',    teacherCtrl.updateTeacher);
 router.delete('/teachers/:id',    teacherCtrl.deleteTeacher);
 
+// ── FEE HEADS (fee-type master: Tuition, Exam, AC …) ────────────────────────────
+router.get   ('/fee-heads',       feeHeadCtrl.getFeeHeads);
+router.post  ('/fee-heads',       feeHeadCtrl.createFeeHead);
+router.put   ('/fee-heads/:id',   feeHeadCtrl.updateFeeHead);
+router.delete('/fee-heads/:id',   feeHeadCtrl.deleteFeeHead);
+
+// ── ENROLLMENT GROUPS (dynamic Group/House/Shift categories) ────────────────────
+// Reads are open to any authenticated school user (the student/admission forms
+// need them regardless of role); only operators may edit the configuration.
+router.get   ('/enrollment-groups',     enrollGrpCtrl.getEnrollmentGroups);
+router.post  ('/enrollment-groups',     authorize('admin', 'principal'), enrollGrpCtrl.createEnrollmentGroup);
+router.put   ('/enrollment-groups/:id', authorize('admin', 'principal'), enrollGrpCtrl.updateEnrollmentGroup);
+router.delete('/enrollment-groups/:id', authorize('admin', 'principal'), enrollGrpCtrl.deleteEnrollmentGroup);
+
 // ── FEES ──────────────────────────────────────────────────────────────────────
-router.get   ('/fees/stats',      feeCtrl.getFeeStats);
+router.get   ('/fees/stats',           feeCtrl.getFeeStats);
+router.get   ('/fees/generate/preview', feeCtrl.previewGenerate);
+router.post  ('/fees/generate',        feeCtrl.generateChallans);
 router.get   ('/fees',            feeCtrl.getFees);
 router.post  ('/fees',            feeCtrl.createFee);
 router.get   ('/fees/:id',        feeCtrl.getFee);

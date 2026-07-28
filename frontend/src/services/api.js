@@ -132,6 +132,25 @@ export const feeAPI = {
   markPaid: (id, data)=> patch(`/fees/${id}/pay`, data),
   delete:   (id)      => del(`/fees/${id}`),
   getStats: (params)  => get('/fees/stats', params),
+  // Challan generation (single / bulk)
+  previewGenerate: (params) => get('/fees/generate/preview', params),
+  generate:        (data)   => post('/fees/generate', data),
+};
+
+// ─── FEE HEADS (fee-type master: Tuition, Exam, AC …) ───────────────────────────
+export const feeHeadAPI = {
+  getAll: ()         => get('/fee-heads'),
+  create: (data)     => post('/fee-heads', data),
+  update: (id, data) => put(`/fee-heads/${id}`, data),
+  delete: (id)       => del(`/fee-heads/${id}`),
+};
+
+// ─── ENROLLMENT GROUPS (dynamic Group/House/Shift categories) ───────────────────
+export const enrollmentGroupAPI = {
+  getAll: ()         => get('/enrollment-groups'),
+  create: (data)     => post('/enrollment-groups', data),
+  update: (id, data) => put(`/enrollment-groups/${id}`, data),
+  delete: (id)       => del(`/enrollment-groups/${id}`),
 };
 
 // ─── ATTENDANCE ───────────────────────────────────────────────────────────────

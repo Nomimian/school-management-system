@@ -53,6 +53,9 @@ exports.updateAdmission = async (req, res) => {
         photo: admission.photo,          // carry the uploaded applicant photo onto the roster
         phone: admission.guardian?.phone,
         admissionDate: new Date(),
+        enrollment: admission.enrollment || [],   // carry Group/House/etc. onto the roster
+        feeProfile: admission.feeProfile || [],   // carry the agreed fee/discounts onto the roster
+        feeAmount: admission.feeAmount || 0,
         feeStatus: 'Pending',
         school: req.user.school,
       });

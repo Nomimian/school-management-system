@@ -11,6 +11,9 @@ const studentSchema = new mongoose.Schema({
   dateOfBirth:   { type: Date },
   religion:      { type: String, default: 'Islam' },
   bloodGroup:    { type: String },
+  // Dynamic enrollment classifications (Group/House/Shift …) defined per school
+  // in Settings → Groups & Categories. Each entry is { name, value }.
+  enrollment:    [{ name: { type: String }, value: { type: String } }],
   guardian: {
     name:         { type: String },
     relationship: { type: String, default: 'Father' },
@@ -22,7 +25,16 @@ const studentSchema = new mongoose.Schema({
   email:         { type: String },
   phone:         { type: String },
   admissionDate: { type: Date, default: Date.now },
-  feeAmount:     { type: Number, default: 0 },
+  // Per-student fee agreement, set at admission / on the student form. Each entry
+  // mirrors a FeeHead by `name`; `amount` overrides the head's base (blank = use
+  // base) and `discount` is this student's concession on that head. The monthly
+  // challan generator reads this to compute each student's net bill.
+  feeProfile:    [{
+    name:     { type: String },
+    amount:   { type: Number, default: 0 },
+    discount: { type: Number, default: 0 },
+  }],
+  feeAmount:     { type: Number, default: 0 },   // cached net MONTHLY fee (Σ monthly heads − discounts)
   feeStatus:     { type: String, enum: ['Paid', 'Pending', 'Overdue', 'Partial'], default: 'Pending' },
   isActive:      { type: Boolean, default: true },
   photo:         { type: String },

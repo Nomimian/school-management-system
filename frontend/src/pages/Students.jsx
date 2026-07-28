@@ -5,10 +5,12 @@ import { Plus, Search, Eye, Edit2, Trash2, GraduationCap, Loader2, RefreshCw, Up
 import { studentAPI, schoolAPI } from '../services/api';
 import { useClasses } from '../hooks/useClasses.js';
 import { SectionHeader, Card, Badge, Button, Input, Modal, Avatar, useToast, useConfirm, Dropdown, TableSkeleton } from '../components/ui';
+import FeeProfileTable from '../components/FeeProfileTable.jsx';
+import EnrollmentFields from '../components/EnrollmentFields.jsx';
 
 const API_BASE = SERVER_URL;
 const feeColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
-const emptyForm = { name:'', class:'', rollNumber:'', gender:'Male', dateOfBirth:'', guardian:{name:'',phone:''}, phone:'', feeAmount:'', feeStatus:'Pending', address:'', email:'', admissionDate:'', bloodGroup:'', photo:'' };
+const emptyForm = { name:'', class:'', rollNumber:'', gender:'Male', dateOfBirth:'', guardian:{name:'',phone:''}, phone:'', enrollment:[], feeProfile:[], feeAmount:'', feeStatus:'Pending', address:'', email:'', admissionDate:'', bloodGroup:'', photo:'' };
 
 export default function Students() {
   const toast = useToast();
@@ -217,7 +219,6 @@ export default function Students() {
             <Input label="Guardian Name" value={editData.guardian?.name||''} onChange={e => setEditData({...editData, guardian:{...editData.guardian, name:e.target.value}})} placeholder="Parent/Guardian"/>
             <Input label="Guardian Phone" value={editData.guardian?.phone||''} onChange={e => setEditData({...editData, guardian:{...editData.guardian, phone:e.target.value}})} placeholder="03XX-XXXXXXX"/>
             <Input label="Student Email" value={editData.email||''} onChange={e => setEditData({...editData, email:e.target.value})} placeholder="student@school.edu"/>
-            <Input label="Monthly Fee (Rs)" type="number" value={editData.feeAmount||''} onChange={e => setEditData({...editData, feeAmount:Number(e.target.value)})} placeholder="5000"/>
             <Input label="Admission Date" type="date" value={editData.admissionDate} onChange={e => setEditData({...editData, admissionDate:e.target.value})}/>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Fee Status</label>
@@ -229,6 +230,26 @@ export default function Students() {
             <div className="sm:col-span-2">
               <Input label="Address" value={editData.address||''} onChange={e => setEditData({...editData, address:e.target.value})} placeholder="Full address"/>
             </div>
+
+            {/* Dynamic enrollment categories (Group / House / …) */}
+            <div className="sm:col-span-2">
+              <EnrollmentFields
+                value={editData.enrollment || []}
+                studentClass={editData.class}
+                seedKey={editData._id || 'new'}
+                onChange={(enrollment) => setEditData(d => ({ ...d, enrollment }))}
+              />
+            </div>
+
+            {/* Per-student fee table (Type · Fee · Discount · Total) */}
+            <div className="sm:col-span-2">
+              <FeeProfileTable
+                value={editData.feeProfile || []}
+                seedKey={editData._id || 'new'}
+                onChange={(profile, monthly) => setEditData(d => ({ ...d, feeProfile: profile, feeAmount: monthly }))}
+              />
+            </div>
+
             <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
               <Button variant="primary" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save Student'}</Button>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SERVER_URL } from '../config/env.js';
-import { DollarSign, Search, Plus, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw, Printer } from 'lucide-react';
+import { DollarSign, Search, Plus, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw, Printer, FileText } from 'lucide-react';
 import { feeAPI, studentAPI } from '../services/api';
 import { useSchool } from '../hooks/useSchool.jsx';
 import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/print/PrintComponents.jsx';
@@ -17,6 +18,7 @@ const CURRENT_MONTH = MONTHS[new Date().getMonth()];
 
 export default function Fees() {
   const toast = useToast();
+  const navigate = useNavigate();
   const { school } = useSchool();
   const [fees, setFees]           = useState([]);
   const [stats, setStats]         = useState(null);
@@ -29,6 +31,11 @@ export default function Fees() {
   const [students, setStudents]   = useState([]);
   const [saving, setSaving]       = useState(false);
   const [form, setForm]           = useState({ student:'', month:CURRENT_MONTH, year:CURRENT_YEAR, amount:'', paid:'', method:'Cash' });
+  // Collect-payment dialog (opened from "Mark Paid" on a challan)
+  const [payOpen, setPayOpen]     = useState(false);
+  const [payTarget, setPayTarget] = useState(null);
+  const [payForm, setPayForm]     = useState({ method:'Cash', amount:'', paidDate:new Date().toISOString().slice(0,10) });
+  const [payingNow, setPaying]    = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -74,12 +81,30 @@ export default function Fees() {
     { label:'Outstanding', value:`Rs ${(repExpected-repCollected).toLocaleString()}` },
   ];
 
-  const markPaid = async (id) => {
+  // Open the collect-payment dialog for a challan (default: clear the balance)
+  const openPay = (fee) => {
+    const balance = Math.max(0, (fee.amount || 0) - (fee.paid || 0));
+    setPayTarget(fee);
+    setPayForm({ method: fee.method || 'Cash', amount: balance, paidDate: new Date().toISOString().slice(0,10) });
+    setPayOpen(true);
+  };
+
+  const confirmPayment = async () => {
+    if (!payTarget) return;
+    const balance = Math.max(0, (payTarget.amount || 0) - (payTarget.paid || 0));
+    const amt = payForm.amount === '' ? balance : Math.max(0, Number(payForm.amount) || 0);
+    if (amt <= 0) return toast.error('Enter an amount greater than 0.');
+    setPaying(true);
     try {
-      await feeAPI.markPaid(id, { method:'Cash' });
-      fetchAll();
-      toast.success('Marked as paid');
-    } catch(e) { toast.error(e.message || 'Could not update payment'); }
+      const res = await feeAPI.markPaid(payTarget._id, { method: payForm.method, amount: amt, paidDate: payForm.paidDate });
+      setPayOpen(false);
+      await fetchAll();
+      // Show the receipt straight away so it can be printed.
+      setSelected(res.data);
+      setReceipt(true);
+      toast.success(res.data?.status === 'Paid' ? 'Payment recorded — receipt ready' : `Partial payment recorded — balance Rs ${(res.data?.balance||0).toLocaleString()}`);
+    } catch(e) { toast.error(e.message || 'Could not record payment'); }
+    finally { setPaying(false); }
   };
 
   // Derived preview of the invoice being recorded (total vs paid → status/balance)
@@ -136,15 +161,23 @@ export default function Fees() {
         <div class="info-item"><label>Roll No</label><span>${r.student?.rollNumber||'—'}</span></div>
         <div class="info-item"><label>Student ID</label><span>${r.student?.studentId||'—'}</span></div>
       </div>
-      <h3 style="font-size:13px;font-weight:bold;color:#475569;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.5px;">Payment Details</h3>
-      <table><thead><tr><th>Description</th><th>Month</th><th>Total Amount</th><th>Amount Paid</th><th>Balance</th></tr></thead>
-      <tbody><tr>
-        <td>School Fee – ${r.month} ${r.year}</td>
-        <td>${r.month} ${r.year}</td>
-        <td>Rs ${(r.amount||0).toLocaleString()}</td>
-        <td>Rs ${(r.paid||0).toLocaleString()}</td>
-        <td>Rs ${(r.balance||0).toLocaleString()}</td>
-      </tr></tbody></table>
+      <h3 style="font-size:13px;font-weight:bold;color:#475569;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.5px;">Fee Details — ${r.month} ${r.year}</h3>
+      <table>
+        <thead><tr><th>Fee Head</th><th style="text-align:right">Amount</th><th style="text-align:right">Discount</th><th style="text-align:right">Payable</th></tr></thead>
+        <tbody>
+          ${(r.items?.length ? r.items : [{ name:`School Fee – ${r.month} ${r.year}`, amount:r.amount, discount:0 }]).map(it => `
+            <tr>
+              <td>${it.name}</td>
+              <td style="text-align:right">Rs ${(it.amount||0).toLocaleString()}</td>
+              <td style="text-align:right">Rs ${(it.discount||0).toLocaleString()}</td>
+              <td style="text-align:right">Rs ${((it.amount||0)-(it.discount||0)).toLocaleString()}</td>
+            </tr>`).join('')}
+        </tbody>
+        <tfoot><tr>
+          <td colspan="3" style="text-align:right;font-weight:bold;">Total Payable</td>
+          <td style="text-align:right;font-weight:bold;">Rs ${(r.amount||0).toLocaleString()}</td>
+        </tr></tfoot>
+      </table>
       <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:10px 14px;border-radius:6px;display:flex;justify-content:space-between;font-size:13px;">
         <span>Payment Method: <strong>${r.method||'—'}</strong></span>
         <span>Date Paid: <strong>${r.paidDate?.slice(0,10)||'—'}</strong></span>
@@ -178,6 +211,7 @@ export default function Fees() {
               filename={`fees-${rangeSlug(range.from, range.to)}`}
               columns={REPORT_COLS} rows={filteredFees} totals={REPORT_TOTALS} docType="fee" />
             <Button variant="secondary" size="sm" icon={RefreshCw} onClick={fetchAll}>Refresh</Button>
+            <Button variant="secondary" size="sm" icon={FileText}  onClick={() => navigate('/fees/generate')}>Generate Challan</Button>
             <Button variant="primary"   size="sm" icon={Plus}      onClick={() => setModal(true)}>Record Payment</Button>
           </div>
         }
@@ -241,7 +275,7 @@ export default function Fees() {
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
                         {r.status !== 'Paid' && (
-                          <button onClick={() => markPaid(r._id)} className="text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-medium">Mark Paid</button>
+                          <button onClick={() => openPay(r)} className="text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-medium">Mark Paid</button>
                         )}
                         <button onClick={() => { setSelected(r); setReceipt(true); }} className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-2.5 py-1 rounded-lg font-medium">Receipt</button>
                         <button onClick={() => printReceipt(r)} className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 px-2.5 py-1 rounded-lg font-medium inline-flex items-center gap-1"><Printer size={12}/> Print</button>
@@ -311,6 +345,67 @@ export default function Fees() {
             <Button variant="primary" onClick={recordPayment} disabled={saving}>{saving ? 'Saving…' : 'Record Payment'}</Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Collect Payment Modal — opened from "Mark Paid" on a challan */}
+      <Modal open={payOpen} onClose={() => setPayOpen(false)} title="Collect Payment" size="sm">
+        {payTarget && (() => {
+          const balance = Math.max(0, (payTarget.amount || 0) - (payTarget.paid || 0));
+          const items = payTarget.items?.length ? payTarget.items : [{ name:`School Fee – ${payTarget.month} ${payTarget.year}`, amount:payTarget.amount, discount:0 }];
+          const amt = payForm.amount === '' ? balance : Math.max(0, Number(payForm.amount) || 0);
+          const willBe = amt >= balance ? 'Paid' : amt > 0 ? 'Partial' : 'Pending';
+          return (
+            <div className="space-y-4">
+              {/* Challan summary */}
+              <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-700">{payTarget.student?.name}</span>
+                  <Badge variant="blue">{payTarget.student?.class}</Badge>
+                </div>
+                <table className="w-full text-sm">
+                  <tbody>
+                    {items.map((it,i) => (
+                      <tr key={i} className="border-b border-slate-50 last:border-0">
+                        <td className="px-4 py-1.5 text-slate-600">{it.name}</td>
+                        <td className="px-4 py-1.5 text-right text-slate-700">Rs {((it.amount||0)-(it.discount||0)).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-slate-50/70"><td className="px-4 py-1.5 text-xs font-semibold text-slate-500 uppercase">{payTarget.month} {payTarget.year} · Total</td><td className="px-4 py-1.5 text-right font-bold text-slate-800">Rs {(payTarget.amount||0).toLocaleString()}</td></tr>
+                    {payTarget.paid > 0 && <tr><td className="px-4 py-1.5 text-xs text-slate-400 uppercase">Already paid</td><td className="px-4 py-1.5 text-right text-emerald-600">Rs {payTarget.paid.toLocaleString()}</td></tr>}
+                    <tr><td className="px-4 py-1.5 text-xs font-semibold text-red-500 uppercase">Balance</td><td className="px-4 py-1.5 text-right font-bold text-red-500">Rs {balance.toLocaleString()}</td></tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {/* Payment inputs */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-slate-700">Payment Method</label>
+                  <Dropdown value={payForm.method} onChange={e => setPayForm({...payForm, method:e.target.value})}
+                    className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                    {['Cash','Bank Transfer','Online','Cheque'].map(m => <option key={m}>{m}</option>)}
+                  </Dropdown>
+                </div>
+                <Input label="Amount Received" type="number" value={payForm.amount} onChange={e => setPayForm({...payForm, amount:e.target.value})} placeholder={String(balance)}/>
+                <div className="col-span-2">
+                  <Input label="Payment Date" type="date" value={payForm.paidDate} onChange={e => setPayForm({...payForm, paidDate:e.target.value})}/>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-sm">
+                <span className="text-slate-500">After this payment:</span>
+                <Badge variant={statusColors[willBe]}>{willBe}</Badge>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-1">
+                <Button variant="secondary" onClick={() => setPayOpen(false)}>Cancel</Button>
+                <Button variant="primary" icon={payingNow ? Loader2 : CheckCircle} onClick={confirmPayment} disabled={payingNow}>{payingNow ? 'Saving…' : 'Confirm Payment'}</Button>
+              </div>
+            </div>
+          );
+        })()}
       </Modal>
 
       {/* Receipt Modal — premium, school-branded */}

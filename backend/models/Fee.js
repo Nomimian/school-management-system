@@ -5,6 +5,14 @@ const feeSchema = new mongoose.Schema({
   student:     { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
   month:       { type: String, required: true },
   year:        { type: Number, required: true },
+  // Per-head breakdown of this challan (Tuition, Exam, AC …). `amount` below is
+  // the NET total (Σ gross − Σ discount) and stays the single figure the rest of
+  // the app reads, so older single-amount fee records remain valid.
+  items:       [{
+    name:      { type: String },
+    amount:    { type: Number, default: 0 },   // gross for this head
+    discount:  { type: Number, default: 0 },   // per-student concession on this head
+  }],
   amount:      { type: Number, required: true },
   paid:        { type: Number, default: 0 },
   balance:     { type: Number, default: 0 },

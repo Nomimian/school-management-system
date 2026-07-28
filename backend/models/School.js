@@ -33,6 +33,10 @@ const schoolSchema = new mongoose.Schema({
   currencySymbol:{ type: String, default: 'Rs' },
   feeDay:        { type: Number, default: 10 },        // day of month fee is due
   lateFine:      { type: Number, default: 200 },
+  // When true, the server auto-creates each active student's monthly challan at
+  // the start of every month (idempotent; also self-heals if the server was
+  // asleep on the 1st). Operators can still generate manually any time.
+  autoGenerateChallans: { type: Boolean, default: true },
 
   // Branding / Theme
   primaryColor:  { type: String, default: '#1d4ed8' },

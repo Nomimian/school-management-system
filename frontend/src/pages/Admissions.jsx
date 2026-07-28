@@ -8,6 +8,8 @@ import { admissionAPI, schoolAPI } from '../services/api';
 import { useSchool } from '../hooks/useSchool.jsx';
 import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/print/PrintComponents.jsx';
 import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, useConfirm, Dropdown, EmptyState, TableSkeleton } from '../components/ui';
+import FeeProfileTable from '../components/FeeProfileTable.jsx';
+import EnrollmentFields from '../components/EnrollmentFields.jsx';
 import { ReportMenu } from '../components/ReportMenu.jsx';
 import { DateRangePicker } from '../components/DateRangePicker.jsx';
 import { inDateRange, rangeLabel, rangeSlug } from '../utils/reportExport.js';
@@ -25,7 +27,7 @@ const emptyForm = {
   religion:'Islam',bloodGroup:'',previousSchool:'',previousClass:'',
   guardian:{ name:'',relationship:'Father',phone:'',cnic:'',occupation:'',email:'' },
   address:'',testDate:'',testMarks:'',status:'Applied',
-  registrationFee:500,remarks:'',photo:'',
+  registrationFee:500,remarks:'',photo:'',enrollment:[],feeProfile:[],feeAmount:0,
 };
 
 export default function Admissions() {
@@ -416,6 +418,28 @@ export default function Admissions() {
                     className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200 resize-none"/>
                 </div>
               </div>
+            </div>
+
+            {/* Enrollment (dynamic Group / House / …) — carried onto the student when enrolled */}
+            <div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Enrollment</div>
+              <EnrollmentFields
+                value={editData.enrollment || []}
+                studentClass={editData.applyingClass}
+                seedKey={editData._id || 'new-admission'}
+                onChange={(enrollment) => setEditData(d => ({ ...d, enrollment }))}
+              />
+            </div>
+
+            {/* Fee Details — carried onto the student record when enrolled */}
+            <div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Fee Details</div>
+              <FeeProfileTable
+                value={editData.feeProfile || []}
+                seedKey={editData._id || 'new-admission'}
+                onChange={(profile, monthly) => setEditData(d => ({ ...d, feeProfile: profile, feeAmount: monthly }))}
+              />
+              <p className="text-xs text-slate-400 mt-2">These fees &amp; discounts are saved with the application and copied to the student roster automatically when the applicant is enrolled.</p>
             </div>
 
             <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">

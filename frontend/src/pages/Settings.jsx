@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { SERVER_URL } from '../config/env.js';
 import {
   Save, School, Bell, Shield, Palette, Upload,
-  Loader2, Eye, EyeOff, CheckCircle, Stamp, Users
+  Loader2, Eye, EyeOff, CheckCircle, Stamp, Users, DollarSign, Layers
 } from 'lucide-react';
 import { SectionHeader, Card, Button, Input, Switch, useToast, Dropdown } from '../components/ui';
 import { useAuth } from '../hooks/useAuth.jsx';
@@ -10,6 +10,8 @@ import { useSchool } from '../hooks/useSchool.jsx';
 import { authAPI, schoolAPI } from '../services/api';
 import { SchoolStamp } from '../components/print/PrintComponents.jsx';
 import UsersPanel from '../components/UsersPanel.jsx';
+import FeeConfigPanel from '../components/FeeConfigPanel.jsx';
+import EnrollmentGroupsPanel from '../components/EnrollmentGroupsPanel.jsx';
 
 const API_BASE = SERVER_URL;
 
@@ -17,6 +19,8 @@ const tabs = [
   { id:'school',        label:'School Profile',  icon:School   },
   { id:'stamp',         label:'Logo & Stamp',    icon:Stamp    },
   { id:'team',          label:'Team & Users',    icon:Users, module:'users' },
+  { id:'fees',          label:'Fee Configuration', icon:DollarSign, module:'fees' },
+  { id:'groups',        label:'Groups & Categories', icon:Layers, module:'students' },
   { id:'notifications', label:'Notifications',   icon:Bell     },
   { id:'security',      label:'Security',        icon:Shield   },
   { id:'appearance',    label:'Appearance',      icon:Palette  },
@@ -289,6 +293,10 @@ export default function Settings() {
 
       {/* ── TEAM & USERS ──────────────────────────────────────────────────── */}
       {activeTab==='team' && can('users') && <UsersPanel/>}
+
+      {activeTab==='fees' && can('fees') && <FeeConfigPanel/>}
+
+      {activeTab==='groups' && <EnrollmentGroupsPanel/>}
 
       {/* ── NOTIFICATIONS ─────────────────────────────────────────────────── */}
       {activeTab==='notifications' && (

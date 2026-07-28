@@ -12,6 +12,9 @@ const admissionSchema = new mongoose.Schema({
   bloodGroup:     { type: String },
   previousSchool: { type: String },
   previousClass:  { type: String },
+  // Dynamic enrollment classifications (Group/House/Shift …) — carried onto the
+  // Student when enrolled. Each entry is { name, value }.
+  enrollment:     [{ name: { type: String }, value: { type: String } }],
   guardian: {
     name:         String, relationship: String,
     phone:        String, cnic: String,
@@ -25,6 +28,15 @@ const admissionSchema = new mongoose.Schema({
   remarks:        { type: String },
   registrationFee:{ type: Number, default: 0 },
   feePaid:        { type: Boolean, default: false },
+  // Fee agreement captured at application time (Type · Fee · Discount). Carried
+  // onto the Student record when the applicant is enrolled. `feeAmount` is the
+  // net monthly total (Σ monthly heads − discounts).
+  feeProfile:     [{
+    name:     { type: String },
+    amount:   { type: Number, default: 0 },
+    discount: { type: Number, default: 0 },
+  }],
+  feeAmount:      { type: Number, default: 0 },
   photo:          { type: String },
   documents:      [{ name: String, url: String }],
   enrolledStudent:{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }, // set once enrolled

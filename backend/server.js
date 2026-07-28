@@ -86,6 +86,9 @@ const PORT = process.env.PORT || 5000;
 // no real port is bound.
 if (require.main === module) {
   app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+  // Monthly-challan automation (idempotent; self-heals if the host slept). Only
+  // started for the real server process — never under the test runner.
+  require('./config/scheduler').startScheduler();
 }
 
 module.exports = app;
