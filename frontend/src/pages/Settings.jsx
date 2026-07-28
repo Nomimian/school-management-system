@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { SERVER_URL } from '../config/env.js';
 import {
   Save, School, Bell, Shield, Palette, Upload,
-  Loader2, Eye, EyeOff, CheckCircle, Stamp, Users, DollarSign, Layers, List
+  Loader2, Eye, EyeOff, CheckCircle, Stamp, Users, DollarSign, Layers, List,
+  SlidersHorizontal, ArrowLeft, ChevronRight
 } from 'lucide-react';
 import { SectionHeader, Card, Button, Input, Switch, useToast, Dropdown } from '../components/ui';
 import { useAuth } from '../hooks/useAuth.jsx';
@@ -31,12 +32,24 @@ const tabs = [
   { id:'security',      label:'Security',            icon:Shield,     group:'Access & System' },
 ];
 
+// The Settings home: one card per group, drilled into to reveal its panels.
+const GROUPS = [
+  { id:'School & Branding', icon:School,            desc:'School profile, logo, stamp and theme' },
+  { id:'Configuration',     icon:SlidersHorizontal, desc:'Fees, groups and dropdown lists' },
+  { id:'Access & System',   icon:Shield,            desc:'Team, notifications and security' },
+];
+
 export default function Settings() {
   const { user, can }       = useAuth();
   const { school, refresh } = useSchool();
   const toast               = useToast();
   const visibleTabs         = tabs.filter(t => !t.module || can(t.module));
-  const [activeTab, setTab] = useState('school');
+  const [activeGroup, setActiveGroup] = useState(null);   // null → show the cards home
+  const [activeTab, setTab] = useState('');
+  const visibleGroups       = GROUPS.filter(g => visibleTabs.some(t => t.group === g.id));
+  const groupTabs           = visibleTabs.filter(t => t.group === activeGroup);
+  const openGroup = (id) => { setActiveGroup(id); setTab(visibleTabs.find(t => t.group === id)?.id || ''); setMsg(''); setErr(''); setSaved(false); };
+  const backToHome = () => { setActiveGroup(null); setTab(''); setMsg(''); setErr(''); setSaved(false); };
   const [accent, setAccent] = useState('#1d4ed8');
   const [fontSize, setFontSize] = useState('medium');
   const [saving, setSaving] = useState(false);
@@ -153,24 +166,49 @@ export default function Settings() {
 
   return (
     <div className="space-y-5">
-      <SectionHeader title="Settings" subtitle="Configure your school management system"/>
+      <SectionHeader
+        title={activeGroup || 'Settings'}
+        subtitle={activeGroup ? 'Manage this section' : 'Choose a section to configure'}
+        action={activeGroup && (
+          <Button variant="secondary" size="sm" icon={ArrowLeft} onClick={backToHome}>All Settings</Button>
+        )}
+      />
 
-      <div className="space-y-3">
-        {[...new Set(visibleTabs.map(t => t.group))].map(groupName => (
-          <div key={groupName}>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-1">{groupName}</div>
-            <div className="flex gap-2 flex-wrap">
-              {visibleTabs.filter(t => t.group === groupName).map(t => (
-                <button key={t.id} onClick={()=>{setTab(t.id);setMsg('');setErr('');setSaved(false);}}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
-                    ${activeTab===t.id?'bg-primary-600 text-white shadow-md':'bg-white text-slate-600 hover:bg-primary-50 border border-slate-200'}`}>
-                  <t.icon size={15}/>{t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Home: one card per group */}
+      {!activeGroup && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {visibleGroups.map(g => {
+            const items = visibleTabs.filter(t => t.group === g.id);
+            return (
+              <button key={g.id} onClick={() => openGroup(g.id)}
+                className="text-left rounded-2xl border border-slate-200 bg-white p-5 hover:border-primary-300 hover:shadow-md transition-all group">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center"><g.icon size={22}/></div>
+                  <ChevronRight size={18} className="text-slate-300 group-hover:text-primary-400"/>
+                </div>
+                <h3 className="font-display font-bold text-slate-800">{g.id}</h3>
+                <p className="text-sm text-slate-500 mt-0.5">{g.desc}</p>
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {items.map(i => <span key={i.id} className="text-[11px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{i.label}</span>)}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Drill-in: the selected group's sub-tabs */}
+      {activeGroup && (
+        <div className="flex gap-2 flex-wrap">
+          {groupTabs.map(t => (
+            <button key={t.id} onClick={()=>{setTab(t.id);setMsg('');setErr('');setSaved(false);}}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
+                ${activeTab===t.id?'bg-primary-600 text-white shadow-md':'bg-white text-slate-600 hover:bg-primary-50 border border-slate-200'}`}>
+              <t.icon size={15}/>{t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {msg   && <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 text-sm"><CheckCircle size={16}/>{msg}</div>}
       {err   && <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 text-sm">{err}</div>}
