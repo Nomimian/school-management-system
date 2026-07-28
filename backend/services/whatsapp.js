@@ -17,8 +17,22 @@ const API_VERSION = 'v20.0';
 
 const isConfigured = () => !!(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_ID);
 
-// digits-only, international format (e.g. 923001234567)
-const normalizeNumber = (n) => String(n || '').replace(/[^\d]/g, '');
+// WhatsApp Cloud API wants digits only in international format (no "+"), e.g.
+// 923001234567. Normalise any local/loose format, defaulting the country code
+// (Pakistan 92; override with SMS_COUNTRY_CODE):
+//   "0334-4968938" → "923344968938" · "+92300…" → "92300…" · "0092…" → "92…"
+const DEFAULT_CC = String(process.env.SMS_COUNTRY_CODE || '92').replace(/\D/g, '');
+const normalizeNumber = (n) => {
+  const raw = String(n || '').trim();
+  if (!raw) return '';
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return '';
+  if (raw.startsWith('+'))           return digits;                       // +92… → 92…
+  if (digits.startsWith('00'))       return digits.slice(2);              // 0092… → 92…
+  if (digits.startsWith('0'))        return DEFAULT_CC + digits.slice(1); // local 03xx → 923xx
+  if (digits.startsWith(DEFAULT_CC)) return digits;                       // 92… → 92…
+  return DEFAULT_CC + digits;                                             // bare 3xx → 923xx
+};
 
 async function post(payload) {
   const url = `https://graph.facebook.com/${API_VERSION}/${process.env.WHATSAPP_PHONE_ID}/messages`;
