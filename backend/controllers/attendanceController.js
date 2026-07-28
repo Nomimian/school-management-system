@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const Attendance = require('../models/Attendance');
 const Student = require('../models/Student');
+const School = require('../models/School');
+const engine = require('../services/notificationEngine');
 
 // @GET /api/attendance?class=Grade 8-A&date=2025-05-30
 exports.getAttendance = async (req, res) => {
@@ -41,6 +43,12 @@ exports.markBulk = async (req, res) => {
     if (validCount !== ids.length)
       return res.status(400).json({ success: false, message: 'One or more students do not belong to your school.' });
 
+    // Snapshot prior statuses so we only alert on a *transition* to Absent
+    // (re-saving the same day won't re-spam guardians).
+    const prev = await Attendance.find({ school: req.user.school, date: new Date(date), student: { $in: ids } })
+      .select('student status').lean();
+    const prevStatus = new Map(prev.map(a => [String(a.student), a.status]));
+
     const ops = records.map(r => ({
       updateOne: {
         filter: { student: r.student, date: new Date(date), school: req.user.school },
@@ -50,6 +58,22 @@ exports.markBulk = async (req, res) => {
     }));
     await Attendance.bulkWrite(ops);
     res.json({ success: true, message: `Attendance marked for ${records.length} students.` });
+
+    // ── Fire absence alerts to guardians (after responding — never blocks) ────
+    const newlyAbsentIds = records
+      .filter(r => r.status === 'Absent' && prevStatus.get(String(r.student)) !== 'Absent')
+      .map(r => r.student);
+    if (newlyAbsentIds.length) {
+      (async () => {
+        try {
+          const [school, students] = await Promise.all([
+            School.findById(req.user.school).select('name notifications').lean(),
+            Student.find({ _id: { $in: newlyAbsentIds }, school: req.user.school }).select('name class guardian phone email').lean(),
+          ]);
+          if (school) await engine.sendAbsenceAlerts(school, students, date);
+        } catch (e) { console.warn('absence alert dispatch failed:', e.message); }
+      })();
+    }
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

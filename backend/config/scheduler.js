@@ -1,5 +1,6 @@
 const School  = require('../models/School');
 const challan = require('../services/challanService');
+const engine  = require('../services/notificationEngine');
 
 /**
  * Monthly-challan automation — deliberately dependency-free (no node-cron) so it
@@ -18,21 +19,22 @@ let timer = null;
 
 async function runOnce(reason = 'tick') {
   try {
-    const schools = await School.find({ isActive: true, autoGenerateChallans: true })
-      .select('_id feeDay autoGenerateChallans').lean();
+    // All active tenants; each task is internally gated by the school's own
+    // toggle (autoGenerateChallans / notifications.feeReminder), so it's safe
+    // to iterate every school here.
+    const schools = await School.find({ isActive: true })
+      .select('_id name feeDay autoGenerateChallans notifications').lean();
     if (!schools.length) return;
-    let created = 0;
+    let created = 0, reminded = 0;
     for (const s of schools) {
-      try {
-        const r = await challan.ensureCurrentMonth(s);
-        created += r?.created || 0;
-      } catch (e) {
-        console.error(`⚠️  Challan automation failed for school ${s._id}:`, e.message);
-      }
+      try { created  += (await challan.ensureCurrentMonth(s))?.created || 0; }
+      catch (e) { console.error(`⚠️  Challan automation failed for school ${s._id}:`, e.message); }
+      try { reminded += (await engine.runFeeReminders(s))?.sent || 0; }
+      catch (e) { console.error(`⚠️  Fee reminders failed for school ${s._id}:`, e.message); }
     }
-    if (created > 0) console.log(`🧾 Auto-generated ${created} monthly challan(s) [${reason}]`);
+    if (created || reminded) console.log(`🧾 [${reason}] ${created} challan(s) generated · ${reminded} fee reminder(s) sent`);
   } catch (e) {
-    console.error('⚠️  Challan scheduler error:', e.message);
+    console.error('⚠️  Scheduler error:', e.message);
   }
 }
 

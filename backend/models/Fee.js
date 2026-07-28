@@ -23,6 +23,7 @@ const feeSchema = new mongoose.Schema({
   receiptNo:   { type: String },
   remarks:     { type: String },
   recordedBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  lastReminder:{ type: Date },   // last time an automated fee-due reminder was sent
 }, { timestamps: true });
 
 // Receipt numbers are unique per school
