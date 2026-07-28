@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { SERVER_URL } from '../config/env.js';
-import { Loader2, Send, Search, X, Users2, Paperclip, FileText, Mail, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, Send, Search, X, Users2, Paperclip, FileText, Mail, MessageCircle, Smartphone, CheckCircle2 } from 'lucide-react';
 import { Modal, Button, useToast } from './ui';
 import { ROLE_LABEL } from '../config/access.js';
 import { chatAPI, attachmentAPI, outboundAPI } from '../services/api';
@@ -14,11 +14,11 @@ const RESULT_TONE = { sent: 'text-emerald-600', simulated: 'text-blue-500', fail
 // Staff tool: send Email / WhatsApp (with attachments) to selected people.
 export default function OutboundCompose({ open, onClose }) {
   const toast = useToast();
-  const [status, setStatus]     = useState({ email: false, whatsapp: false });
+  const [status, setStatus]     = useState({ email: false, whatsapp: false, sms: false });
   const [recipients, setRecipients] = useState([]);
   const [picked, setPicked]     = useState([]);
   const [q, setQ]               = useState('');
-  const [channels, setChannels] = useState({ email: true, whatsapp: false });
+  const [channels, setChannels] = useState({ email: true, whatsapp: false, sms: false });
   const [subject, setSubject]   = useState('');
   const [body, setBody]         = useState('');
   const [atts, setAtts]         = useState([]);
@@ -74,19 +74,20 @@ export default function OutboundCompose({ open, onClose }) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Send Email / WhatsApp" size="lg">
+    <Modal open={open} onClose={onClose} title="Send Email / WhatsApp / SMS" size="lg">
       {results ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-emerald-600"><CheckCircle2 size={18}/> <span className="font-medium">Dispatch complete</span></div>
           <div className="rounded-xl border border-slate-100 overflow-hidden">
             <table className="w-full text-sm">
-              <thead><tr className="bg-slate-50/70 text-left"><th className="px-3 py-2 text-xs font-bold text-slate-500 uppercase">Recipient</th><th className="px-3 py-2 text-xs font-bold text-slate-500 uppercase">Email</th><th className="px-3 py-2 text-xs font-bold text-slate-500 uppercase">WhatsApp</th></tr></thead>
+              <thead><tr className="bg-slate-50/70 text-left"><th className="px-3 py-2 text-xs font-bold text-slate-500 uppercase">Recipient</th><th className="px-3 py-2 text-xs font-bold text-slate-500 uppercase">Email</th><th className="px-3 py-2 text-xs font-bold text-slate-500 uppercase">WhatsApp</th><th className="px-3 py-2 text-xs font-bold text-slate-500 uppercase">SMS</th></tr></thead>
               <tbody>
                 {results.map(r => (
                   <tr key={r.id} className="border-t border-slate-50">
                     <td className="px-3 py-2 text-slate-700">{r.name}</td>
                     <td className={`px-3 py-2 font-medium ${RESULT_TONE[r.email] || 'text-slate-300'}`}>{r.email || '—'}</td>
                     <td className={`px-3 py-2 font-medium ${RESULT_TONE[r.whatsapp] || 'text-slate-300'}`}>{r.whatsapp || '—'}</td>
+                    <td className={`px-3 py-2 font-medium ${RESULT_TONE[r.sms] || 'text-slate-300'}`}>{r.sms || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -103,9 +104,10 @@ export default function OutboundCompose({ open, onClose }) {
           {err && <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-2.5 text-sm">{err}</div>}
 
           {/* Channels */}
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <ChannelToggle id="email" icon={Mail} label="Email"/>
             <ChannelToggle id="whatsapp" icon={MessageCircle} label="WhatsApp"/>
+            <ChannelToggle id="sms" icon={Smartphone} label="SMS"/>
           </div>
 
           {/* Recipients */}

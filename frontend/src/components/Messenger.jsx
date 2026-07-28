@@ -170,13 +170,18 @@ export default function Messenger() {
             <>
               <div className="p-3 border-b border-slate-100 flex items-center gap-3">
                 <button className="sm:hidden text-slate-400" onClick={() => setActiveId(null)}><ArrowLeft size={18}/></button>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="font-semibold text-slate-800 text-sm truncate">{titleOf(thread.conversation, meId)}</div>
                   <div className="text-xs text-slate-400 truncate">
                     {(thread.conversation.participants || []).filter(p => String(p._id) !== String(meId)).map(p => `${p.name} (${ROLE_LABEL[p.role] || p.role})`).join(', ')}
                     {thread.conversation.aboutStudent && ` · about ${thread.conversation.aboutStudent.name}`}
                   </div>
                 </div>
+                {/* Close the open conversation */}
+                <button onClick={() => setActiveId(null)} aria-label="Close chat"
+                  className="ml-auto flex-shrink-0 p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                  <X size={18}/>
+                </button>
               </div>
 
               <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-3 bg-slate-50/40">

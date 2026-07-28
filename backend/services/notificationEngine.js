@@ -18,6 +18,7 @@ const Student = require('../models/Student');
 const { notify } = require('../controllers/notificationController');
 const mailer  = require('./mailer');
 const whatsapp = require('./whatsapp');
+const sms     = require('./sms');
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -34,6 +35,12 @@ async function notifyGuardians(school, student, { title, body, link = '', channe
     if (channels.whatsapp !== false) {
       const phone = student.guardian?.phone || student.phone;
       if (phone) whatsapp.sendWhatsApp({ to: phone, body: `${title}\n\n${body}` }).catch(() => {});
+    }
+
+    // 2b) SMS → guardian phone (best-effort)
+    if (channels.sms !== false) {
+      const phone = student.guardian?.phone || student.phone;
+      if (phone) sms.sendSMS({ to: phone, body: `${title} — ${body}` }).catch(() => {});
     }
 
     // 3) email → guardian email (best-effort)

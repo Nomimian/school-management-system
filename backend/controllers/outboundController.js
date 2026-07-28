@@ -9,6 +9,7 @@ const path = require('path');
 const User = require('../models/User');
 const mailer = require('../services/mailer');
 const whatsapp = require('../services/whatsapp');
+const sms = require('../services/sms');
 const { notify } = require('./notificationController');
 
 const uploadDir = path.join(__dirname, '..', 'uploads');
@@ -16,7 +17,7 @@ const basename = (url) => path.basename(String(url || '').split('?')[0]);
 
 // GET /api/outbound/status — which channels are live vs simulated (for the UI)
 exports.status = (req, res) => {
-  res.json({ success: true, data: { email: mailer.isConfigured(), whatsapp: whatsapp.isConfigured() } });
+  res.json({ success: true, data: { email: mailer.isConfigured(), whatsapp: whatsapp.isConfigured(), sms: sms.isConfigured() } });
 };
 
 // POST /api/outbound/send
@@ -26,8 +27,9 @@ exports.send = async (req, res) => {
     const { recipients = [], channels = [], subject = '', body = '', attachments = [] } = req.body;
     const wantEmail = channels.includes('email');
     const wantWhats = channels.includes('whatsapp');
+    const wantSms   = channels.includes('sms');
     if (!recipients.length) return res.status(400).json({ success: false, message: 'Select at least one recipient.' });
-    if (!wantEmail && !wantWhats) return res.status(400).json({ success: false, message: 'Choose at least one channel.' });
+    if (!wantEmail && !wantWhats && !wantSms) return res.status(400).json({ success: false, message: 'Choose at least one channel.' });
     if (!String(body).trim() && !attachments.length) return res.status(400).json({ success: false, message: 'Write a message or attach a file.' });
 
     // Resolve recipients strictly within the caller's school.
@@ -58,6 +60,15 @@ exports.send = async (req, res) => {
             const out = await whatsapp.sendWhatsApp({ to: u.phone, body: [subject, body].filter(Boolean).join('\n\n'), attachments: waAttachments });
             r.whatsapp = out.simulated ? 'simulated' : 'sent';
           } catch (e) { r.whatsapp = 'failed'; }
+        }
+      }
+      if (wantSms) {
+        if (!u.phone) r.sms = 'no-phone';
+        else {
+          try {
+            const out = await sms.sendSMS({ to: u.phone, body: [subject, body].filter(Boolean).join(' — ') });
+            r.sms = out.simulated ? 'simulated' : 'sent';
+          } catch (e) { r.sms = 'failed'; }
         }
       }
       results.push(r);
