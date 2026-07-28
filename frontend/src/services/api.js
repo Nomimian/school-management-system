@@ -153,6 +153,14 @@ export const enrollmentGroupAPI = {
   delete: (id)       => del(`/enrollment-groups/${id}`),
 };
 
+// ─── OPTION SETS (all configurable dropdown lists) ──────────────────────────────
+export const optionSetAPI = {
+  getAll: ()         => get('/option-sets'),
+  create: (data)     => post('/option-sets', data),
+  update: (id, data) => put(`/option-sets/${id}`, data),
+  delete: (id)       => del(`/option-sets/${id}`),
+};
+
 // ─── ATTENDANCE ───────────────────────────────────────────────────────────────
 export const attendanceAPI = {
   getAll:       (params) => get('/attendance', params),

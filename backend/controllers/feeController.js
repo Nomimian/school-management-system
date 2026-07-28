@@ -46,14 +46,37 @@ exports.createFee = async (req, res) => {
     const student = await Student.findOne({ _id: req.body.student, school: req.user.school }).select('_id');
     if (!student) return res.status(400).json({ success: false, message: 'Student not found in your school.' });
 
-    const fee = await Fee.create({ ...req.body, school: req.user.school, recordedBy: req.user._id });
-    // Update student fee status
+    let fee, created = true;
+    try {
+      fee = await Fee.create({ ...req.body, school: req.user.school, recordedBy: req.user._id });
+    } catch (e) {
+      // A challan already exists for this student+month (unique index). Instead of
+      // creating a duplicate, record this payment against the existing challan.
+      if (e.code !== 11000) throw e;
+      created = false;
+      fee = await Fee.findOne({ school: req.user.school, student: req.body.student, month: req.body.month, year: req.body.year });
+      if (!fee) throw e;
+      const paidNow = Number(req.body.paid) || 0;
+      fee.paid    = Math.min(fee.amount, (fee.paid || 0) + paidNow);   // add to whatever was paid
+      fee.status  = fee.paid >= fee.amount ? 'Paid' : (fee.paid > 0 ? 'Partial' : 'Pending');
+      if (req.body.method)   fee.method   = req.body.method;
+      if (req.body.paidDate) fee.paidDate = new Date(req.body.paidDate);
+      if (req.body.remarks)  fee.remarks  = req.body.remarks;
+      fee.recordedBy = req.user._id;
+      await fee.save();
+    }
+
+    // Keep the student's fee status in sync.
     await Student.findOneAndUpdate({ _id: req.body.student, school: req.user.school }, { feeStatus: fee.status });
     const populated = await fee.populate([
       { path: 'student', select: 'name class rollNumber studentId' },
       { path: 'recordedBy', select: 'name' },
     ]);
-    res.status(201).json({ success: true, data: populated });
+    res.status(created ? 201 : 200).json({
+      success: true,
+      data: populated,
+      message: created ? undefined : `A challan for ${fee.month} ${fee.year} already existed — your payment was recorded against it.`,
+    });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }

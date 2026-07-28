@@ -4,6 +4,7 @@ import { SERVER_URL } from '../config/env.js';
 import { DollarSign, Search, Plus, CheckCircle, Clock, AlertCircle, Loader2, RefreshCw, Printer, FileText } from 'lucide-react';
 import { feeAPI, studentAPI } from '../services/api';
 import { useSchool } from '../hooks/useSchool.jsx';
+import { useOptions } from '../hooks/useOptions.js';
 import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/print/PrintComponents.jsx';
 import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, Dropdown, EmptyState, TableSkeleton } from '../components/ui';
 import { ReportMenu } from '../components/ReportMenu.jsx';
@@ -20,6 +21,8 @@ export default function Fees() {
   const toast = useToast();
   const navigate = useNavigate();
   const { school } = useSchool();
+  const { get: opt } = useOptions();
+  const PAY_METHODS = opt('paymentMethods', ['Cash','Bank Transfer','Online','Cheque']);
   const [fees, setFees]           = useState([]);
   const [stats, setStats]         = useState(null);
   const [loading, setLoading]     = useState(true);
@@ -322,7 +325,7 @@ export default function Fees() {
             <label className="text-sm font-medium text-slate-700">Payment Method</label>
             <Dropdown value={form.method} onChange={e => setForm({...form, method:e.target.value})}
               className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
-              {['Cash','Bank Transfer','Online','Cheque'].map(m => <option key={m}>{m}</option>)}
+              {PAY_METHODS.map(m => <option key={m}>{m}</option>)}
             </Dropdown>
           </div>
 
@@ -385,7 +388,7 @@ export default function Fees() {
                   <label className="text-sm font-medium text-slate-700">Payment Method</label>
                   <Dropdown value={payForm.method} onChange={e => setPayForm({...payForm, method:e.target.value})}
                     className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
-                    {['Cash','Bank Transfer','Online','Cheque'].map(m => <option key={m}>{m}</option>)}
+                    {PAY_METHODS.map(m => <option key={m}>{m}</option>)}
                   </Dropdown>
                 </div>
                 <Input label="Amount Received" type="number" value={payForm.amount} onChange={e => setPayForm({...payForm, amount:e.target.value})} placeholder={String(balance)}/>

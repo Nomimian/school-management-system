@@ -28,6 +28,10 @@ const feeSchema = new mongoose.Schema({
 // Receipt numbers are unique per school
 feeSchema.index({ school: 1, receiptNo: 1 }, { unique: true, partialFilterExpression: { receiptNo: { $type: 'string' } } });
 
+// One challan per student per month — the hard guarantee against duplicate
+// challans (concurrent generation, double-clicks, or the Record-Payment path).
+feeSchema.index({ school: 1, student: 1, month: 1, year: 1 }, { unique: true });
+
 // Auto-generate receipt number (scoped per school)
 feeSchema.pre('save', async function (next) {
   if (this.isModified('status') && this.status === 'Paid' && !this.receiptNo) {

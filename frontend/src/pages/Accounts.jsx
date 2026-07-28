@@ -6,17 +6,19 @@ import { ReportMenu } from '../components/ReportMenu.jsx';
 import { DateRangePicker } from '../components/DateRangePicker.jsx';
 import { inDateRange, rangeLabel, rangeSlug } from '../utils/reportExport.js';
 import { useSchool } from '../hooks/useSchool.jsx';
+import { useOptions } from '../hooks/useOptions.js';
 import { startOfMonth, endOfMonth, endOfDay } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-const INCOME_CATEGORIES  = ['Student Fees','Registration Fee','Donation','Transport Fee','Library Fine','Other Income'];
-const EXPENSE_CATEGORIES = ['Teacher Salary','Staff Salary','Utility Bills','Rent','Maintenance','Stationery','Equipment','Other Expense'];
+const DEFAULT_INCOME_CATEGORIES  = ['Student Fees','Registration Fee','Donation','Transport Fee','Library Fine','Other Income'];
+const DEFAULT_EXPENSE_CATEGORIES = ['Teacher Salary','Staff Salary','Utility Bills','Rent','Maintenance','Stationery','Equipment','Other Expense'];
 const COLORS = ['#1d4ed8','#10b981','#f97316','#8b5cf6','#ef4444','#06b6d4','#84cc16','#f59e0b'];
 
 export default function Accounts() {
   const toast = useToast();
   const confirm = useConfirm();
   const { school } = useSchool();
+  const { get } = useOptions();
   const [records, setRecords] = useState([]);
   const [stats, setStats]     = useState(null);
   const [loading, setLoading] = useState(true);
@@ -99,6 +101,8 @@ export default function Accounts() {
     catch(e) { toast.error(e.message); }
   };
 
+  const INCOME_CATEGORIES  = get('incomeCategories',  DEFAULT_INCOME_CATEGORIES);
+  const EXPENSE_CATEGORIES = get('expenseCategories', DEFAULT_EXPENSE_CATEGORIES);
   const categories = form.type === 'Income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
   const chartData = [

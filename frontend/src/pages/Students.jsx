@@ -7,6 +7,7 @@ import { useClasses } from '../hooks/useClasses.js';
 import { SectionHeader, Card, Badge, Button, Input, Modal, Avatar, useToast, useConfirm, Dropdown, TableSkeleton } from '../components/ui';
 import FeeProfileTable from '../components/FeeProfileTable.jsx';
 import EnrollmentFields from '../components/EnrollmentFields.jsx';
+import DynamicSelect from '../components/DynamicSelect.jsx';
 
 const API_BASE = SERVER_URL;
 const feeColors = { Paid:'green', Pending:'orange', Overdue:'red', Partial:'purple' };
@@ -220,7 +221,8 @@ export default function Students() {
               </Dropdown>
             </div>
             <Input label="Date of Birth" type="date" value={editData.dateOfBirth} onChange={e => setEditData({...editData, dateOfBirth:e.target.value})}/>
-            <Input label="Blood Group" value={editData.bloodGroup} onChange={e => setEditData({...editData, bloodGroup:e.target.value})} placeholder="A+, B-, O+"/>
+            <DynamicSelect label="Blood Group" optionKey="bloodGroups" value={editData.bloodGroup}
+              onChange={e => setEditData({...editData, bloodGroup:e.target.value})} placeholder="Select blood group…"/>
             <Input label="Guardian Name" value={editData.guardian?.name||''} onChange={e => setEditData({...editData, guardian:{...editData.guardian, name:e.target.value}})} placeholder="Parent/Guardian"/>
             <Input label="Guardian Phone" value={editData.guardian?.phone||''} onChange={e => setEditData({...editData, guardian:{...editData.guardian, phone:e.target.value}})} placeholder="03XX-XXXXXXX"/>
             <Input label="Student Email" value={editData.email||''} onChange={e => setEditData({...editData, email:e.target.value})} placeholder="student@school.edu"/>

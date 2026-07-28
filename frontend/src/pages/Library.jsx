@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, Library, BookOpen, Layers, CheckCircle2, BookMarked, Pencil, Eye } from 'lucide-react';
 import { bookAPI } from '../services/api';
+import { useOptions } from '../hooks/useOptions.js';
 import { SectionHeader, Card, Badge, Button, Modal, Input, StatCard, TableSkeleton, EmptyState, useToast, useConfirm, Dropdown } from '../components/ui';
 
-const CATEGORIES = ['Science','Language','Social','Technology','Religious','Literature'];
+const DEFAULT_CATEGORIES = ['Science','Language','Social','Technology','Religious','Literature'];
 
 function Field({ label, children, full }) {
   return (
@@ -17,6 +18,8 @@ function Field({ label, children, full }) {
 export default function LibraryPage() {
   const toast = useToast();
   const confirm = useConfirm();
+  const { get } = useOptions();
+  const CATEGORIES = get('bookCategories', DEFAULT_CATEGORIES);
   const [books, setBooks]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');

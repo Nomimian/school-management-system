@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Search, Users, UserCheck, Wallet, Pencil, Eye } from 'lucide-react';
 import { staffAPI } from '../services/api';
 import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, StatCard, TableSkeleton, EmptyState, useToast, useConfirm, Dropdown } from '../components/ui';
+import DynamicSelect from '../components/DynamicSelect.jsx';
 
 const roleColors = { Principal:'purple', 'Vice Principal':'blue', Accountant:'green', Librarian:'orange', 'IT Admin':'teal', Receptionist:'gray', Peon:'gray', Nurse:'red', Security:'gray', Clerk:'blue', Other:'gray' };
 const ROLES = ['Principal','Vice Principal','Accountant','Librarian','IT Admin','Receptionist','Peon','Nurse','Security','Clerk','Other'];
@@ -115,14 +116,10 @@ export default function HR() {
         <div className="space-y-4">
           <Input label="Full Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Staff full name"/>
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">Role</label>
-              <Dropdown value={form.role} onChange={e=>setForm({...form,role:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
-                <option value="">Select role</option>
-                {ROLES.map(r=><option key={r}>{r}</option>)}
-              </Dropdown>
-            </div>
-            <Input label="Department" value={form.department} onChange={e=>setForm({...form,department:e.target.value})} placeholder="e.g. Finance"/>
+            <DynamicSelect label="Role" optionKey="staffRoles" fallback={ROLES} value={form.role}
+              onChange={e=>setForm({...form,role:e.target.value})} placeholder="Select role…"/>
+            <DynamicSelect label="Department" optionKey="departments" value={form.department}
+              onChange={e=>setForm({...form,department:e.target.value})} placeholder="Select department…"/>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input label="Salary" type="number" value={form.salary} onChange={e=>setForm({...form,salary:e.target.value})}/>

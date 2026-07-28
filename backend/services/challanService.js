@@ -77,7 +77,16 @@ async function generateForStudents({ school, month, year, heads, students, dueDa
   }
 
   let created = [];
-  if (docs.length) created = await Fee.insertMany(docs);
+  if (docs.length) {
+    // ordered:false + tolerate dup-key: if two runs race, the unique index rejects
+    // the duplicate rather than aborting the whole batch.
+    try {
+      created = await Fee.insertMany(docs, { ordered: false });
+    } catch (e) {
+      if (e.code === 11000 && Array.isArray(e.insertedDocs)) created = e.insertedDocs;
+      else throw e;
+    }
+  }
 
   // Reflect the new dues on each student's status (only those we just billed).
   if (created.length) {

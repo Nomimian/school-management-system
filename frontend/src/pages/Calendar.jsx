@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, CalendarDays, Pencil, X } from 'lucide-react';
 import { eventAPI } from '../services/api';
+import { useOptions } from '../hooks/useOptions.js';
 import { SectionHeader, Card, Badge, Button, Modal, Input, EmptyState, useToast, useConfirm, Dropdown } from '../components/ui';
 
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const TYPES = ['Meeting','Exam','Event','Finance','Holiday'];
+const DEFAULT_TYPES = ['Meeting','Exam','Event','Finance','Holiday'];
 const typeColors = { Meeting:'bg-blue-100 text-blue-700', Exam:'bg-red-100 text-red-600', Event:'bg-emerald-100 text-emerald-700', Finance:'bg-orange-100 text-orange-700', Holiday:'bg-purple-100 text-purple-700' };
 
 const emptyForm = { title:'', date:'', time:'', type:'Event' };
@@ -13,6 +14,8 @@ const emptyForm = { title:'', date:'', time:'', type:'Event' };
 export default function Calendar() {
   const toast = useToast();
   const confirm = useConfirm();
+  const { get } = useOptions();
+  const TYPES = get('eventTypes', DEFAULT_TYPES);
   const now = new Date();
   const [year, setYear]       = useState(now.getFullYear());
   const [month, setMonth]     = useState(now.getMonth());

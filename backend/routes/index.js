@@ -7,6 +7,7 @@ const teacherCtrl    = require('../controllers/teacherController');
 const feeCtrl        = require('../controllers/feeController');
 const feeHeadCtrl    = require('../controllers/feeHeadController');
 const enrollGrpCtrl  = require('../controllers/enrollmentGroupController');
+const optionSetCtrl  = require('../controllers/optionSetController');
 const attendanceCtrl = require('../controllers/attendanceController');
 const examCtrl       = require('../controllers/examController');
 const otherCtrl      = require('../controllers/otherController');
@@ -172,6 +173,13 @@ router.get   ('/enrollment-groups',     enrollGrpCtrl.getEnrollmentGroups);
 router.post  ('/enrollment-groups',     authorize('admin', 'principal'), enrollGrpCtrl.createEnrollmentGroup);
 router.put   ('/enrollment-groups/:id', authorize('admin', 'principal'), enrollGrpCtrl.updateEnrollmentGroup);
 router.delete('/enrollment-groups/:id', authorize('admin', 'principal'), enrollGrpCtrl.deleteEnrollmentGroup);
+
+// ── OPTION SETS (all configurable dropdown lists) ───────────────────────────────
+// Reads open to any authenticated school user (forms need them); operators edit.
+router.get   ('/option-sets',     optionSetCtrl.getOptionSets);
+router.post  ('/option-sets',     authorize('admin', 'principal'), optionSetCtrl.createOptionSet);
+router.put   ('/option-sets/:id', authorize('admin', 'principal'), optionSetCtrl.updateOptionSet);
+router.delete('/option-sets/:id', authorize('admin', 'principal'), optionSetCtrl.deleteOptionSet);
 
 // ── FEES ──────────────────────────────────────────────────────────────────────
 router.get   ('/fees/stats',           feeCtrl.getFeeStats);

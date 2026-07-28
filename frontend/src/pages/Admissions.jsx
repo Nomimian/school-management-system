@@ -10,6 +10,7 @@ import { buildPrintPage, openPrintWindow, stampEnabled } from '../components/pri
 import { SectionHeader, Card, Badge, Button, Modal, Input, Avatar, useToast, useConfirm, Dropdown, EmptyState, TableSkeleton } from '../components/ui';
 import FeeProfileTable from '../components/FeeProfileTable.jsx';
 import EnrollmentFields from '../components/EnrollmentFields.jsx';
+import DynamicSelect from '../components/DynamicSelect.jsx';
 import { ReportMenu } from '../components/ReportMenu.jsx';
 import { DateRangePicker } from '../components/DateRangePicker.jsx';
 import { inDateRange, rangeLabel, rangeSlug } from '../utils/reportExport.js';
@@ -371,7 +372,8 @@ export default function Admissions() {
                   </Dropdown>
                 </div>
                 <Input label="Date of Birth" type="date" value={editData.dateOfBirth} onChange={e=>setEditData({...editData,dateOfBirth:e.target.value})}/>
-                <Input label="Blood Group" value={editData.bloodGroup} onChange={e=>setEditData({...editData,bloodGroup:e.target.value})} placeholder="A+, B-, O+"/>
+                <DynamicSelect label="Blood Group" optionKey="bloodGroups" value={editData.bloodGroup}
+                  onChange={e=>setEditData({...editData,bloodGroup:e.target.value})} placeholder="Select blood group…"/>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700">Religion</label>
                   <Dropdown value={editData.religion} onChange={e=>setEditData({...editData,religion:e.target.value})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
@@ -388,12 +390,9 @@ export default function Admissions() {
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Guardian Information</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="Guardian Name *" value={editData.guardian?.name||''} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,name:e.target.value}})}/>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-slate-700">Relationship</label>
-                  <Dropdown value={editData.guardian?.relationship||'Father'} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,relationship:e.target.value}})} className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-200">
-                    {['Father','Mother','Guardian','Uncle','Aunt'].map(r=><option key={r}>{r}</option>)}
-                  </Dropdown>
-                </div>
+                <DynamicSelect label="Relationship" optionKey="relationships" includeBlank={false}
+                  value={editData.guardian?.relationship||'Father'}
+                  onChange={e=>setEditData({...editData,guardian:{...editData.guardian,relationship:e.target.value}})}/>
                 <Input label="Phone *" value={editData.guardian?.phone||''} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,phone:e.target.value}})} placeholder="03XX-XXXXXXX"/>
                 <Input label="CNIC" value={editData.guardian?.cnic||''} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,cnic:e.target.value}})} placeholder="XXXXX-XXXXXXX-X"/>
                 <Input label="Occupation" value={editData.guardian?.occupation||''} onChange={e=>setEditData({...editData,guardian:{...editData.guardian,occupation:e.target.value}})}/>
