@@ -46,6 +46,24 @@ async function post(payload) {
   return { id: data.messages?.[0]?.id };
 }
 
+// Send a PRE-APPROVED TEMPLATE message (required for business-initiated messages
+// outside the 24h customer-service window — e.g. proactive fee/absence reminders).
+// The template must already be created & approved in WhatsApp Manager; `params`
+// fill its {{1}}, {{2}}, … body placeholders in order.
+async function sendTemplate({ to, name, language, params = [] }) {
+  const num = normalizeNumber(to);
+  if (!num) throw new Error('Missing recipient phone number.');
+  const lang = language || process.env.WHATSAPP_TEMPLATE_LANG || 'en';
+  if (!isConfigured()) {
+    console.log('[whatsapp:simulated:template]', { to: num, name, lang, params });
+    return { simulated: true };
+  }
+  const components = params.length
+    ? [{ type: 'body', parameters: params.map((p) => ({ type: 'text', text: String(p) })) }]
+    : [];
+  return post({ to: num, type: 'template', template: { name, language: { code: lang }, components } });
+}
+
 // Send a text message, plus one media message per attachment.
 async function sendWhatsApp({ to, body, attachments = [] }) {
   const num = normalizeNumber(to);
@@ -66,4 +84,4 @@ async function sendWhatsApp({ to, body, attachments = [] }) {
   return { sent: results.length };
 }
 
-module.exports = { sendWhatsApp, isConfigured, normalizeNumber };
+module.exports = { sendWhatsApp, sendTemplate, isConfigured, normalizeNumber };

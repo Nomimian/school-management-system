@@ -23,7 +23,8 @@ const sms     = require('./sms');
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 // Deliver one message to a student's guardians across every available channel.
-async function notifyGuardians(school, student, { title, body, link = '', channels = {} }) {
+// `wa` optionally carries a pre-approved WhatsApp template: { template, params }.
+async function notifyGuardians(school, student, { title, body, link = '', channels = {}, wa = null }) {
   try {
     // 1) in-app → linked parent accounts
     const parents = await User.find({ school: school._id, role: 'parent', children: student._id }).select('_id').lean();
@@ -31,10 +32,18 @@ async function notifyGuardians(school, student, { title, body, link = '', channe
       await notify({ school: school._id, users: parents.map(p => p._id), type: 'alert', title, body, link });
     }
 
-    // 2) WhatsApp → guardian / SMS number (best-effort)
+    // 2) WhatsApp → guardian phone (best-effort). Proactive (business-initiated)
+    // messages require an approved template; use one when configured, else fall
+    // back to free-form text (delivers only inside a 24h window / simulated).
     if (channels.whatsapp !== false) {
       const phone = student.guardian?.phone || student.phone;
-      if (phone) whatsapp.sendWhatsApp({ to: phone, body: `${title}\n\n${body}` }).catch(() => {});
+      if (phone) {
+        if (wa?.template && whatsapp.isConfigured()) {
+          whatsapp.sendTemplate({ to: phone, name: wa.template, params: wa.params || [] }).catch(() => {});
+        } else {
+          whatsapp.sendWhatsApp({ to: phone, body: `${title}\n\n${body}` }).catch(() => {});
+        }
+      }
     }
 
     // 2b) SMS → guardian phone (best-effort)
@@ -61,6 +70,8 @@ async function notifyGuardians(school, student, { title, body, link = '', channe
 }
 
 // ── Absence alert — call when a student is newly marked Absent ────────────────
+// WhatsApp template WHATSAPP_TEMPLATE_ABSENCE placeholders (in order):
+//   {{1}} student name · {{2}} class · {{3}} date
 async function sendAbsenceAlert(school, student, date) {
   if (school?.notifications?.attendanceSMS === false) return;   // toggle off
   const d = new Date(date).toLocaleDateString('en-PK', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
@@ -68,6 +79,7 @@ async function sendAbsenceAlert(school, student, date) {
     title: `Absence Alert — ${student.name}`,
     body: `${student.name} (${student.class || ''}) was marked ABSENT on ${d}. If this is unexpected, please contact the school office.`,
     link: '/parent',
+    wa: { template: process.env.WHATSAPP_TEMPLATE_ABSENCE, params: [student.name, student.class || '—', d] },
   });
 }
 
@@ -110,12 +122,18 @@ async function runFeeReminders(school, now = new Date()) {
     }
 
     const dueStr = fee.dueDate ? new Date(fee.dueDate).toLocaleDateString('en-PK') : '—';
+    // WhatsApp template WHATSAPP_TEMPLATE_FEE_REMINDER placeholders (in order):
+    //   {{1}} student name · {{2}} month year · {{3}} balance (Rs) · {{4}} due date / "overdue"
     await notifyGuardians(school, student, {
       title: `${overdue ? 'Overdue Fee' : 'Fee Reminder'} — ${fee.month} ${fee.year}`,
       body: `Dear Parent, the fee for ${student.name} (${student.class || ''}) for ${fee.month} ${fee.year} ` +
             `${overdue ? 'is OVERDUE' : `is due by ${dueStr}`}. Outstanding balance: Rs ${balance.toLocaleString()}. ` +
             `Kindly clear it at your earliest convenience.`,
       link: '/parent',
+      wa: {
+        template: process.env.WHATSAPP_TEMPLATE_FEE_REMINDER,
+        params: [student.name, `${fee.month} ${fee.year}`, `Rs ${balance.toLocaleString()}`, overdue ? 'overdue' : dueStr],
+      },
     });
     fee.lastReminder = now;
     await fee.save();
