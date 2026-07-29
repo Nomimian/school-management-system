@@ -21,6 +21,7 @@ const USAGE = {
   examTypes:        'Exams (groups)',
   examStatuses:     'Exams (status)',
   examAttendanceStatuses: 'Exams (attendance)',
+  streams:          'Subjects (streams)',
 };
 
 /**

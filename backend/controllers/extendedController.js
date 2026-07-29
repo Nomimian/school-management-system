@@ -205,13 +205,26 @@ exports.getSubjects = async (req, res) => {
   try {
     const filter = { school: req.user.school };
     if (req.query.class) filter.class = req.query.class;
-    const data = await Subject.find(filter).populate('teacher','name');
+    if (req.query.group !== undefined) filter.group = req.query.group || '';
+    const data = await Subject.find(filter).populate('teacher','name').sort({ order: 1, name: 1 });
     res.json({ success:true, data });
   } catch(e) { res.status(500).json({ success:false, message:e.message }); }
 };
 exports.createSubject = async (req, res) => {
-  try { const s = await Subject.create({ ...req.body, school: req.user.school }); res.status(201).json({success:true,data:s}); }
-  catch(e) { res.status(400).json({ success:false, message:e.message }); }
+  try {
+    const { school, _id, ...body } = req.body;
+    const s = await Subject.create({ ...body, group: (body.group || '').trim(), school: req.user.school });
+    res.status(201).json({ success:true, data:s });
+  } catch(e) { res.status(400).json({ success:false, message:e.message }); }
+};
+exports.updateSubject = async (req, res) => {
+  try {
+    const { school, _id, ...updates } = req.body;
+    if (updates.group !== undefined) updates.group = (updates.group || '').trim();
+    const s = await Subject.findOneAndUpdate({ _id: req.params.id, school: req.user.school }, updates, { new: true, runValidators: true });
+    if (!s) return res.status(404).json({ success:false, message:'Subject not found.' });
+    res.json({ success:true, data:s });
+  } catch(e) { res.status(400).json({ success:false, message:e.message }); }
 };
 exports.deleteSubject = async (req, res) => {
   try { await Subject.findOneAndDelete({ _id: req.params.id, school: req.user.school }); res.json({success:true,message:'Deleted.'}); }

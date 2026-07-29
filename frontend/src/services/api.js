@@ -299,9 +299,10 @@ export const accountAPI = {
 
 // ─── SUBJECTS ─────────────────────────────────────────────────────────────────
 export const subjectAPI = {
-  getAll:  (params) => get('/subjects', params),
-  create:  (data)   => post('/subjects', data),
-  delete:  (id)     => del(`/subjects/${id}`),
+  getAll:  (params)   => get('/subjects', params),
+  create:  (data)     => post('/subjects', data),
+  update:  (id, data) => put(`/subjects/${id}`, data),
+  delete:  (id)       => del(`/subjects/${id}`),
 };
 
 // ─── FEE STRUCTURES ───────────────────────────────────────────────────────────

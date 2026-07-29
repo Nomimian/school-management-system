@@ -172,10 +172,15 @@ const subjectSchema = new mongoose.Schema({
   name:       { type: String, required: true },
   code:       { type: String },
   class:      { type: String, required: true },
+  // Optional stream/group tag. Empty ⇒ every student in the class takes it.
+  // When set (e.g. "Pre-Medical"), it applies only to students whose enrollment
+  // includes that value — so ICS vs Pre-Engineering in the same class differ.
+  group:      { type: String, trim: true, default: '' },
   teacher:    { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' },
   isOptional: { type: Boolean, default: false },
   totalMarks: { type: Number, default: 100 },
   passMark:   { type: Number, default: 40 },
+  order:      { type: Number, default: 0 },
 }, { timestamps: true });
 
 // ── GRADE SCALE ───────────────────────────────────────────────────────────────

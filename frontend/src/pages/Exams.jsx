@@ -4,7 +4,7 @@ import {
   UserCheck, BarChart3, Archive, Printer, Send, CheckCircle2,
   ChevronRight, Trophy, X,
 } from 'lucide-react';
-import { examAPI, examGroupAPI } from '../services/api';
+import { examAPI, examGroupAPI, subjectAPI } from '../services/api';
 import {
   SectionHeader, Card, Badge, Button, Modal, Input, Avatar, EmptyState,
   TableSkeleton, useToast, useConfirm, Dropdown, StatCard,
@@ -37,7 +37,7 @@ const gradeColor = (g) => {
 const emptyGroup = { name: '', type: '', session: '', startDate: '', endDate: '', description: '' };
 const emptyExam = () => ({
   name: '', examGroup: '', class: '', session: '', startDate: '', endDate: '',
-  status: 'Upcoming', description: '', subjects: [],
+  status: 'Upcoming', description: '',
 });
 
 export default function Exams() {
@@ -204,27 +204,16 @@ function ExamsTab({ exams, groups, classes, loading, reload, goto }) {
       name: ex.name || '', examGroup: ex.examGroup?._id || ex.examGroup || '', class: ex.class || '',
       session: ex.session || '', startDate: ex.startDate?.slice(0, 10) || '', endDate: ex.endDate?.slice(0, 10) || '',
       status: ex.status || 'Upcoming', description: ex.description || '',
-      subjects: (ex.subjects || []).map(s => ({ name: s.name, totalMarks: s.totalMarks ?? 100, passMark: s.passMark ?? 40, examDate: s.examDate?.slice(0, 10) || '' })),
     } : emptyExam());
     setModal(true);
   };
-
-  const setSubject = (i, ch) => setForm(f => ({ ...f, subjects: f.subjects.map((s, idx) => idx === i ? { ...s, ...ch } : s) }));
-  const addSubject = () => setForm(f => ({ ...f, subjects: [...f.subjects, { name: '', totalMarks: 100, passMark: 40, examDate: '' }] }));
-  const removeSubject = (i) => setForm(f => ({ ...f, subjects: f.subjects.filter((_, idx) => idx !== i) }));
 
   const save = async () => {
     if (!form.name.trim()) return toast.error('Exam name is required.');
     if (!form.class) return toast.error('Select a class.');
     if (!form.startDate) return toast.error('Start date is required.');
     setSaving(true);
-    const payload = {
-      ...form,
-      examGroup: form.examGroup || null,
-      subjects: form.subjects.filter(s => String(s.name).trim()).map(s => ({
-        name: s.name.trim(), totalMarks: Number(s.totalMarks) || 100, passMark: Number(s.passMark) || 40, examDate: s.examDate || undefined,
-      })),
-    };
+    const payload = { ...form, examGroup: form.examGroup || null };
     try {
       if (editing) await examAPI.update(editing._id, payload);
       else await examAPI.create(payload);
@@ -265,7 +254,7 @@ function ExamsTab({ exams, groups, classes, loading, reload, goto }) {
       {loading ? <Card><TableSkeleton rows={4} cols={4} /></Card>
         : filtered.length === 0 ? (
           <Card><EmptyState icon={Award} title="No exams found"
-            subtitle="Create an exam (e.g. T1, T2) and add its subjects with marks and dates."
+            subtitle="Create an exam (e.g. T1, T2) for a class — its subjects come from Settings → Subjects."
             action={<Button variant="primary" size="sm" icon={Plus} onClick={() => open(null)}>Create Exam</Button>} /></Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -282,13 +271,7 @@ function ExamsTab({ exams, groups, classes, loading, reload, goto }) {
                 </div>
                 <h3 className="font-display font-bold text-slate-800 mb-0.5">{e.name}</h3>
                 <div className="text-sm text-slate-500 mb-2">
-                  {e.class}{e.examGroup?.name ? ` · ${e.examGroup.name}` : ''}
-                </div>
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {(e.subjects || []).length
-                    ? e.subjects.slice(0, 5).map(s => <span key={s.name} className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{s.name}</span>)
-                    : <span className="text-xs text-slate-400">{e.subject || 'No subjects added'}</span>}
-                  {(e.subjects || []).length > 5 && <span className="text-[11px] text-slate-400">+{e.subjects.length - 5}</span>}
+                  {e.class}{e.examGroup?.name ? ` · ${e.examGroup.name}` : ''}{e.session ? ` · ${e.session}` : ''}
                 </div>
                 <div className="text-xs text-slate-400 mb-3">{e.startDate?.slice(0, 10)}{e.endDate ? ` → ${e.endDate.slice(0, 10)}` : ''}</div>
 
@@ -341,31 +324,9 @@ function ExamsTab({ exams, groups, classes, loading, reload, goto }) {
             <Input label="End Date" type="date" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
           </div>
 
-          {/* Subjects schedule */}
-          <div className="rounded-2xl border border-slate-200">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 bg-slate-50/70">
-              <span className="text-sm font-semibold text-slate-700">Subjects & Marks Schedule</span>
-              <button onClick={addSubject} className="text-xs text-primary-600 hover:text-primary-700 font-medium inline-flex items-center gap-1"><Plus size={13} /> Add subject</button>
-            </div>
-            {form.subjects.length === 0 ? (
-              <p className="text-xs text-slate-400 px-4 py-3">No subjects yet — add one per paper, each with its own total & pass marks. (Leave empty for a single overall-marks exam.)</p>
-            ) : (
-              <div className="p-3 space-y-2">
-                {form.subjects.map((s, i) => (
-                  <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                    <input value={s.name} onChange={e => setSubject(i, { name: e.target.value })} placeholder="Subject"
-                      className="col-span-4 px-2.5 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg" />
-                    <input type="number" value={s.totalMarks} onChange={e => setSubject(i, { totalMarks: e.target.value })} placeholder="Total"
-                      className="col-span-2 px-2.5 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg" />
-                    <input type="number" value={s.passMark} onChange={e => setSubject(i, { passMark: e.target.value })} placeholder="Pass"
-                      className="col-span-2 px-2.5 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg" />
-                    <input type="date" value={s.examDate} onChange={e => setSubject(i, { examDate: e.target.value })}
-                      className="col-span-3 px-2.5 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg" />
-                    <button onClick={() => removeSubject(i)} className="col-span-1 text-slate-300 hover:text-red-500 flex justify-center"><Trash2 size={15} /></button>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="flex items-start gap-2 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 text-xs text-slate-500">
+            <ClipboardList size={14} className="mt-0.5 flex-shrink-0 text-primary-500" />
+            <span>This exam is held for <b>all subjects of {form.class || 'the class'}</b>. Subjects (and which stream they apply to) are configured once in <b>Settings → Subjects</b> and used automatically for marks, attendance and reports.</span>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
@@ -378,24 +339,56 @@ function ExamsTab({ exams, groups, classes, loading, reload, goto }) {
   );
 }
 
-// Shared: pick an exam, then (if it has subjects) a subject.
-function ExamSubjectPicker({ exams, exam, setExam, subject, setSubject }) {
-  const subjects = (exam?.subjects || []).map(s => s.name);
+// Shared control bar: pick an exam, its subject (from the class config), and an
+// optional section to narrow the roster.
+function ExamPicker({ exams, exam, onExam, subjects, subject, setSubject, sections, section, setSection, extra }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      <Dropdown value={exam?._id || ''} onChange={e => { const ex = exams.find(x => x._id === e.target.value); setExam(ex || null); setSubject(''); }}
+    <div className="flex flex-wrap items-center gap-2">
+      <Dropdown value={exam?._id || ''} onChange={e => onExam(exams.find(x => x._id === e.target.value) || null)}
         className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 min-w-[14rem]">
         <option value="">Select exam…</option>
         {exams.map(e => <option key={e._id} value={e._id}>{e.name} — {e.class}{e.examGroup?.name ? ` (${e.examGroup.name})` : ''}</option>)}
       </Dropdown>
       {exam && subjects.length > 0 && (
         <Dropdown value={subject} onChange={e => setSubject(e.target.value)}
-          className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 min-w-[10rem]">
+          className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 min-w-[12rem]">
           <option value="">Select subject…</option>
-          {subjects.map(s => <option key={s}>{s}</option>)}
+          {subjects.map(s => <option key={s.name} value={s.name}>{s.name}{s.group ? ` · ${s.group}` : ''}</option>)}
         </Dropdown>
       )}
+      {exam && sections.length > 1 && (
+        <Dropdown value={section} onChange={e => setSection(e.target.value)}
+          className="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 min-w-[9rem]">
+          <option value="">All sections</option>
+          {sections.map(s => <option key={s} value={s}>Section {s}</option>)}
+        </Dropdown>
+      )}
+      {extra}
     </div>
+  );
+}
+
+// Load the configured subjects for the selected exam's class.
+function useExamSubjects(exam) {
+  const [subjects, setSubjects] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    if (!exam) { setSubjects([]); setLoaded(false); return; }
+    let alive = true;
+    setLoaded(false);
+    subjectAPI.getAll({ class: exam.class })
+      .then(r => { if (alive) { setSubjects(r.data || []); setLoaded(true); } })
+      .catch(() => { if (alive) { setSubjects([]); setLoaded(true); } });
+    return () => { alive = false; };
+  }, [exam?._id]); // eslint-disable-line
+  return { subjects, loaded };
+}
+
+// Shown when the exam's class has no subjects configured yet.
+function NoSubjectsNotice({ icon, exam }) {
+  return (
+    <Card><EmptyState icon={icon} title={`No subjects configured for ${exam.class}`}
+      subtitle="Set this class's subjects once in Settings → Subjects — every exam of the class then uses them automatically." /></Card>
   );
 }
 
@@ -404,21 +397,23 @@ function MarksTab({ exams, activeExam, setActiveExam }) {
   const toast = useToast();
   const [exam, setExam] = useState(activeExam || null);
   const [subject, setSubject] = useState('');
+  const [section, setSection] = useState('');
   const [sheet, setSheet] = useState(null);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { subjects, loaded: subjectsLoaded } = useExamSubjects(exam);
 
-  useEffect(() => { if (activeExam) { setExam(activeExam); setSubject(''); } }, [activeExam]);
+  useEffect(() => { if (activeExam) { setExam(activeExam); setSubject(''); setSection(''); } }, [activeExam]);
 
-  const needsSubject = (exam?.subjects || []).length > 0;
-  const ready = exam && (!needsSubject || subject);
+  const pickExam = (ex) => { setExam(ex); setActiveExam?.(ex); setSubject(''); setSection(''); setSheet(null); setRows([]); };
+  const ready = exam && subject;
 
   const load = async () => {
     if (!ready) return;
     setLoading(true);
     try {
-      const r = await examAPI.getMarksheet(exam._id, needsSubject ? subject : '');
+      const r = await examAPI.getMarksheet(exam._id, subject);
       setSheet(r.data);
       setRows((r.data.students || []).map(s => ({ ...s })));
     } catch (e) { toast.error(e.message); setSheet(null); }
@@ -427,6 +422,8 @@ function MarksTab({ exams, activeExam, setActiveExam }) {
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [exam?._id, subject]);
 
   const setRow = (id, ch) => setRows(rs => rs.map(r => r.student === id ? { ...r, ...ch } : r));
+  const sections = [...new Set(rows.map(r => r.section).filter(Boolean))].sort();
+  const visibleRows = section ? rows.filter(r => r.section === section) : rows;
 
   const save = async () => {
     setSaving(true);
@@ -435,30 +432,34 @@ function MarksTab({ exams, activeExam, setActiveExam }) {
         .filter(r => r.isAbsent || (r.marks !== '' && r.marks !== null && r.marks !== undefined))
         .map(r => ({ student: r.student, marks: r.isAbsent ? 0 : Number(r.marks), isAbsent: !!r.isAbsent, remarks: r.remarks || '' }));
       if (!entries.length) return toast.error('Enter at least one mark.');
-      const res = await examAPI.saveMarks(exam._id, { subject: needsSubject ? subject : '', entries });
+      const res = await examAPI.saveMarks(exam._id, { subject, entries });
       toast.success(`Saved ${res.saved} result(s)`);
       load();
     } catch (e) { toast.error(e.message); } finally { setSaving(false); }
   };
 
-  const total = sheet?.totalMarks || exam?.totalMarks || 100;
+  const total = sheet?.totalMarks || 100;
 
   return (
     <div className="space-y-4">
       <Card className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <ExamSubjectPicker exams={exams} exam={exam} setExam={(e) => { setExam(e); setActiveExam?.(e); }} subject={subject} setSubject={setSubject} />
-          {sheet && <span className="text-sm text-slate-500">Out of <b className="text-slate-700">{total}</b> · Pass <b className="text-slate-700">{sheet?.passMark ?? exam?.passMark ?? 40}</b></span>}
+          <ExamPicker exams={exams} exam={exam} onExam={pickExam} subjects={subjects} subject={subject} setSubject={setSubject}
+            sections={sections} section={section} setSection={setSection} />
+          {sheet && <span className="text-sm text-slate-500">Out of <b className="text-slate-700">{total}</b> · Pass <b className="text-slate-700">{sheet?.passMark ?? 40}</b></span>}
         </div>
       </Card>
 
-      {!ready ? (
-        <Card><EmptyState icon={PencilRuler} title="Select an exam"
-          subtitle={needsSubject ? 'Pick an exam and a subject to load its marks grid.' : 'Pick an exam to enter marks.'} /></Card>
+      {!exam ? (
+        <Card><EmptyState icon={PencilRuler} title="Select an exam" subtitle="Pick an exam, then a subject, to enter marks." /></Card>
+      ) : subjectsLoaded && subjects.length === 0 ? (
+        <NoSubjectsNotice icon={PencilRuler} exam={exam} />
+      ) : !subject ? (
+        <Card><EmptyState icon={PencilRuler} title="Select a subject" subtitle="Choose the subject to enter marks for." /></Card>
       ) : loading ? <Card><TableSkeleton rows={8} cols={4} /></Card> : (
         <Card>
           <div className="flex items-center justify-between p-4 border-b border-slate-100 flex-wrap gap-2">
-            <h3 className="font-display font-bold text-slate-800">{exam.name} — {exam.class}{needsSubject ? ` · ${subject}` : ''}</h3>
+            <h3 className="font-display font-bold text-slate-800">{exam.name} — {exam.class} · {subject}{section ? ` · Sec ${section}` : ''}{sheet?.group ? ` (${sheet.group})` : ''}</h3>
             <div className="flex gap-2">
               <Button variant="secondary" size="sm" onClick={() => setRows(rs => rs.map(r => ({ ...r, isAbsent: false })))}>Clear Absent</Button>
               <Button variant="primary" size="sm" onClick={save} loading={saving}>Save Marks</Button>
@@ -474,7 +475,7 @@ function MarksTab({ exams, activeExam, setActiveExam }) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map(r => (
+                {visibleRows.map(r => (
                   <tr key={r.student} className="border-b border-slate-50 hover:bg-primary-50/30">
                     <td className="px-4 py-2 text-slate-400 text-xs">{r.rollNumber || r.studentId || '—'}</td>
                     <td className="px-4 py-2">
@@ -499,7 +500,7 @@ function MarksTab({ exams, activeExam, setActiveExam }) {
                 ))}
               </tbody>
             </table>
-            {rows.length === 0 && <EmptyState icon={PencilRuler} title="No students in this class" subtitle="Add students to this class first." />}
+            {visibleRows.length === 0 && <EmptyState icon={PencilRuler} title="No students" subtitle="No students match this class/stream/section." />}
           </div>
         </Card>
       )}
@@ -512,21 +513,23 @@ function AttendanceTab({ exams, activeExam, setActiveExam }) {
   const toast = useToast();
   const [exam, setExam] = useState(activeExam || null);
   const [subject, setSubject] = useState('');
+  const [section, setSection] = useState('');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [date, setDate] = useState('');
+  const { subjects, loaded: subjectsLoaded } = useExamSubjects(exam);
 
-  useEffect(() => { if (activeExam) { setExam(activeExam); setSubject(''); } }, [activeExam]);
+  useEffect(() => { if (activeExam) { setExam(activeExam); setSubject(''); setSection(''); } }, [activeExam]);
 
-  const needsSubject = (exam?.subjects || []).length > 0;
-  const ready = exam && (!needsSubject || subject);
+  const pickExam = (ex) => { setExam(ex); setActiveExam?.(ex); setSubject(''); setSection(''); setRows([]); };
+  const ready = exam && subject;
 
   const load = async () => {
     if (!ready) return;
     setLoading(true);
     try {
-      const r = await examAPI.getAttendance(exam._id, needsSubject ? subject : '');
+      const r = await examAPI.getAttendance(exam._id, subject);
       setRows((r.data.students || []).map(s => ({ ...s })));
     } catch (e) { toast.error(e.message); }
     finally { setLoading(false); }
@@ -534,13 +537,15 @@ function AttendanceTab({ exams, activeExam, setActiveExam }) {
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [exam?._id, subject]);
 
   const setRow = (id, ch) => setRows(rs => rs.map(r => r.student === id ? { ...r, ...ch } : r));
-  const markAll = (status) => setRows(rs => rs.map(r => ({ ...r, status })));
+  const sections = [...new Set(rows.map(r => r.section).filter(Boolean))].sort();
+  const visibleRows = section ? rows.filter(r => r.section === section) : rows;
+  const markAll = (status) => setRows(rs => rs.map(r => (!section || r.section === section) ? { ...r, status } : r));
 
   const save = async () => {
     setSaving(true);
     try {
       const entries = rows.map(r => ({ student: r.student, status: r.status || 'Present', remarks: r.remarks || '' }));
-      const res = await examAPI.saveAttendance(exam._id, { subject: needsSubject ? subject : '', date: date || undefined, entries });
+      const res = await examAPI.saveAttendance(exam._id, { subject, date: date || undefined, entries });
       toast.success(`Saved attendance for ${res.saved} student(s)`);
     } catch (e) { toast.error(e.message); } finally { setSaving(false); }
   };
@@ -549,17 +554,22 @@ function AttendanceTab({ exams, activeExam, setActiveExam }) {
     <div className="space-y-4">
       <Card className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <ExamSubjectPicker exams={exams} exam={exam} setExam={(e) => { setExam(e); setActiveExam?.(e); }} subject={subject} setSubject={setSubject} />
-          <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
+          <ExamPicker exams={exams} exam={exam} onExam={pickExam} subjects={subjects} subject={subject} setSubject={setSubject}
+            sections={sections} section={section} setSection={setSection}
+            extra={<Input type="date" value={date} onChange={e => setDate(e.target.value)} />} />
         </div>
       </Card>
 
-      {!ready ? (
-        <Card><EmptyState icon={UserCheck} title="Select an exam" subtitle={needsSubject ? 'Pick an exam and subject/paper to mark attendance.' : 'Pick an exam to mark attendance.'} /></Card>
+      {!exam ? (
+        <Card><EmptyState icon={UserCheck} title="Select an exam" subtitle="Pick an exam, then a subject/paper, to mark attendance." /></Card>
+      ) : subjectsLoaded && subjects.length === 0 ? (
+        <NoSubjectsNotice icon={UserCheck} exam={exam} />
+      ) : !subject ? (
+        <Card><EmptyState icon={UserCheck} title="Select a subject" subtitle="Choose the subject/paper to mark attendance for." /></Card>
       ) : loading ? <Card><TableSkeleton rows={8} cols={3} /></Card> : (
         <Card>
           <div className="flex items-center justify-between p-4 border-b border-slate-100 flex-wrap gap-2">
-            <h3 className="font-display font-bold text-slate-800">{exam.name} — {exam.class}{needsSubject ? ` · ${subject}` : ''}</h3>
+            <h3 className="font-display font-bold text-slate-800">{exam.name} — {exam.class} · {subject}{section ? ` · Sec ${section}` : ''}</h3>
             <div className="flex gap-2">
               <Button variant="secondary" size="sm" icon={CheckCircle2} onClick={() => markAll('Present')}>All Present</Button>
               <Button variant="primary" size="sm" onClick={save} loading={saving}>Save Attendance</Button>
@@ -574,7 +584,7 @@ function AttendanceTab({ exams, activeExam, setActiveExam }) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map(r => (
+                {visibleRows.map(r => (
                   <tr key={r.student} className="border-b border-slate-50 hover:bg-primary-50/30">
                     <td className="px-4 py-2 text-slate-400 text-xs">{r.rollNumber || r.studentId || '—'}</td>
                     <td className="px-4 py-2">
@@ -593,7 +603,7 @@ function AttendanceTab({ exams, activeExam, setActiveExam }) {
                 ))}
               </tbody>
             </table>
-            {rows.length === 0 && <EmptyState icon={UserCheck} title="No students in this class" subtitle="Add students to this class first." />}
+            {visibleRows.length === 0 && <EmptyState icon={UserCheck} title="No students" subtitle="No students match this class/stream/section." />}
           </div>
         </Card>
       )}
@@ -619,7 +629,7 @@ function ReportsTab({ exams, activeExam, setActiveExam }) {
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [exam?._id]);
 
-  const subjectCols = useMemo(() => (report?.exam?.subjects || []).map(s => s.name), [report]);
+  const subjectCols = useMemo(() => report?.subjects || [], [report]);
 
   return (
     <div className="space-y-4">

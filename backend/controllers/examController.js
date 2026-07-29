@@ -1,23 +1,42 @@
 const mongoose = require('mongoose');
 const { Exam, Result, ExamGroup, ExamAttendance } = require('../models/Exam');
+const { Subject } = require('../models/Extended');
 const User = require('../models/User');
 const Student = require('../models/Student');
 const { notify } = require('./notificationController');
 const { resolveGrade, getDefaultScale } = require('../utils/grading');
 
 // Roster for a class (school-scoped), ordered by roll number then name.
-async function classRoster(schoolId, className) {
-  return Student.find({ school: schoolId, class: className })
-    .select('name class section rollNumber studentId photo')
+// `section` narrows to one section; enrollment is included so a subject's stream
+// tag can be matched to each student.
+async function classRoster(schoolId, className, { section } = {}) {
+  const q = { school: schoolId, class: className };
+  if (section) q.section = section;
+  return Student.find(q)
+    .select('name class section rollNumber studentId photo enrollment')
     .sort({ rollNumber: 1, name: 1 });
 }
 
-// Metadata (total/pass marks) for a subject within an exam. Falls back to the
-// exam's legacy scale when the subject isn't in the schedule.
-function subjectMeta(exam, subject) {
-  const s = (exam.subjects || []).find(x => x.name === subject);
-  if (s) return { totalMarks: s.totalMarks || 100, passMark: s.passMark || 40 };
-  return { totalMarks: exam.totalMarks || 100, passMark: exam.passMark || 40 };
+// The subjects configured for a class (Settings → Subjects), ordered.
+async function classSubjects(schoolId, className) {
+  return Subject.find({ school: schoolId, class: className }).sort({ order: 1, name: 1 }).lean();
+}
+
+// Marks metadata + stream for a subject, from the class config (fallback 100/40).
+function subjectMetaFrom(subjects, name) {
+  const s = (subjects || []).find(x => x.name === name);
+  return { totalMarks: s?.totalMarks || 100, passMark: s?.passMark || 40, group: s?.group || '' };
+}
+
+// Does a subject's stream tag apply to this student? Empty ⇒ everyone. The tag
+// may list several streams (comma-separated, e.g. a shared subject like Physics
+// taken by Pre-Medical, Pre-Engineering and ICS); it applies when ANY of them
+// matches one of the student's enrollment values.
+function studentInStream(student, group) {
+  const wanted = String(group || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+  if (!wanted.length) return true;
+  const have = (student.enrollment || []).map(e => String(e.value || '').trim().toLowerCase());
+  return wanted.some(w => have.includes(w));
 }
 
 // @GET /api/reports/subject-performance — avg % score per subject (this school)
@@ -165,11 +184,15 @@ exports.getMarksheet = async (req, res) => {
     if (!exam) return res.status(404).json({ success: false, message: 'Exam not found.' });
 
     const subject = req.query.subject || null;
-    const meta = subjectMeta(exam, subject);
-    const [students, results] = await Promise.all([
-      classRoster(req.user.school, exam.class),
+    const section = req.query.section || null;
+    const subjects = await classSubjects(req.user.school, exam.class);
+    const meta = subjectMetaFrom(subjects, subject);
+    const [studentsRaw, results] = await Promise.all([
+      classRoster(req.user.school, exam.class, { section }),
       Result.find({ exam: exam._id, school: req.user.school, subject }).lean(),
     ]);
+    // Only students the subject's stream applies to (all, when untagged).
+    const students = studentsRaw.filter(s => studentInStream(s, meta.group));
     const byStudent = Object.fromEntries(results.map(r => [String(r.student), r]));
 
     const rows = students.map(s => {
@@ -180,7 +203,7 @@ exports.getMarksheet = async (req, res) => {
         grade: r ? r.grade : null, isPassed: r ? r.isPassed : null, remarks: r ? r.remarks : '',
       };
     });
-    res.json({ success: true, data: { exam, subject, ...meta, students: rows } });
+    res.json({ success: true, data: { exam, subject, group: meta.group, totalMarks: meta.totalMarks, passMark: meta.passMark, students: rows } });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
@@ -195,11 +218,13 @@ exports.saveMarks = async (req, res) => {
     const entries = Array.isArray(req.body.entries) ? req.body.entries : [];
     if (!entries.length) return res.status(400).json({ success: false, message: 'No marks submitted.' });
 
-    const { totalMarks, passMark } = subjectMeta(exam, subject);
+    const subjects = await classSubjects(req.user.school, exam.class);
+    const { totalMarks, passMark, group } = subjectMetaFrom(subjects, subject);
     const scale = await getDefaultScale(req.user.school);
 
-    // Only touch students that actually belong to this school+class.
-    const rosterIds = new Set((await classRoster(req.user.school, exam.class)).map(s => String(s._id)));
+    // Only touch students in this class who the subject's stream applies to.
+    const roster = await classRoster(req.user.school, exam.class);
+    const rosterIds = new Set(roster.filter(s => studentInStream(s, group)).map(s => String(s._id)));
 
     const ops = [];
     for (const e of entries) {
@@ -257,7 +282,8 @@ exports.addResult = async (req, res) => {
     if (!inSchool) return res.status(400).json({ success: false, message: 'Student not found in your school.' });
 
     const subject = req.body.subject || null;
-    const { totalMarks, passMark } = subjectMeta(exam, subject);
+    const subjects = await classSubjects(req.user.school, exam.class);
+    const { totalMarks, passMark } = subjectMetaFrom(subjects, subject);
     const scale = await getDefaultScale(req.user.school);
     const marks = Math.max(0, Number(req.body.marks) || 0);
     const pct = totalMarks > 0 ? (marks / totalMarks) * 100 : 0;
@@ -298,10 +324,14 @@ exports.getExamAttendance = async (req, res) => {
     const exam = await Exam.findOne({ _id: req.params.examId, school: req.user.school });
     if (!exam) return res.status(404).json({ success: false, message: 'Exam not found.' });
     const subject = req.query.subject || null;
-    const [students, records] = await Promise.all([
-      classRoster(req.user.school, exam.class),
+    const section = req.query.section || null;
+    const subjects = await classSubjects(req.user.school, exam.class);
+    const { group } = subjectMetaFrom(subjects, subject);
+    const [studentsRaw, records] = await Promise.all([
+      classRoster(req.user.school, exam.class, { section }),
       ExamAttendance.find({ exam: exam._id, school: req.user.school, subject }).lean(),
     ]);
+    const students = studentsRaw.filter(s => studentInStream(s, group));
     const byStudent = Object.fromEntries(records.map(r => [String(r.student), r]));
     const rows = students.map(s => {
       const r = byStudent[String(s._id)];
@@ -325,7 +355,10 @@ exports.saveExamAttendance = async (req, res) => {
     const entries = Array.isArray(req.body.entries) ? req.body.entries : [];
     if (!entries.length) return res.status(400).json({ success: false, message: 'No attendance submitted.' });
 
-    const rosterIds = new Set((await classRoster(req.user.school, exam.class)).map(s => String(s._id)));
+    const subjects = await classSubjects(req.user.school, exam.class);
+    const { group } = subjectMetaFrom(subjects, subject);
+    const roster = await classRoster(req.user.school, exam.class);
+    const rosterIds = new Set(roster.filter(s => studentInStream(s, group)).map(s => String(s._id)));
     const ops = [];
     for (const e of entries) {
       if (!e.student || !rosterIds.has(String(e.student))) continue;
@@ -354,12 +387,17 @@ exports.getExamReport = async (req, res) => {
     if (!exam) return res.status(404).json({ success: false, message: 'Exam not found.' });
 
     const scale = await getDefaultScale(req.user.school);
-    const subjectNames = (exam.subjects || []).map(s => s.name);
-    const [students, results, attendance] = await Promise.all([
+    const [subjectDocs, students, results, attendance] = await Promise.all([
+      classSubjects(req.user.school, exam.class),
       classRoster(req.user.school, exam.class),
       Result.find({ exam: exam._id, school: req.user.school }).lean(),
       ExamAttendance.find({ exam: exam._id, school: req.user.school }).lean(),
     ]);
+    // Subject columns come from the class config; fall back to whatever subjects
+    // actually have recorded results (covers exams predating the config).
+    const subjectNames = subjectDocs.length
+      ? subjectDocs.map(s => s.name)
+      : [...new Set(results.map(r => r.subject).filter(Boolean))];
 
     // Group results per student.
     const perStudent = new Map();
@@ -392,7 +430,7 @@ exports.getExamReport = async (req, res) => {
     rows = [...withResults, ...rows.filter(r => !r.hasResult)];
 
     // Subject-wise analytics.
-    const subjectStats = (subjectNames.length ? subjectNames : [...new Set(results.map(r => r.subject).filter(Boolean))]).map(name => {
+    const subjectStats = subjectNames.map(name => {
       const rs = results.filter(r => (r.subject || null) === name && !r.isAbsent);
       const count = rs.length;
       const avg = count ? rs.reduce((s, r) => s + r.marks, 0) / count : 0;
@@ -409,6 +447,7 @@ exports.getExamReport = async (req, res) => {
 
     res.json({ success: true, data: {
       exam,
+      subjects: subjectNames,
       students: rows,
       subjectStats,
       summary: {

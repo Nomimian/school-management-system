@@ -3,7 +3,7 @@ import { SERVER_URL } from '../config/env.js';
 import {
   Save, School, Bell, Shield, Palette, Upload,
   Loader2, Eye, EyeOff, CheckCircle, Stamp, Users, DollarSign, Layers, List,
-  SlidersHorizontal, ArrowLeft, ChevronRight, GraduationCap
+  SlidersHorizontal, ArrowLeft, ChevronRight, GraduationCap, BookOpen
 } from 'lucide-react';
 import { SectionHeader, Card, Button, Input, Switch, useToast, Dropdown } from '../components/ui';
 import { useAuth } from '../hooks/useAuth.jsx';
@@ -15,6 +15,7 @@ import FeeConfigPanel from '../components/FeeConfigPanel.jsx';
 import EnrollmentGroupsPanel from '../components/EnrollmentGroupsPanel.jsx';
 import OptionSetsPanel from '../components/OptionSetsPanel.jsx';
 import GradeScalePanel from '../components/GradeScalePanel.jsx';
+import SubjectsPanel from '../components/SubjectsPanel.jsx';
 
 const API_BASE = SERVER_URL;
 
@@ -26,6 +27,7 @@ const tabs = [
   // ── Configuration ──
   { id:'fees',          label:'Fee Configuration',   icon:DollarSign, group:'Configuration', module:'fees' },
   { id:'groups',        label:'Groups & Categories', icon:Layers,     group:'Configuration', module:'students' },
+  { id:'subjects',      label:'Subjects',            icon:BookOpen,   group:'Configuration', module:'classes' },
   { id:'grades',        label:'Manage Grades',       icon:GraduationCap, group:'Configuration', module:'exams' },
   { id:'options',       label:'Dropdown Options',    icon:List,       group:'Configuration', module:'students' },
   // ── Access & System ──
@@ -349,6 +351,8 @@ export default function Settings() {
       {activeTab==='fees' && can('fees') && <FeeConfigPanel/>}
 
       {activeTab==='groups' && <EnrollmentGroupsPanel/>}
+
+      {activeTab==='subjects' && can('classes') && <SubjectsPanel/>}
 
       {activeTab==='grades' && can('exams') && <GradeScalePanel/>}
 

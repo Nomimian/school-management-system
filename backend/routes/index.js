@@ -293,6 +293,7 @@ router.delete('/accounts/:id',         ext.deleteAccount);
 // ── SUBJECTS ──────────────────────────────────────────────────────────────────
 router.get   ('/subjects',             ext.getSubjects);
 router.post  ('/subjects',             ext.createSubject);
+router.put   ('/subjects/:id',         ext.updateSubject);
 router.delete('/subjects/:id',         ext.deleteSubject);
 
 // ── GRADE SCALES (dynamic grading bands) ────────────────────────────────────────

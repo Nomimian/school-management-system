@@ -14,6 +14,7 @@ const DEFAULTS = [
   { key: 'certificateTypes', label: 'Certificate Types',      options: ['Character','Leaving','Bonafide','Transfer','Merit'] },
   { key: 'examTypes',        label: 'Exam Group Types',       options: ['Daily','Weekly','Monthly','Term','Half-Yearly','Yearly','Annual'] },
   { key: 'examStatuses',     label: 'Exam Statuses',          options: ['Upcoming','Ongoing','Completed'] },
+  { key: 'streams',          label: 'Academic Streams',       options: ['Pre-Medical','Pre-Engineering','ICS','I.Com','Arts','Commerce','General'] },
   { key: 'examAttendanceStatuses', label: 'Exam Attendance Statuses', options: ['Present','Absent','Late','Leave','Exempted'] },
 ];
 
