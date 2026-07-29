@@ -58,7 +58,28 @@ export default function EnrollmentFields({ value = [], studentClass = '', seedKe
   const setValue = (name, v) => setSel(s => ({ ...s, [name]: v }));
 
   if (groups === null) return <div className="flex items-center gap-2 text-slate-400 text-sm py-3"><Loader2 size={14} className="animate-spin"/> Loading categories…</div>;
-  if (!applicable.length) return null;      // nothing applies to this class → render nothing
+
+  // There ARE categories, but none apply yet. Rather than render an invisible
+  // gap (which reads as "the enrollment part is missing"), show the section with
+  // a hint. Most categories here are class-scoped, so the usual cause is simply
+  // that no class is selected yet on a new form.
+  if (!applicable.length) {
+    const activeGroups = groups || [];
+    if (!activeGroups.length) return null;   // truly nothing configured → stay quiet
+    return (
+      <div className="rounded-xl border border-dashed border-slate-200 overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+          <Layers size={15} className="text-primary-500"/>
+          <span className="text-sm font-semibold text-slate-700">Enrollment</span>
+        </div>
+        <p className="px-4 py-3 text-sm text-slate-400">
+          {studentClass
+            ? `No enrollment categories apply to “${studentClass}”. Adjust a category's classes in Settings → Groups & Categories.`
+            : 'Select a class above to choose enrollment options (Group, House, …).'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-slate-200 overflow-hidden">

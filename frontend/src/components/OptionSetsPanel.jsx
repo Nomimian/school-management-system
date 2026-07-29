@@ -18,6 +18,9 @@ const USAGE = {
   incomeCategories: 'Accounts',
   expenseCategories:'Accounts',
   certificateTypes: 'Certificates',
+  examTypes:        'Exams (groups)',
+  examStatuses:     'Exams (status)',
+  examAttendanceStatuses: 'Exams (attendance)',
 };
 
 /**

@@ -218,14 +218,54 @@ exports.deleteSubject = async (req, res) => {
   catch(e) { res.status(500).json({ success:false, message:e.message }); }
 };
 
-// ── GRADE SCALE ───────────────────────────────────────────────────────────────
+// ── GRADE SCALE (dynamic grading, drives marks/reports/report-cards) ──────────
+const { DEFAULT_SCALE } = require('../utils/grading');
+
+// Seed a sensible default scale the first time a school opens Manage Grades.
+async function ensureGradeScale(schoolId) {
+  const count = await GradeScale.countDocuments({ school: schoolId });
+  if (count > 0) return;
+  await GradeScale.create({ school: schoolId, name: 'Standard', scales: DEFAULT_SCALE, isDefault: true });
+}
+
 exports.getGradeScales = async (req, res) => {
-  try { const data = await GradeScale.find({ school: req.user.school }); res.json({success:true,data}); }
-  catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  try {
+    await ensureGradeScale(req.user.school);
+    const data = await GradeScale.find({ school: req.user.school }).sort({ isDefault: -1, createdAt: 1 });
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 };
+
 exports.createGradeScale = async (req, res) => {
-  try { const g = await GradeScale.create({ ...req.body, school: req.user.school }); res.status(201).json({success:true,data:g}); }
-  catch(e) { res.status(400).json({ success:false, message:e.message }); }
+  try {
+    const makeDefault = req.body.isDefault || (await GradeScale.countDocuments({ school: req.user.school })) === 0;
+    if (makeDefault) await GradeScale.updateMany({ school: req.user.school }, { isDefault: false });
+    const g = await GradeScale.create({ ...req.body, isDefault: makeDefault, school: req.user.school });
+    res.status(201).json({ success: true, data: g });
+  } catch (e) { res.status(400).json({ success: false, message: e.message }); }
+};
+
+exports.updateGradeScale = async (req, res) => {
+  try {
+    const { school, _id, ...updates } = req.body;
+    if (updates.isDefault) await GradeScale.updateMany({ school: req.user.school, _id: { $ne: req.params.id } }, { isDefault: false });
+    const g = await GradeScale.findOneAndUpdate({ _id: req.params.id, school: req.user.school }, updates, { new: true, runValidators: true });
+    if (!g) return res.status(404).json({ success: false, message: 'Grade scale not found.' });
+    res.json({ success: true, data: g });
+  } catch (e) { res.status(400).json({ success: false, message: e.message }); }
+};
+
+exports.deleteGradeScale = async (req, res) => {
+  try {
+    const g = await GradeScale.findOneAndDelete({ _id: req.params.id, school: req.user.school });
+    if (!g) return res.status(404).json({ success: false, message: 'Grade scale not found.' });
+    // If we removed the default, promote another so grading always has a scale.
+    if (g.isDefault) {
+      const next = await GradeScale.findOne({ school: req.user.school });
+      if (next) { next.isDefault = true; await next.save(); }
+    }
+    res.json({ success: true, message: 'Grade scale deleted.' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 };
 
 // ── FEE STRUCTURE ─────────────────────────────────────────────────────────────
@@ -347,20 +387,13 @@ exports.generateReportCard = async (req, res) => {
     const percentage     = totalMax > 0 ? ((totalObtained / totalMax) * 100).toFixed(2) : 0;
     const passed         = results.every(r => r.isPassed);
 
-    // Determine final grade
-    const getGrade = (pct) => {
-      if (pct >= 90) return { grade:'A+', gpa:4.0, remarks:'Outstanding' };
-      if (pct >= 80) return { grade:'A',  gpa:3.7, remarks:'Excellent' };
-      if (pct >= 70) return { grade:'B+', gpa:3.3, remarks:'Very Good' };
-      if (pct >= 60) return { grade:'B',  gpa:3.0, remarks:'Good' };
-      if (pct >= 50) return { grade:'C',  gpa:2.5, remarks:'Satisfactory' };
-      if (pct >= 40) return { grade:'D',  gpa:2.0, remarks:'Needs Improvement' };
-      return           { grade:'F',  gpa:0.0, remarks:'Fail' };
-    };
+    // Determine final grade against the school's configurable Grade Scale.
+    const { resolveGrade, getDefaultScale } = require('../utils/grading');
+    const scale = await getDefaultScale(req.user.school);
 
     // With no results, a "0% / F / rank 0" card is misleading — report no-data.
     const finalGrade = results.length
-      ? getGrade(Number(percentage))
+      ? resolveGrade(Number(percentage), scale)
       : { grade: '—', gpa: null, remarks: 'No results recorded' };
 
     // Class rank (among students with results in same class)

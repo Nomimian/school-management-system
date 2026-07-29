@@ -82,6 +82,7 @@ router.use('/timetable-db',    requireModule('timetable'));
 router.use('/homework',        requireModule('homework'));
 router.use('/promotions',      requireModule('promotions'));
 router.use('/exams',           requireModule('exams'));
+router.use('/exam-groups',     requireModule('exams'));
 router.use('/grade-scales',    requireModule('exams'));
 router.use('/report-card',     requireModule('results'));
 router.use('/fees',            requireModule('fees'));
@@ -203,11 +204,25 @@ router.post('/attendance/bulk',     attendanceCtrl.markBulk);
 router.get ('/attendance/summary',  attendanceCtrl.getDailySummary);
 router.get ('/attendance/trend',    attendanceCtrl.getTrend);
 
+// ── EXAM GROUPS (Monthly / Daily / Yearly … containers) ─────────────────────────
+router.get   ('/exam-groups',              examCtrl.getExamGroups);
+router.post  ('/exam-groups',              examCtrl.createExamGroup);
+router.put   ('/exam-groups/:id',          examCtrl.updateExamGroup);
+router.delete('/exam-groups/:id',          examCtrl.deleteExamGroup);
+
 // ── EXAMS ─────────────────────────────────────────────────────────────────────
+// Static/collection routes first, then :examId sub-resources, then :id mutations.
+router.get   ('/exams/archive',            examCtrl.getExamArchive);
 router.get   ('/exams',                    examCtrl.getExams);
 router.post  ('/exams',                    examCtrl.createExam);
+router.patch ('/exams/:id/publish',        examCtrl.publishExam);
 router.put   ('/exams/:id',                examCtrl.updateExam);
 router.delete('/exams/:id',                examCtrl.deleteExam);
+router.get   ('/exams/:examId/marksheet',  examCtrl.getMarksheet);
+router.post  ('/exams/:examId/marks',      examCtrl.saveMarks);
+router.get   ('/exams/:examId/attendance', examCtrl.getExamAttendance);
+router.post  ('/exams/:examId/attendance', examCtrl.saveExamAttendance);
+router.get   ('/exams/:examId/report',     examCtrl.getExamReport);
 router.get   ('/exams/:examId/results',    examCtrl.getResults);
 router.post  ('/exams/:examId/results',    examCtrl.addResult);
 
@@ -280,9 +295,11 @@ router.get   ('/subjects',             ext.getSubjects);
 router.post  ('/subjects',             ext.createSubject);
 router.delete('/subjects/:id',         ext.deleteSubject);
 
-// ── GRADE SCALES ──────────────────────────────────────────────────────────────
+// ── GRADE SCALES (dynamic grading bands) ────────────────────────────────────────
 router.get   ('/grade-scales',         ext.getGradeScales);
 router.post  ('/grade-scales',         ext.createGradeScale);
+router.put   ('/grade-scales/:id',     ext.updateGradeScale);
+router.delete('/grade-scales/:id',     ext.deleteGradeScale);
 
 // ── FEE STRUCTURES ────────────────────────────────────────────────────────────
 router.get   ('/fee-structures',       ext.getFeeStructures);

@@ -177,14 +177,40 @@ export const attendanceAPI = {
   getTrend:     ()       => get('/attendance/trend'),
 };
 
-// ─── EXAMS ────────────────────────────────────────────────────────────────────
+// ─── EXAMS (groups, exams, marks, attendance, reports) ──────────────────────────
+export const examGroupAPI = {
+  getAll: ()         => get('/exam-groups'),
+  create: (data)     => post('/exam-groups', data),
+  update: (id, data) => put(`/exam-groups/${id}`, data),
+  delete: (id)       => del(`/exam-groups/${id}`),
+};
+
 export const examAPI = {
-  getAll:      ()          => get('/exams'),
-  create:      (data)      => post('/exams', data),
-  update:      (id, data)  => put(`/exams/${id}`, data),
-  delete:      (id)        => del(`/exams/${id}`),
-  getResults:  (examId)    => get(`/exams/${examId}/results`),
-  addResult:   (examId, d) => post(`/exams/${examId}/results`, d),
+  getAll:        (params)  => get('/exams', params),
+  create:        (data)    => post('/exams', data),
+  update:        (id, data)=> put(`/exams/${id}`, data),
+  delete:        (id)      => del(`/exams/${id}`),
+  publish:       (id, publish = true) => patch(`/exams/${id}/publish`, { publish }),
+  // Marks entry
+  getMarksheet:  (examId, subject) => get(`/exams/${examId}/marksheet`, subject !== undefined ? { subject } : {}),
+  saveMarks:     (examId, data)    => post(`/exams/${examId}/marks`, data),
+  // Exam attendance
+  getAttendance: (examId, subject) => get(`/exams/${examId}/attendance`, subject !== undefined ? { subject } : {}),
+  saveAttendance:(examId, data)    => post(`/exams/${examId}/attendance`, data),
+  // Reports
+  getReport:     (examId)  => get(`/exams/${examId}/report`),
+  getArchive:    ()        => get('/exams/archive'),
+  // Legacy simple results (still used by parent portal & older flows)
+  getResults:    (examId)    => get(`/exams/${examId}/results`),
+  addResult:     (examId, d) => post(`/exams/${examId}/results`, d),
+};
+
+// ─── GRADE SCALES (dynamic grading bands) ───────────────────────────────────────
+export const gradeScaleAPI = {
+  getAll: ()         => get('/grade-scales'),
+  create: (data)     => post('/grade-scales', data),
+  update: (id, data) => put(`/grade-scales/${id}`, data),
+  delete: (id)       => del(`/grade-scales/${id}`),
 };
 
 // ─── NOTICES ─────────────────────────────────────────────────────────────────

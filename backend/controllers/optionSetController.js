@@ -12,12 +12,23 @@ const DEFAULTS = [
   { key: 'incomeCategories', label: 'Income Categories',      options: ['Student Fees','Registration Fee','Donation','Transport Fee','Library Fine','Other Income'] },
   { key: 'expenseCategories',label: 'Expense Categories',     options: ['Teacher Salary','Staff Salary','Utility Bills','Rent','Maintenance','Stationery','Equipment','Other Expense'] },
   { key: 'certificateTypes', label: 'Certificate Types',      options: ['Character','Leaving','Bonafide','Transfer','Merit'] },
+  { key: 'examTypes',        label: 'Exam Group Types',       options: ['Daily','Weekly','Monthly','Term','Half-Yearly','Yearly','Annual'] },
+  { key: 'examStatuses',     label: 'Exam Statuses',          options: ['Upcoming','Ongoing','Completed'] },
+  { key: 'examAttendanceStatuses', label: 'Exam Attendance Statuses', options: ['Present','Absent','Late','Leave','Exempted'] },
 ];
 
+// Seed the built-in lists AND backfill any that are missing. Backfilling matters
+// because when new default lists ship (e.g. the exam dropdowns), existing schools
+// already have some option sets — a plain "skip if any exist" check would never
+// add the new ones, so they'd never appear in Settings. This only inserts keys
+// the school doesn't have yet; it never touches customised existing lists.
 async function ensureDefaults(schoolId) {
-  const count = await OptionSet.countDocuments({ school: schoolId });
-  if (count > 0) return;
-  await OptionSet.insertMany(DEFAULTS.map((d, i) => ({ ...d, school: schoolId, order: i })));
+  const existing = await OptionSet.find({ school: schoolId }).select('key').lean();
+  const have = new Set(existing.map(o => o.key));
+  const missing = DEFAULTS.filter(d => !have.has(d.key));
+  if (!missing.length) return;
+  const base = existing.length;
+  await OptionSet.insertMany(missing.map((d, i) => ({ ...d, school: schoolId, order: base + i })));
 }
 
 const clean = (arr) => [...new Set((arr || []).map(s => String(s).trim()).filter(Boolean))];
