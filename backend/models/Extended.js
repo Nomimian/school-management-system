@@ -96,6 +96,15 @@ const homeworkSchema = new mongoose.Schema({
   totalMarks:  { type: Number, default: 0 },
   attachments: [{ name: String, url: String }],
   status:      { type: String, enum: ['Active','Expired','Graded'], default: 'Active' },
+  // Turned-in work, one entry per student (submitted via the parent portal).
+  submissions: [{
+    student:     { type: mongoose.Schema.Types.ObjectId, ref: 'Student' },
+    note:        { type: String },
+    attachments: [{ name: String, url: String, type: String }],
+    submittedAt: { type: Date, default: Date.now },
+    grade:       { type: String },
+    feedback:    { type: String },
+  }],
 }, { timestamps: true });
 
 // ── MESSAGE / COMMUNICATION ───────────────────────────────────────────────────

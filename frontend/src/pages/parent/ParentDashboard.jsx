@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, ChevronRight, Bell, CalendarCheck, Wallet, GraduationCap } from 'lucide-react';
+import { Loader2, ChevronRight, Bell, CalendarCheck, Wallet, GraduationCap, CalendarDays } from 'lucide-react';
 import { Card, Badge } from '../../components/ui';
 import { portalAPI } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth.jsx';
@@ -27,6 +27,7 @@ export default function ParentDashboard() {
 
   const children = data?.children || [];
   const notices  = data?.notices  || [];
+  const events   = data?.events   || [];
 
   return (
     <div className="space-y-6 animate-rise">
@@ -65,6 +66,27 @@ export default function ParentDashboard() {
               </Card>
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Upcoming events */}
+      {events.length > 0 && (
+        <div>
+          <h2 className="font-display font-bold text-slate-800 text-lg flex items-center gap-2 mb-3"><CalendarDays size={18}/> Upcoming Events</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {events.map(e => (
+              <Card key={e._id} className="p-4 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-700 flex flex-col items-center justify-center flex-shrink-0 leading-none">
+                  <span className="text-lg font-display font-bold">{new Date(e.date).getDate()}</span>
+                  <span className="text-[10px] uppercase">{new Date(e.date).toLocaleString('default', { month: 'short' })}</span>
+                </div>
+                <div className="min-w-0">
+                  <div className="font-semibold text-slate-800 text-sm truncate">{e.title}</div>
+                  <div className="text-xs text-slate-400">{e.type}{e.time ? ` · ${e.time}` : ''}</div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
 

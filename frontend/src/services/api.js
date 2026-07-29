@@ -66,6 +66,7 @@ export const parentAdminAPI = {
 export const portalAPI = {
   overview: ()   => get('/portal/overview'),
   child:    (id) => get(`/portal/child/${id}`),
+  submitHomework: (id, hwId, data) => post(`/portal/child/${id}/homework/${hwId}/submit`, data),
 };
 
 // ─── CHAT / MESSAGING (all authenticated users) ─────────────────────────────────

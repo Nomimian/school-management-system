@@ -18,8 +18,8 @@ const Student    = require('../models/Student');
 const Attendance = require('../models/Attendance');
 const Fee        = require('../models/Fee');
 const { Result }   = require('../models/Exam');
-const { Notice }   = require('../models/Other');
-const { Homework } = require('../models/Extended');
+const { Notice, Event } = require('../models/Other');
+const { Homework, Timetable, Certificate, StudentTransport, StudentHealth } = require('../models/Extended');
 
 const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || ''));
 
@@ -153,10 +153,12 @@ exports.portalOverview = async (req, res) => {
       return { student: c, attendancePct, feeBalance: bal };
     }));
 
-    const notices = await Notice.find({ school: req.user.school, audience: { $in: ['All', 'Parents'] } })
-      .sort({ createdAt: -1 }).limit(10);
+    const [notices, events] = await Promise.all([
+      Notice.find({ school: req.user.school, audience: { $in: ['All', 'Parents'] } }).sort({ createdAt: -1 }).limit(10),
+      Event.find({ school: req.user.school, date: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) } }).sort({ date: 1 }).limit(8),
+    ]);
 
-    res.json({ success: true, data: { children: summaries, notices } });
+    res.json({ success: true, data: { children: summaries, notices, events } });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 };
 
@@ -166,15 +168,26 @@ exports.portalChild = async (req, res) => {
     const child = await ownChild(req, req.params.id);
     if (!child) return res.status(404).json({ success: false, message: 'Child not found.' });
 
-    const [attendance, fees, results] = await Promise.all([
-      Attendance.find({ student: child._id, school: req.user.school }).sort({ date: -1 }).limit(60),
+    const [attendance, fees, results, homeworkRaw, timetable, certificates, transport, health] = await Promise.all([
+      Attendance.find({ student: child._id, school: req.user.school }).sort({ date: -1 }).limit(120),
       Fee.find({ student: child._id, school: req.user.school }).sort({ year: -1, createdAt: -1 }),
       Result.find({ student: child._id, school: req.user.school })
-        .populate('exam', 'name subject class totalMarks startDate').sort({ createdAt: -1 }),
+        .populate('exam', 'name subject class totalMarks passMark startDate').sort({ createdAt: -1 }),
+      // Homework is class-wide; only expose THIS child's own submission.
+      Homework.find({ school: req.user.school, class: child.class }).sort({ dueDate: -1 }).limit(40).lean(),
+      Timetable.find({ school: req.user.school, class: child.class }).populate('periods.teacher', 'name').lean(),
+      Certificate.find({ school: req.user.school, student: child._id }).sort({ issueDate: -1 }).lean(),
+      StudentTransport.findOne({ school: req.user.school, student: child._id, isActive: true }).populate('route', 'routeName routeNo').lean(),
+      StudentHealth.findOne({ school: req.user.school, student: child._id }).lean(),
     ]);
-    // Homework is class-wide; show the child's class.
-    const homework = await Homework.find({ school: req.user.school, class: child.class })
-      .sort({ dueDate: -1 }).limit(30);
+
+    // Strip other students' submissions; attach only this child's.
+    const cid = String(child._id);
+    const homework = homeworkRaw.map(h => {
+      const mine = (h.submissions || []).find(s => String(s.student) === cid) || null;
+      const { submissions, ...rest } = h;
+      return { ...rest, mySubmission: mine };
+    });
 
     const present = attendance.filter((a) => a.status === 'Present').length;
     const attendancePct = attendance.length ? Math.round((present / attendance.length) * 100) : null;
@@ -185,9 +198,37 @@ exports.portalChild = async (req, res) => {
       success: true,
       data: {
         student: child,
-        attendance, fees, results, homework,
+        attendance, fees, results, homework, timetable, certificates, transport, health,
         summary: { attendancePct, feeTotal, feePaid, feeBalance: feeTotal - feePaid },
       },
     });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+};
+
+// POST /api/portal/child/:id/homework/:hwId/submit  — parent turns in work
+exports.submitHomework = async (req, res) => {
+  try {
+    const child = await ownChild(req, req.params.id);
+    if (!child) return res.status(404).json({ success: false, message: 'Child not found.' });
+
+    const hw = await Homework.findOne({ _id: req.params.hwId, school: req.user.school, class: child.class });
+    if (!hw) return res.status(404).json({ success: false, message: 'Homework not found for this class.' });
+
+    const { note = '', attachments = [] } = req.body;
+    if (!String(note).trim() && !attachments.length)
+      return res.status(400).json({ success: false, message: 'Add a note or attach your work.' });
+
+    const cid = String(child._id);
+    const entry = {
+      student: child._id, note: String(note),
+      attachments: (attachments || []).map(a => ({ name: a.name, url: a.url, type: a.type })),
+      submittedAt: new Date(),
+    };
+    const idx = (hw.submissions || []).findIndex(s => String(s.student) === cid);
+    if (idx >= 0) hw.submissions[idx] = { ...hw.submissions[idx].toObject?.() || hw.submissions[idx], ...entry };
+    else hw.submissions.push(entry);
+    await hw.save();
+
+    res.json({ success: true, message: 'Homework submitted.', data: entry });
+  } catch (e) { res.status(400).json({ success: false, message: e.message }); }
 };

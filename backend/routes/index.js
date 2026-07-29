@@ -117,8 +117,9 @@ router.delete('/parents/:id',          parentCtrl.deleteParent);
 
 // ── PARENT PORTAL (role: parent only — data double-scoped to own children) ───
 router.use('/portal', authorize('parent'));
-router.get('/portal/overview',  parentCtrl.portalOverview);
-router.get('/portal/child/:id', parentCtrl.portalChild);
+router.get ('/portal/overview',  parentCtrl.portalOverview);
+router.get ('/portal/child/:id', parentCtrl.portalChild);
+router.post('/portal/child/:id/homework/:hwId/submit', parentCtrl.submitHomework);
 
 // ── MESSAGING / CHAT (every authenticated school user, incl. parents) ────────
 // Not module-gated: staff and parents alike must be able to converse. Access is
