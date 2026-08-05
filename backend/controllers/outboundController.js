@@ -7,9 +7,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 const path = require('path');
 const User = require('../models/User');
+const MessageLog = require('../models/MessageLog');
 const mailer = require('../services/mailer');
 const whatsapp = require('../services/whatsapp');
 const sms = require('../services/sms');
+const log = require('../services/messageLog');
 const { notify } = require('./notificationController');
 
 const uploadDir = path.join(__dirname, '..', 'uploads');
@@ -18,6 +20,25 @@ const basename = (url) => path.basename(String(url || '').split('?')[0]);
 // GET /api/outbound/status — which channels are live vs simulated (for the UI)
 exports.status = (req, res) => {
   res.json({ success: true, data: { email: mailer.isConfigured(), whatsapp: whatsapp.isConfigured(), sms: sms.isConfigured() } });
+};
+
+// GET /api/outbound/log — recent delivery-log entries for the caller's school.
+// Optional filters: ?channel=email|whatsapp|sms  ?status=sent|simulated|failed|skipped  ?event=outbound|absence|fee-reminder
+exports.logList = async (req, res) => {
+  try {
+    const { channel, status, event } = req.query;
+    const filter = { school: req.user.school };
+    if (channel) filter.channel = channel;
+    if (status)  filter.status  = status;
+    if (event)   filter.event   = event;
+    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const items = await MessageLog.find(filter)
+      .populate('student', 'name class')
+      .populate('user', 'name role')
+      .sort({ createdAt: -1 })
+      .limit(limit);
+    res.json({ success: true, count: items.length, data: items });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 };
 
 // POST /api/outbound/send
@@ -44,31 +65,27 @@ exports.send = async (req, res) => {
     const results = [];
     for (const u of users) {
       const r = { id: u._id, name: u.name };
+      // Common delivery-log metadata for this recipient.
+      const meta = { school: req.user.school, event: 'outbound', name: u.name, user: u._id, subject: subject || 'Message from your school', body };
       if (wantEmail) {
-        if (!u.email) r.email = 'no-email';
+        if (!u.email) { r.email = 'no-email'; await log.skip({ ...meta, channel: 'email' }, 'no email on file'); }
         else {
-          try {
-            const out = await mailer.sendMail({ to: u.email, subject: subject || 'Message from your school', html, text: body, attachments: mailAttachments, fromName: req.user.name });
-            r.email = out.simulated ? 'simulated' : 'sent';
-          } catch (e) { r.email = 'failed'; }
+          r.email = (await log.deliver({ ...meta, channel: 'email', to: u.email },
+            () => mailer.sendMail({ to: u.email, subject: subject || 'Message from your school', html, text: body, attachments: mailAttachments, fromName: req.user.name }))).status;
         }
       }
       if (wantWhats) {
-        if (!u.phone) r.whatsapp = 'no-phone';
+        if (!u.phone) { r.whatsapp = 'no-phone'; await log.skip({ ...meta, channel: 'whatsapp' }, 'no phone on file'); }
         else {
-          try {
-            const out = await whatsapp.sendWhatsApp({ to: u.phone, body: [subject, body].filter(Boolean).join('\n\n'), attachments: waAttachments });
-            r.whatsapp = out.simulated ? 'simulated' : 'sent';
-          } catch (e) { r.whatsapp = 'failed'; }
+          r.whatsapp = (await log.deliver({ ...meta, channel: 'whatsapp', to: u.phone },
+            () => whatsapp.sendWhatsApp({ to: u.phone, body: [subject, body].filter(Boolean).join('\n\n'), attachments: waAttachments }))).status;
         }
       }
       if (wantSms) {
-        if (!u.phone) r.sms = 'no-phone';
+        if (!u.phone) { r.sms = 'no-phone'; await log.skip({ ...meta, channel: 'sms' }, 'no phone on file'); }
         else {
-          try {
-            const out = await sms.sendSMS({ to: u.phone, body: [subject, body].filter(Boolean).join(' — ') });
-            r.sms = out.simulated ? 'simulated' : 'sent';
-          } catch (e) { r.sms = 'failed'; }
+          r.sms = (await log.deliver({ ...meta, channel: 'sms', to: u.phone },
+            () => sms.sendSMS({ to: u.phone, body: [subject, body].filter(Boolean).join(' — ') }))).status;
         }
       }
       results.push(r);

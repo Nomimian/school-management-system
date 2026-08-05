@@ -144,6 +144,7 @@ router.post('/attachments', attachmentUpload.single('file'), attachmentCtrl.uplo
 // ── OUTBOUND EMAIL / WHATSAPP (staff only — parents can't broadcast) ─────────
 router.use('/outbound', authorize('admin', 'principal', 'teacher', 'accountant', 'frontdesk'));
 router.get ('/outbound/status', outboundCtrl.status);
+router.get ('/outbound/log',    outboundCtrl.logList);
 router.post('/outbound/send',   outboundCtrl.send);
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────

@@ -81,8 +81,9 @@ export const chatAPI = {
 
 // ─── OUTBOUND EMAIL / WHATSAPP (staff only) ─────────────────────────────────────
 export const outboundAPI = {
-  status: ()     => get('/outbound/status'),
-  send:   (data) => post('/outbound/send', data),
+  status: ()       => get('/outbound/status'),
+  send:   (data)   => post('/outbound/send', data),
+  log:    (params) => get('/outbound/log', params),
 };
 
 // ─── ATTACHMENTS (images + documents, for chat & outbound) ──────────────────────

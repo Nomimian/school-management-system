@@ -19,12 +19,13 @@ const { notify } = require('../controllers/notificationController');
 const mailer  = require('./mailer');
 const whatsapp = require('./whatsapp');
 const sms     = require('./sms');
+const log     = require('./messageLog');
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 // Deliver one message to a student's guardians across every available channel.
 // `wa` optionally carries a pre-approved WhatsApp template: { template, params }.
-async function notifyGuardians(school, student, { title, body, link = '', channels = {}, wa = null }) {
+async function notifyGuardians(school, student, { title, body, link = '', channels = {}, wa = null, event = 'notification' }) {
   try {
     // 1) in-app → linked parent accounts
     const parents = await User.find({ school: school._id, role: 'parent', children: student._id }).select('_id').lean();
@@ -32,37 +33,35 @@ async function notifyGuardians(school, student, { title, body, link = '', channe
       await notify({ school: school._id, users: parents.map(p => p._id), type: 'warning', title, body, link });
     }
 
-    // 2) WhatsApp → guardian phone (best-effort). Proactive (business-initiated)
-    // messages require an approved template; use one when configured, else fall
-    // back to free-form text (delivers only inside a 24h window / simulated).
-    if (channels.whatsapp !== false) {
-      const phone = student.guardian?.phone || student.phone;
-      if (phone) {
-        if (wa?.template && whatsapp.isConfigured()) {
-          whatsapp.sendTemplate({ to: phone, name: wa.template, params: wa.params || [] }).catch(() => {});
-        } else {
-          whatsapp.sendWhatsApp({ to: phone, body: `${title}\n\n${body}` }).catch(() => {});
-        }
-      }
+    // Shared metadata for every external send's delivery-log row.
+    const meta = { school: school._id, event, student: student._id, name: student.guardian?.name || student.name, subject: title, body };
+    const phone = student.guardian?.phone || student.phone;
+    const email = student.guardian?.email || student.email;
+
+    // 2) WhatsApp → guardian phone (best-effort, logged). Proactive (business-
+    // initiated) messages require an approved template; use one when configured,
+    // else fall back to free-form text (delivers only inside a 24h window).
+    if (channels.whatsapp !== false && phone) {
+      const useTemplate = wa?.template && whatsapp.isConfigured();
+      await log.deliver({ ...meta, channel: 'whatsapp', to: phone }, () =>
+        useTemplate
+          ? whatsapp.sendTemplate({ to: phone, name: wa.template, params: wa.params || [] })
+          : whatsapp.sendWhatsApp({ to: phone, body: `${title}\n\n${body}` }));
     }
 
-    // 2b) SMS → guardian phone (best-effort)
-    if (channels.sms !== false) {
-      const phone = student.guardian?.phone || student.phone;
-      if (phone) sms.sendSMS({ to: phone, body: `${title} — ${body}` }).catch(() => {});
+    // 2b) SMS → guardian phone (best-effort, logged)
+    if (channels.sms !== false && phone) {
+      await log.deliver({ ...meta, channel: 'sms', to: phone }, () => sms.sendSMS({ to: phone, body: `${title} — ${body}` }));
     }
 
-    // 3) email → guardian email (best-effort)
-    if (channels.email !== false) {
-      const email = student.guardian?.email || student.email;
-      if (email) {
-        mailer.sendMail({
-          to: email, fromName: school.name,
-          subject: title,
-          text: body,
-          html: `<div style="font-family:Segoe UI,Arial,sans-serif"><h3 style="margin:0 0 8px">${title}</h3><p style="color:#334155;white-space:pre-line">${body}</p><p style="color:#94a3b8;font-size:12px">— ${school.name}</p></div>`,
-        }).catch(() => {});
-      }
+    // 3) email → guardian email (best-effort, logged)
+    if (channels.email !== false && email) {
+      await log.deliver({ ...meta, channel: 'email', to: email }, () => mailer.sendMail({
+        to: email, fromName: school.name,
+        subject: title,
+        text: body,
+        html: `<div style="font-family:Segoe UI,Arial,sans-serif"><h3 style="margin:0 0 8px">${title}</h3><p style="color:#334155;white-space:pre-line">${body}</p><p style="color:#94a3b8;font-size:12px">— ${school.name}</p></div>`,
+      }));
     }
   } catch (e) {
     console.warn('notifyGuardians failed:', e.message);
@@ -79,6 +78,7 @@ async function sendAbsenceAlert(school, student, date) {
     title: `Absence Alert — ${student.name}`,
     body: `${student.name} (${student.class || ''}) was marked ABSENT on ${d}. If this is unexpected, please contact the school office.`,
     link: '/parent',
+    event: 'absence',
     wa: { template: process.env.WHATSAPP_TEMPLATE_ABSENCE, params: [student.name, student.class || '—', d] },
   });
 }
@@ -130,6 +130,7 @@ async function runFeeReminders(school, now = new Date()) {
             `${overdue ? 'is OVERDUE' : `is due by ${dueStr}`}. Outstanding balance: Rs ${balance.toLocaleString()}. ` +
             `Kindly clear it at your earliest convenience.`,
       link: '/parent',
+      event: 'fee-reminder',
       wa: {
         template: process.env.WHATSAPP_TEMPLATE_FEE_REMINDER,
         params: [student.name, `${fee.month} ${fee.year}`, `Rs ${balance.toLocaleString()}`, overdue ? 'overdue' : dueStr],
