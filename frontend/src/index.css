@@ -18,10 +18,26 @@
   ::selection { background: rgba(29,78,216,0.18); }
 
   /* ── DARK MODE ───────────────────────────────────────────────────────────────
-     The UI is built on hard-coded slate utilities, so rather than editing every
-     component we remap that palette under `.dark`. `.dark .bg-white` (0,2,0)
-     out-ranks `.bg-white` (0,1,0), so these win without !important. Brand
-     (primary-*) colours are injected separately in config/theme.js and stay. */
+     The UI is built on hard-coded Tailwind colour utilities, so rather than
+     editing every component we remap that palette under `.dark`. A `.dark X`
+     selector (0,2,0) out-ranks the bare utility `X` (0,1,0), so these win
+     without !important — EXCEPT brand (`primary-*`) utilities, which config/
+     theme.js injects with !important, so those overrides below add !important
+     too and rely on the extra `.dark` specificity to win the tie.
+
+     The design contract for dark: the page is dark, so anything sitting ON it —
+     text, borders, badges, cards — must resolve to a LIGHTER colour so it reads.
+     Surfaces step up in lightness with elevation (body → section → card → chip):
+       body        #0b1220   darkest
+       section 50  #0f1728
+       card white  #131c31   the elevated surface
+       chip 100    #1e293b
+       raised 200  #26324a
+     Solid colour utilities (bg-*-400/500/600 buttons, dots, gradients) are left
+     untouched — they already read well on dark. Only the LIGHT pastel steps
+     (-50/-100 fills, -100/-200/-300 borders) and the DARK colour text steps
+     (-500..-800) are remapped: pastels become translucent tints of their hue,
+     and dark text becomes a bright -300/-400 shade of the same hue. */
   html.dark body {
     color: #e2e8f0;
     background-color: #0b1220;
@@ -29,24 +45,159 @@
       radial-gradient(1200px 600px at 100% -10%, rgba(59,130,246,0.14), transparent 60%),
       radial-gradient(900px 500px at -10% 10%, rgba(99,102,241,0.12), transparent 55%);
   }
-  /* Surfaces */
+  /* ── Neutral surfaces ─────────────────────────────────────────────────────── */
+  /* The app shell (Layout root) paints `bg-surface` (#f0f4ff). Left alone it
+     shows as a light band behind every page header where no card covers it —
+     let the dark body gradient show through instead. */
+  .dark .bg-surface { background-color: transparent; }
   .dark .bg-white { background-color: #131c31; }
-  .dark .bg-slate-50, .dark .bg-slate-50\/50, .dark .bg-slate-50\/40, .dark .bg-slate-50\/30 { background-color: #0f1728; }
+  .dark .bg-slate-50,
+  .dark .bg-slate-50\/30, .dark .bg-slate-50\/40, .dark .bg-slate-50\/50,
+  .dark .bg-slate-50\/60, .dark .bg-slate-50\/70 { background-color: #0f1728; }
   .dark .bg-slate-100 { background-color: #1e293b; }
-  .dark .hover\:bg-slate-50:hover, .dark .hover\:bg-slate-100:hover { background-color: #1e293b; }
-  /* Text */
+  .dark .bg-slate-200 { background-color: #26324a; }
+  .dark .bg-slate-300 { background-color: #33415c; }
+  .dark .bg-slate-400 { background-color: #475569; }
+  .dark .hover\:bg-slate-50:hover, .dark .hover\:bg-slate-50\/50:hover { background-color: #16203a; }
+  .dark .hover\:bg-slate-100:hover, .dark .hover\:bg-slate-200:hover { background-color: #1e293b; }
+  /* ── Neutral text ─────────────────────────────────────────────────────────── */
   .dark .text-slate-900, .dark .text-slate-800, .dark .text-slate-700 { color: #e5edf7; }
   .dark .text-slate-600 { color: #cbd5e1; }
   .dark .text-slate-500 { color: #94a3b8; }
   .dark .text-slate-400 { color: #6b7a90; }
-  /* Borders */
-  .dark .border-slate-100, .dark .border-slate-200, .dark .border-slate-50 { border-color: #26324a; }
-  /* Form controls */
+  .dark .hover\:text-slate-700:hover, .dark .hover\:text-slate-600:hover { color: #e5edf7; }
+  /* ── Neutral borders / dividers ───────────────────────────────────────────── */
+  .dark .border-slate-50, .dark .border-slate-100, .dark .border-slate-100\/80,
+  .dark .border-slate-200, .dark .border-slate-300 { border-color: #26324a; }
+  .dark .hover\:border-slate-300:hover { border-color: #3a4762; }
+  .dark .divide-slate-50 > :not([hidden]) ~ :not([hidden]),
+  .dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+  .dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: #26324a; }
+
+  /* ── Coloured accents ─────────────────────────────────────────────────────────
+     Each hue: light pastel fills (-50/-100) → translucent tint of that hue so
+     the badge glows on dark instead of sitting as a bright patch; dark text
+     (-500..-800) → a bright -300/-400 shade so labels/values pop; light borders
+     → a translucent hue line. Solid -400/-500/-600 fills are deliberately NOT
+     touched (buttons, status dots, gradients keep their colour). */
+
+  /* red */
+  .dark .bg-red-50 { background-color: rgba(239,68,68,0.13); }
+  .dark .bg-red-100 { background-color: rgba(239,68,68,0.20); }
+  .dark .hover\:bg-red-50:hover { background-color: rgba(239,68,68,0.16); }
+  .dark .hover\:bg-red-100:hover { background-color: rgba(239,68,68,0.24); }
+  .dark .text-red-500, .dark .text-red-600, .dark .text-red-700 { color: #f87171; }
+  .dark .hover\:text-red-500:hover, .dark .hover\:text-red-600:hover { color: #fca5a5; }
+  .dark .border-red-100, .dark .border-red-200, .dark .border-red-300 { border-color: rgba(248,113,113,0.32); }
+
+  /* rose */
+  .dark .bg-rose-50, .dark .bg-rose-100 { background-color: rgba(244,63,94,0.18); }
+  .dark .text-rose-600, .dark .text-rose-700 { color: #fb7185; }
+
+  /* orange */
+  .dark .bg-orange-50 { background-color: rgba(249,115,22,0.13); }
+  .dark .bg-orange-100 { background-color: rgba(249,115,22,0.20); }
+  .dark .hover\:bg-orange-100:hover { background-color: rgba(249,115,22,0.24); }
+  .dark .text-orange-500, .dark .text-orange-600, .dark .text-orange-700 { color: #fb923c; }
+  .dark .hover\:text-orange-600:hover { color: #fdba74; }
+  .dark .border-orange-200, .dark .border-orange-300 { border-color: rgba(251,146,60,0.32); }
+
+  /* amber */
+  .dark .bg-amber-50 { background-color: rgba(245,158,11,0.13); }
+  .dark .bg-amber-100 { background-color: rgba(245,158,11,0.20); }
+  .dark .hover\:bg-amber-100:hover, .dark .hover\:bg-amber-200:hover { background-color: rgba(245,158,11,0.24); }
+  .dark .text-amber-500, .dark .text-amber-600, .dark .text-amber-700 { color: #fbbf24; }
+  .dark .hover\:text-amber-600:hover { color: #fcd34d; }
+  .dark .border-amber-100, .dark .border-amber-200 { border-color: rgba(251,191,36,0.32); }
+
+  /* lime */
+  .dark .bg-lime-50, .dark .bg-lime-100 { background-color: rgba(132,204,22,0.18); }
+  .dark .text-lime-600, .dark .text-lime-700 { color: #a3e635; }
+
+  /* green / emerald */
+  .dark .bg-green-50, .dark .bg-green-100 { background-color: rgba(16,185,129,0.16); }
+  .dark .text-green-600, .dark .text-green-700 { color: #34d399; }
+  .dark .bg-emerald-50 { background-color: rgba(16,185,129,0.13); }
+  .dark .bg-emerald-100 { background-color: rgba(16,185,129,0.20); }
+  .dark .hover\:bg-emerald-100:hover, .dark .hover\:bg-emerald-200:hover { background-color: rgba(16,185,129,0.24); }
+  .dark .text-emerald-500, .dark .text-emerald-600, .dark .text-emerald-700 { color: #34d399; }
+  .dark .hover\:text-emerald-600:hover { color: #6ee7b7; }
+  .dark .border-emerald-200, .dark .border-emerald-300 { border-color: rgba(52,211,153,0.32); }
+
+  /* teal */
+  .dark .bg-teal-50 { background-color: rgba(20,184,166,0.13); }
+  .dark .bg-teal-100 { background-color: rgba(20,184,166,0.20); }
+  .dark .hover\:bg-teal-200:hover { background-color: rgba(20,184,166,0.24); }
+  .dark .text-teal-600, .dark .text-teal-700 { color: #2dd4bf; }
+  .dark .border-teal-200 { border-color: rgba(45,212,191,0.32); }
+
+  /* cyan */
+  .dark .bg-cyan-50, .dark .bg-cyan-100 { background-color: rgba(6,182,212,0.18); }
+  .dark .text-cyan-600, .dark .text-cyan-700 { color: #22d3ee; }
+
+  /* sky */
+  .dark .bg-sky-50, .dark .bg-sky-100 { background-color: rgba(14,165,233,0.18); }
+  .dark .text-sky-600, .dark .text-sky-700 { color: #38bdf8; }
+
+  /* blue */
+  .dark .bg-blue-50 { background-color: rgba(59,130,246,0.13); }
+  .dark .bg-blue-100 { background-color: rgba(59,130,246,0.20); }
+  .dark .hover\:bg-blue-50\/30:hover { background-color: rgba(59,130,246,0.10); }
+  .dark .hover\:bg-blue-100:hover, .dark .hover\:bg-blue-200:hover { background-color: rgba(59,130,246,0.24); }
+  .dark .text-blue-500, .dark .text-blue-600, .dark .text-blue-700 { color: #60a5fa; }
+  .dark .hover\:text-blue-500:hover, .dark .hover\:text-blue-600:hover, .dark .hover\:text-blue-700:hover { color: #93c5fd; }
+  .dark .border-blue-50, .dark .border-blue-100, .dark .border-blue-200, .dark .border-blue-300 { border-color: rgba(96,165,250,0.32); }
+  .dark .hover\:border-blue-200:hover { border-color: rgba(96,165,250,0.45); }
+
+  /* indigo */
+  .dark .bg-indigo-50, .dark .bg-indigo-100 { background-color: rgba(99,102,241,0.18); }
+  .dark .text-indigo-500, .dark .text-indigo-600, .dark .text-indigo-700 { color: #818cf8; }
+  .dark .border-indigo-200 { border-color: rgba(129,140,248,0.32); }
+
+  /* violet */
+  .dark .bg-violet-50, .dark .bg-violet-100 { background-color: rgba(139,92,246,0.18); }
+  .dark .hover\:bg-violet-100:hover { background-color: rgba(139,92,246,0.24); }
+  .dark .text-violet-600, .dark .text-violet-700 { color: #a78bfa; }
+
+  /* purple */
+  .dark .bg-purple-50 { background-color: rgba(168,85,247,0.13); }
+  .dark .bg-purple-100 { background-color: rgba(168,85,247,0.20); }
+  .dark .hover\:bg-purple-100:hover, .dark .hover\:bg-purple-200:hover { background-color: rgba(168,85,247,0.24); }
+  .dark .text-purple-500, .dark .text-purple-600, .dark .text-purple-700 { color: #c084fc; }
+  .dark .hover\:text-purple-600:hover { color: #d8b4fe; }
+  .dark .border-purple-200, .dark .border-purple-300 { border-color: rgba(192,132,252,0.32); }
+
+  /* pink */
+  .dark .bg-pink-50, .dark .bg-pink-100 { background-color: rgba(236,72,153,0.18); }
+  .dark .text-pink-600, .dark .text-pink-700 { color: #f472b6; }
+
+  /* ── Brand (primary-*) tints — theme.js injects these with !important, so we
+     must match it with !important + the extra `.dark` specificity to win. The
+     accent hue is preserved but made translucent (fills) or lifted toward white
+     (text) so it reads on the dark surface. */
+  .dark .bg-primary-50 { background-color: color-mix(in srgb, var(--brand) 22%, transparent) !important; }
+  .dark .bg-primary-100 { background-color: color-mix(in srgb, var(--brand) 30%, transparent) !important; }
+  .dark .hover\:bg-primary-50:hover { background-color: color-mix(in srgb, var(--brand) 22%, transparent) !important; }
+  .dark .hover\:bg-primary-100:hover { background-color: color-mix(in srgb, var(--brand) 30%, transparent) !important; }
+  .dark .text-primary-400, .dark .text-primary-500, .dark .text-primary-600,
+  .dark .text-primary-700, .dark .text-primary-800 { color: color-mix(in srgb, var(--brand) 52%, white) !important; }
+  .dark .hover\:text-primary-600:hover, .dark .hover\:text-primary-700:hover { color: color-mix(in srgb, var(--brand) 62%, white) !important; }
+  .dark .ring-primary-100, .dark .focus\:ring-primary-100:focus { --tw-ring-color: color-mix(in srgb, var(--brand) 35%, transparent) !important; }
+
+  /* ── Form controls ────────────────────────────────────────────────────────── */
   .dark input, .dark textarea, .dark select { color: #e5edf7; }
   .dark input::placeholder, .dark textarea::placeholder { color: #64748b; }
   .dark select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); }
+  .dark select:hover { border-color: #3a4762; }
+  .dark select option { color: #e5edf7; background: #131c31; }
+  .dark input[type="file"]::file-selector-button { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+  .dark input[type="file"]::file-selector-button:hover { background: #26324a; border-color: #475569; }
   /* Soften the light-tuned shadows on dark */
   .dark .shadow-card, .dark .shadow-float, .dark .shadow-sm, .dark .shadow-md, .dark .shadow-lg { box-shadow: 0 8px 30px rgba(0,0,0,0.45); }
+  /* Dark glass + skeleton so overlays and loading states aren't bright white */
+  .dark .glassmorphism { background: rgba(19,28,49,0.82); }
+  .dark .skeleton { background: #1a2438; }
+  .dark .skeleton::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent); }
 
   /* ── Native <select> dropdowns ──────────────────────────────────────────────
      Every select across the app renders the plain OS arrow otherwise. Strip it
@@ -122,6 +273,10 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; background-clip: content-box; }
+.dark ::-webkit-scrollbar-thumb { background: #33415c; background-clip: content-box; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+.dark .scrollbar-thin::-webkit-scrollbar-thumb { background: #33415c; }
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #475569; }
 
 /* Sidebar active state */
 .nav-active {
