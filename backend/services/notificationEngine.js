@@ -29,7 +29,7 @@ async function notifyGuardians(school, student, { title, body, link = '', channe
     // 1) in-app → linked parent accounts
     const parents = await User.find({ school: school._id, role: 'parent', children: student._id }).select('_id').lean();
     if (parents.length) {
-      await notify({ school: school._id, users: parents.map(p => p._id), type: 'alert', title, body, link });
+      await notify({ school: school._id, users: parents.map(p => p._id), type: 'warning', title, body, link });
     }
 
     // 2) WhatsApp → guardian phone (best-effort). Proactive (business-initiated)

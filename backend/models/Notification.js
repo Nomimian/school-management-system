@@ -13,5 +13,8 @@ const notificationSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 notificationSchema.index({ user: 1, read: 1, createdAt: -1 });
+// TTL: auto-purge notifications after 90 days so the collection can't grow
+// unbounded. The list view only ever shows the latest 50 per user anyway.
+notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 90 });
 
 module.exports = mongoose.model('Notification', notificationSchema);

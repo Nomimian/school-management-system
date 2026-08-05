@@ -1,16 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Bell, Search, ChevronDown, Check, LogOut, User, GraduationCap, Users, Loader2, X, ArrowRight, AlertTriangle, Info, CheckCircle2, Sun, Moon } from 'lucide-react';
+import { Menu, Search, ChevronDown, LogOut, User, GraduationCap, Users, Loader2, Sun, Moon } from 'lucide-react';
 import { useApp } from '../../hooks/useApp.jsx';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { studentAPI, teacherAPI } from '../../services/api';
 import NotificationBell from '../NotificationBell.jsx';
-
-const NOTIF_STYLE = {
-  warning: { icon: AlertTriangle, tint: 'bg-amber-50',   color: 'text-amber-500' },
-  info:    { icon: Info,          tint: 'bg-blue-50',    color: 'text-blue-500' },
-  success: { icon: CheckCircle2,  tint: 'bg-emerald-50', color: 'text-emerald-500' },
-};
 
 const pageTitles = {
   '/': 'Dashboard', '/students': 'Students Management', '/teachers': 'Teachers Management',
@@ -31,9 +25,8 @@ const pageTitles = {
 };
 
 export default function Topbar() {
-  const { sidebarOpen, setSidebarOpen, notifications, unreadCount, markAllRead, markRead } = useApp();
+  const { sidebarOpen, setSidebarOpen } = useApp();
   const { user, logout } = useAuth();
-  const [showNotif, setShowNotif]   = useState(false);
   const [showUser, setShowUser]     = useState(false);
   const [dark, setDark]             = useState(() => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
   const toggleDark = () => {
@@ -42,7 +35,6 @@ export default function Topbar() {
     try { localStorage.setItem('theme', next ? 'dark' : 'light'); } catch { /* ignore */ }
     setDark(next);
   };
-  const [viewedNotif, setViewedNotif] = useState(null);
   const [search, setSearch]         = useState('');
   const [results, setResults]       = useState({ students: [], teachers: [] });
   const [searching, setSearching]   = useState(false);
@@ -55,8 +47,6 @@ export default function Topbar() {
   const today = new Date().toLocaleDateString('en-PK', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   const handleLogout = () => { logout(); navigate('/login'); };
-
-  const openNotif = (n) => { markRead(n.id); setViewedNotif(n); setShowNotif(false); };
 
   // ── Global search (debounced) ────────────────────────────────────────────
   useEffect(() => {
@@ -93,8 +83,6 @@ export default function Topbar() {
   };
 
   const total = results.students.length + results.teachers.length;
-  const vSt = viewedNotif ? (NOTIF_STYLE[viewedNotif.type] || NOTIF_STYLE.info) : null;
-  const VIcon = vSt?.icon;
 
   return (
     <>
@@ -172,7 +160,7 @@ export default function Topbar() {
 
         {/* User menu */}
         <div className="relative">
-          <button onClick={() => { setShowUser(!showUser); setShowNotif(false); }}
+          <button onClick={() => setShowUser(!showUser)}
             className="flex items-center gap-2 pl-2 cursor-pointer group">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-sm font-bold">
               {user?.name?.charAt(0) || 'A'}
@@ -205,39 +193,6 @@ export default function Topbar() {
         </div>
       </div>
     </header>
-
-    {/* Notification detail modal */}
-    {viewedNotif && (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-[fadeIn_.15s_ease-out]"
-        onClick={() => setViewedNotif(null)}>
-        <div onClick={e => e.stopPropagation()}
-          className="bg-white rounded-3xl shadow-float w-full max-w-md p-6 animate-[popIn_.18s_ease-out] ring-1 ring-black/5">
-          <div className="flex items-start gap-4">
-            <div className={`w-12 h-12 rounded-2xl ${vSt.tint} flex items-center justify-center flex-shrink-0`}>
-              <VIcon size={22} className={vSt.color} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-display font-bold text-slate-800 text-lg leading-tight">{viewedNotif.title || viewedNotif.text}</h3>
-              <p className="text-xs text-slate-400 mt-1">{viewedNotif.time}</p>
-            </div>
-            <button onClick={() => setViewedNotif(null)} className="p-2 -m-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600">
-              <X size={18} />
-            </button>
-          </div>
-          <p className="text-sm text-slate-600 leading-relaxed mt-4">{viewedNotif.detail || viewedNotif.text}</p>
-          <div className="flex justify-end gap-2 mt-6">
-            <button onClick={() => setViewedNotif(null)}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Close</button>
-            {viewedNotif.link && (
-              <button onClick={() => { const l = viewedNotif.link; setViewedNotif(null); navigate(l); }}
-                className="px-4 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 inline-flex items-center gap-2">
-                Go to page <ArrowRight size={15} />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    )}
     </>
   );
 }
