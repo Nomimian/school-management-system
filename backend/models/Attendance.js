@@ -6,6 +6,13 @@ const attendanceSchema = new mongoose.Schema({
   class:    { type: String, required: true },
   date:     { type: Date, required: true },
   status:   { type: String, enum: ['Present', 'Absent', 'Late', 'Leave'], default: 'Present' },
+  // How the record was captured. Keeps provenance so manual and (future)
+  // biometric/imported records live side by side and can be trusted/audited.
+  method:   { type: String, enum: ['Manual', 'Biometric', 'Import', 'Self'], default: 'Manual' },
+  // Exact check-in moment — supplied by biometric devices; optional for manual.
+  checkInTime: { type: Date },
+  // Device / terminal identifier for biometric captures (null for manual).
+  deviceId: { type: String },
   markedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   remarks:  { type: String },
 }, { timestamps: true });

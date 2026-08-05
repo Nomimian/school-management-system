@@ -30,8 +30,13 @@ exports.getAttendance = async (req, res) => {
 // @POST /api/attendance/bulk  — mark entire class at once
 exports.markBulk = async (req, res) => {
   try {
-    const { records, date, class: cls } = req.body;
-    // records = [{ student: id, status: 'Present' }, ...]
+    const { records, date, class: cls, method: bodyMethod } = req.body;
+    // records = [{ student: id, status: 'Present', method?, checkInTime?, deviceId? }, ...]
+    // `method` may be set per-record (biometric devices) or once for the whole
+    // batch (manual marking). Anything unknown falls back to a safe 'Manual'.
+    const ALLOWED_METHODS = ['Manual', 'Biometric', 'Import', 'Self'];
+    const normMethod = (m) => (ALLOWED_METHODS.includes(m) ? m : null);
+    const batchMethod = normMethod(bodyMethod) || 'Manual';
     if (!Array.isArray(records) || records.length === 0)
       return res.status(400).json({ success: false, message: 'records must be a non-empty array.' });
     if (!date)
@@ -49,13 +54,23 @@ exports.markBulk = async (req, res) => {
       .select('student status').lean();
     const prevStatus = new Map(prev.map(a => [String(a.student), a.status]));
 
-    const ops = records.map(r => ({
-      updateOne: {
-        filter: { student: r.student, date: new Date(date), school: req.user.school },
-        update: { $set: { student: r.student, date: new Date(date), class: cls, status: r.status, markedBy: req.user._id, school: req.user.school } },
-        upsert: true,
-      },
-    }));
+    const ops = records.map(r => {
+      const set = {
+        student: r.student, date: new Date(date), class: cls, status: r.status,
+        method: normMethod(r.method) || batchMethod,
+        markedBy: req.user._id, school: req.user.school,
+      };
+      // Only persist biometric-specific fields when actually supplied.
+      if (r.checkInTime) set.checkInTime = new Date(r.checkInTime);
+      if (r.deviceId)    set.deviceId    = r.deviceId;
+      return {
+        updateOne: {
+          filter: { student: r.student, date: new Date(date), school: req.user.school },
+          update: { $set: set },
+          upsert: true,
+        },
+      };
+    });
     await Attendance.bulkWrite(ops);
     res.json({ success: true, message: `Attendance marked for ${records.length} students.` });
 
